@@ -1,0 +1,93 @@
+=== Task 3: Reuse and Harden Framework-Agnostic ACP Core ===
+Timestamp: 2026-03-28T15:51:00Z
+
+## Test Results
+
+### bridge-contract tests (20 tests)
+```
+ RUN  v2.1.9 /home/blake/Documents/software/acp-react-chat-ui
+
+ ✓ packages/acp-chat-core/src/bridge-contract.test.ts (20 tests) 7ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+```
+
+### session-controller tests (4 tests)
+```
+ RUN  v2.1.9 /home/blake/Documents/software/acp-react-chat-ui
+
+ ✓ packages/acp-chat-core/src/session/session-controller.test.ts (4 tests) 3ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+```
+
+### normalization tests (33 tests)
+```
+ RUN  v2.1.9 /home/blake/Documents/software/acp-react-chat-ui
+
+ ✓ packages/acp-chat-core/src/normalization/store.test.ts (17 tests) 4ms
+ ✓ packages/acp-chat-core/src/normalization/thread-view.test.ts (16 tests) 6ms
+
+ Test Files  2 passed (2)
+      Tests  33 passed (33)
+```
+
+## Total Tests: 57 tests pass across all three scopes
+
+## Files Created/Modified
+
+### Generated Types
+- packages/acp-chat-core/src/generated/BridgeEnvelope.ts
+- packages/acp-chat-core/src/generated/BridgeMessage.ts
+- packages/acp-chat-core/src/generated/BridgeStatus.ts
+- packages/acp-chat-core/src/generated/UnsupportedVersionError.ts
+- packages/acp-chat-core/src/generated/index.ts
+- packages/acp-chat-core/src/generated/serde_json/JsonValue.ts
+
+### Bridge Parser
+- packages/acp-chat-core/src/bridge/parser.ts
+- packages/acp-chat-core/src/bridge/index.ts
+
+### Transport Client
+- packages/acp-chat-core/src/transport/client.ts
+- packages/acp-chat-core/src/transport/index.ts
+
+### Session Controller
+- packages/acp-chat-core/src/session/controller.ts
+- packages/acp-chat-core/src/session/index.ts
+
+### Normalization Store
+- packages/acp-chat-core/src/normalization/store.ts
+- packages/acp-chat-core/src/normalization/index.ts
+
+### Launch Presets
+- packages/acp-chat-core/src/presets/launch.ts
+- packages/acp-chat-core/src/presets/index.ts
+
+### Pure Helpers (moved from Svelte package)
+- packages/acp-chat-core/src/helpers/composer-logic.ts
+- packages/acp-chat-core/src/helpers/thought-stack-logic.ts
+- packages/acp-chat-core/src/helpers/index.ts
+
+### Main Entry Point
+- packages/acp-chat-core/src/index.ts
+
+### Test Files
+- packages/acp-chat-core/src/bridge-contract.test.ts
+- packages/acp-chat-core/src/session/session-controller.test.ts
+- packages/acp-chat-core/src/normalization/store.test.ts
+- packages/acp-chat-core/src/normalization/thread-view.test.ts
+- packages/acp-chat-core/src/index.test.ts
+
+## Bundle Size Report
+- @acp/chat-core: 15.74 KB gzip (budget: 60 KB) - PASS
+- @acp/chat-react: 0.44 KB gzip (budget: 120 KB) - PASS
+
+## Conclusion
+All acceptance criteria met:
+- [x] pnpm test -- --run bridge-contract succeeds
+- [x] pnpm test -- --run session-controller succeeds
+- [x] pnpm test -- --run normalization succeeds
+- [x] No Svelte runtime import exists under packages/acp-chat-core

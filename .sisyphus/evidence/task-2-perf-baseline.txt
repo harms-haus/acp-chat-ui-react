@@ -1,0 +1,88 @@
+
+> acp-react-chat-library@ perf:test /home/blake/Documents/software/acp-react-chat-ui
+> node --experimental-strip-types scripts/perf-runner.ts
+
+Running performance tests...
+
+
+=== Performance Report ===
+Fixture: fixtures/sample-replay.jsonl
+Envelopes: 8
+Messages normalized: 2
+Total characters: 14
+Timestamp: 2026-03-28T15:33:18.067Z
+
+Budget Results:
+  PASS Streaming Cadence: 0.00ms avg (budget: 16ms avg) [max 0.00ms, 4 payloads]
+  PASS First Interactive: 0.02ms (budget: 150ms) [7 envelopes to first done]
+  PASS Memory Growth: 0.00MB (budget: 50MB) [2 messages, 14 chars retained]
+
+Overall: ALL PASSED
+
+=== Performance Report ===
+Fixture: fixtures/canonical-10k-replay.jsonl
+Envelopes: 15004
+Messages normalized: 10000
+Total characters: 2845060
+Timestamp: 2026-03-28T15:33:18.172Z
+
+Budget Results:
+  PASS Streaming Cadence: 0.00ms avg (budget: 16ms avg) [max 0.25ms, 15000 payloads]
+  PASS First Interactive: 0.02ms (budget: 150ms) [6 envelopes to first done]
+  PASS Memory Growth: -6.39MB (budget: 50MB) [10000 messages, 2845060 chars retained]
+
+Overall: ALL PASSED
+
+=== Summary ===
+All performance budgets passed.
+
+> acp-react-chat-library@ build /home/blake/Documents/software/acp-react-chat-ui
+> pnpm -r run build
+
+Scope: 3 of 4 workspace projects
+packages/acp-chat-core build$ tsc -p tsconfig.build.json
+packages/acp-chat-core build: Done
+packages/acp-chat-react build$ vite build
+packages/acp-chat-react build: vite v6.4.1 building for production...
+packages/acp-chat-react build: transforming...
+packages/acp-chat-react build: ✓ 1 modules transformed.
+packages/acp-chat-react build: rendering chunks...
+packages/acp-chat-react build: [vite:dts] Start generate declaration files...
+packages/acp-chat-react build: computing gzip size...
+packages/acp-chat-react build: dist/index.js  0.20 kB │ gzip: 0.16 kB
+packages/acp-chat-react build: [vite:dts] Declaration files built in 707ms.
+packages/acp-chat-react build: ✓ built in 737ms
+packages/acp-chat-react build: Done
+apps/harness build$ vite build
+apps/harness build: vite v6.4.1 building for production...
+apps/harness build: transforming...
+apps/harness build: ✓ 30 modules transformed.
+apps/harness build: rendering chunks...
+apps/harness build: computing gzip size...
+apps/harness build: dist/index.html                  0.33 kB │ gzip:  0.24 kB
+apps/harness build: dist/assets/index-CtfzJsPr.js  194.89 kB │ gzip: 61.66 kB
+apps/harness build: ✓ built in 623ms
+apps/harness build: Done
+
+=== Bundle Budget Report ===
+Timestamp: 2026-03-28T15:33:21.084Z
+
+Package Sizes:
+  PASS @acp/chat-core:
+      Raw: 0.67 KB
+      Gzip: 0.52 KB (budget: 60 KB)
+  PASS @acp/chat-react:
+      Raw: 0.40 KB
+      Gzip: 0.37 KB (budget: 120 KB)
+
+=== Source Import Check ===
+Status: PASS
+No forbidden imports detected.
+
+=== Dist Import Check ===
+Status: PASS
+No forbidden imports detected.
+
+=== Summary ===
+All bundle budgets passed.
+All import checks passed.

@@ -1,0 +1,8 @@
+{"version":1,"seq":0,"timestamp_ms":1700000000000,"type":"replay_metadata","captured_at_ms":1700000000000,"total_envelopes":8,"description":"Sample replay fixture for testing"}
+{"version":1,"seq":1,"timestamp_ms":1700000000001,"type":"bridge_status","status":"starting"}
+{"version":1,"seq":2,"timestamp_ms":1700000000002,"type":"bridge_status","status":"connected"}
+{"version":1,"seq":3,"timestamp_ms":1700000000003,"type":"acp_payload","payload":{"jsonrpc":"2.0","method":"session/update","params":{"update":{"type":"user_message","turnId":"turn-0","role":"user","content":[{"type":"text","text":"Hello!"}]}}}}
+{"version":1,"seq":4,"timestamp_ms":1700000000004,"type":"acp_payload","payload":{"jsonrpc":"2.0","method":"session/update","params":{"update":{"type":"agent_message_chunk","turnId":"turn-1","role":"assistant","content":[{"type":"text","text":"Hi"}],"status":"in_progress"}}}}
+{"version":1,"seq":5,"timestamp_ms":1700000000005,"type":"acp_payload","payload":{"jsonrpc":"2.0","method":"session/update","params":{"update":{"type":"agent_message_chunk","turnId":"turn-1","role":"assistant","content":[{"type":"text","text":" there"}],"status":"in_progress"}}}}
+{"version":1,"seq":6,"timestamp_ms":1700000000006,"type":"acp_payload","payload":{"jsonrpc":"2.0","method":"session/update","params":{"update":{"type":"agent_message_chunk","turnId":"turn-1","role":"assistant","content":[],"status":"done"}}}}
+{"version":1,"seq":7,"timestamp_ms":1700000000007,"type":"bridge_status","status":"disconnected"}

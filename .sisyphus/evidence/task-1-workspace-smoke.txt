@@ -1,0 +1,22 @@
+# Task 1 Workspace Smoke Evidence
+
+## Verification Date
+Sat Mar 28 2026 10:00:17
+
+## Commands Executed
+pnpm install && pnpm build && pnpm test && cargo test --manifest-path crates/acp-bridge/Cargo.toml
+
+## Actual Results
+- pnpm install: SUCCESS - 112 packages installed, workspace packages linked
+- pnpm build: SUCCESS - all 3 packages/apps built (core, react, harness)
+- pnpm test: SUCCESS - 4 tests passed (2 core smoke + 2 react smoke)
+- cargo test: SUCCESS - 10 Rust tests passed
+
+## Output Summary
+- packages/acp-chat-core: tsc build succeeded
+- packages/acp-chat-react: vite build produced 0.20 kB dist
+- apps/harness: vite build produced 194.89 kB assets
+- crates/acp-bridge: 10 tests passed (6 unit tests + 4 ts-rs export tests)
+
+## Note
+Base UI version corrected to ^1.0.0-rc.0 (stable 1.0.0 not yet released).

@@ -1,0 +1,71 @@
+# Task 4 React Store - SSR Safety Evidence
+
+## Server-Side Snapshot Tests
+
+The React store adapter includes SSR-safe server snapshot behavior that:
+1. Returns an empty initial state without requiring `window` or `document`
+2. Is safe to call in Node.js environment
+3. Provides a consistent snapshot shape for hydration
+
+## Test Results
+
+### Node.js Environment (No Browser APIs)
+
+```
+> pnpm test -- --run acp-store
+
+ RUN  v2.1.9 /home/blake/Documents/software/acp-react-chat-ui
+
+ ✓ packages/acp-chat-react/src/store/react-store-adapter.test.ts (19 tests) 8ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+```
+
+### SSR-Specific Test Cases
+
+1. **Server snapshot is safe to call in Node.js environment**
+   - Test: `server snapshot is safe to call in Node.js environment`
+   - Result: PASSED
+   - The `getServerSnapshot()` method returns a valid empty state without accessing browser APIs
+
+2. **Server snapshot provides empty initial state**
+   - Test: `provides SSR-safe server snapshot without window/document access`
+   - Result: PASSED
+   - Returns disconnected session state, empty messages/thoughts/toolCalls maps
+
+3. **Server snapshot can be used for hydration**
+   - The snapshot shape matches the client snapshot shape
+   - Version starts at 0 for consistent hydration
+
+## No Browser API Dependencies
+
+The `getServerSnapshot()` method:
+- Does NOT access `window`
+- Does NOT access `document`
+- Does NOT use `setTimeout` or other timer APIs
+- Returns pure JavaScript objects and Maps
+
+## Code Evidence
+
+```typescript
+getServerSnapshot(): AcpStoreSnapshot {
+  return {
+    session: {
+      connectionStatus: "disconnected",
+      bridgeStatus: "disconnected",
+      sessionId: null,
+      initialized: false,
+      capabilities: null,
+    },
+    messages: new Map(),
+    thoughts: new Map(),
+    toolCalls: new Map(),
+    timelineOrder: [],
+    turnIdToMessageId: new Map(),
+    version: 0,
+  };
+}
+```
+
+This is pure JavaScript with no browser dependencies, making it safe for SSR environments.

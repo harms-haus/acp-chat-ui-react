@@ -1,0 +1,15 @@
+Running performance tests with deliberately impossible budgets...
+
+
+=== Performance Report (FAILURE MODE) ===
+Fixture: fixtures/sample-replay.jsonl
+
+Budget Results:
+  FAIL Streaming Cadence: 0.0181ms avg (budget: 0.0001ms avg)
+  FAIL First Interactive: 0.0158ms (budget: 0.0001ms)
+  FAIL Memory Growth: 0.0056MB (budget: 0.0001MB)
+
+Failed budgets:
+  - Streaming Cadence: 0.0181ms avg exceeds 0.0001ms avg budget
+  - First Interactive: 0.0158ms exceeds 0.0001ms budget
+  - Memory Growth: 0.0056MB exceeds 0.0001MB budget

@@ -1,0 +1,14 @@
+
+> @acp/chat-react@0.0.1 test /home/blake/Documents/software/acp-react-chat-ui/packages/acp-chat-react
+> vitest run "src/ssr-smoke.test.ts"
+
+
+ RUN  v2.1.9 /home/blake/Documents/software/acp-react-chat-ui/packages/acp-chat-react
+
+ ✓ src/ssr-smoke.test.ts (7 tests) 45ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  13:03:18
+   Duration  231ms (transform 50ms, setup 0ms, collect 21ms, tests 45ms, environment 0ms, prepare 46ms)
+

@@ -1,0 +1,83 @@
+{
+  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/acp-react-chat-library.md",
+  "started_at": "2026-03-28T14:47:16.988Z",
+  "session_ids": [
+    "ses_2cb161b2bffeV60p5aEXz77yIa",
+    "ses_2cb156750ffeB4IAHESYPnQPUP",
+    "ses_2cb156723ffeLHpm2KuFoe1ZQb",
+    "ses_2cb15672dffebUL9l1PRTMI0IG",
+    "ses_2cb11f1bdffeRGumNtdTCqaD3N",
+    "ses_2cafdf19affejrS5G8XcN5dl4n",
+    "ses_2cae7e2f4ffeFHLqiYzo0GQjgr",
+    "ses_2cad86a2affeI4GsE5QVDwZ76c",
+    "ses_2ca937c38ffeokGkvZ0jq4rsfY",
+    "ses_2ca2ecb76ffe99MgyupDZFpRDC",
+    "ses_2ca046430ffeH0r3DBsHRotCN6"
+  ],
+  "plan_name": "acp-react-chat-library",
+  "task_sessions": {
+    "todo:2": {
+      "task_key": "todo:2",
+      "task_label": "2",
+      "task_title": "Establish explicit performance budgets and perf verification tooling",
+      "session_id": "ses_2cafdf19affejrS5G8XcN5dl4n",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-03-28T15:24:24.268Z"
+    },
+    "todo:3": {
+      "task_key": "todo:3",
+      "task_label": "3",
+      "task_title": "Reuse and harden the framework-agnostic ACP core",
+      "session_id": "ses_2cae7e2f4ffeFHLqiYzo0GQjgr",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-03-28T15:52:49.343Z"
+    },
+    "todo:4": {
+      "task_key": "todo:4",
+      "task_label": "4",
+      "task_title": "Build the React ACP store adapter and batched notification layer",
+      "session_id": "ses_2cad86a2affeI4GsE5QVDwZ76c",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-03-28T16:15:12.303Z"
+    },
+    "todo:5": {
+      "task_key": "todo:5",
+      "task_label": "5",
+      "task_title": "Build the SSR-safe React harness and client boundary shell",
+      "session_id": "ses_2ca937c38ffeokGkvZ0jq4rsfY",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-03-28T17:28:26.572Z"
+    },
+    "todo:6": {
+      "task_key": "todo:6",
+      "task_label": "6",
+      "task_title": "Build the always-virtualized thread foundation",
+      "session_id": "ses_2ca5f9de7ffe1zhrsJ5DiGmlmK",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-03-28T18:36:37.028Z"
+    },
+    "todo:7": {
+      "task_key": "todo:7",
+      "task_label": "7",
+      "task_title": "Build message, content, and update rendering on top of the virtualized thread",
+      "session_id": "ses_2ca2ecb76ffe99MgyupDZFpRDC",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-03-28T19:29:56.961Z"
+    },
+    "todo:8": {
+      "task_key": "todo:8",
+      "task_label": "8",
+      "task_title": "Build the basic composer send/stop flow for React",
+      "session_id": "ses_2ca046430ffeH0r3DBsHRotCN6",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-03-28T20:09:41.359Z"
+    }
+  }
+}

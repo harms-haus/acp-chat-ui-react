@@ -1,0 +1,161 @@
+/**
+ * @fileoverview Harness styles for shell chrome
+ * 
+ * Minimal CSS for harness UI using CSS variables for theming.
+ */
+
+:root {
+  --harness-bg: #1a1a2e;
+  --harness-text: #e8e8f0;
+  --harness-muted: #6b6b8d;
+  --harness-accent: #4a9eff;
+  --harness-border: #2d2d4a;
+  --harness-card-bg: #252542;
+  --harness-success: #4ade80;
+  --harness-warning: #fbbf24;
+  --harness-error: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: var(--harness-bg);
+  color: var(--harness-text);
+}
+
+[data-acp-root] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: 16px;
+  gap: 16px;
+}
+
+[data-acp-shell-header] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--harness-border);
+}
+
+[data-acp-shell-title] {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+[data-acp-shell-main] {
+  display: flex;
+  flex: 1;
+  gap: 16px;
+}
+
+[data-acp-shell-content] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-acp-shell-sidebar] {
+  width: 280px;
+  padding: 16px;
+  background-color: var(--harness-card-bg);
+  border-radius: 8px;
+}
+
+[data-acp-session-source-tabs] {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background-color: var(--harness-card-bg);
+  border-radius: 6px;
+}
+
+[data-acp-session-source-tab] {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+[data-acp-session-source-tab][data-selected="true"] {
+  background-color: var(--harness-accent);
+}
+
+[data-acp-session-source-tab]:hover:not([data-selected="true"]) {
+  background-color: var(--harness-border);
+}
+
+[data-acp-diagnostics-panel] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-acp-diagnostic-row] {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: var(--harness-card-bg);
+  border-radius: 4px;
+}
+
+[data-acp-diagnostic-label] {
+  color: var(--harness-muted);
+  font-size: 12px;
+}
+
+[data-acp-diagnostic-value] {
+  font-size: 14px;
+}
+
+[data-acp-perf-panel] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+[data-acp-perf-metric] {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: var(--harness-card-bg);
+  border-radius: 4px;
+}
+
+[data-acp-perf-metric-label] {
+  color: var(--harness-muted);
+}
+
+[data-acp-perf-metric-value] {
+  font-weight: 500;
+}
+
+[data-acp-perf-metric-value][data-status="good"] {
+  color: var(--harness-success);
+}
+
+[data-acp-perf-metric-value][data-status="warning"] {
+  color: var(--harness-warning);
+}
+
+[data-acp-perf-metric-value][data-status="error"] {
+  color: var(--harness-error);
+}
+
+[data-acp-thread-placeholder] {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--harness-muted);
+  font-size: 14px;
+  background-color: var(--harness-card-bg);
+  border-radius: 8px;
+}

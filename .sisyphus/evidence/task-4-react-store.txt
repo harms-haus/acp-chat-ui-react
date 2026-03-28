@@ -1,0 +1,72 @@
+# Task 4 React Store - Evidence
+
+## Test Results
+
+### React Store Adapter Tests
+```
+> pnpm test -- --run react-store-adapter
+
+ RUN  v2.1.9 /home/blake/Documents/software/acp-react-chat-ui
+
+ ✓ packages/acp-chat-react/src/store/react-store-adapter.test.ts (19 tests) 7ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+```
+
+### Streaming Store Perf Scenario
+```
+> pnpm perf:test -- --scenario streaming-store
+
+Running scenario: streaming-store...
+
+
+Results:
+  PASS Streaming Store: 0.00ms avg (budget: 16ms avg) [1000 updates, 20 notifications (2.0% ratio), expected ~21]
+
+Overall: PASSED
+```
+
+### Full Perf Tests
+```
+> pnpm perf:test
+
+Running performance tests...
+
+=== Performance Report ===
+Fixture: fixtures/sample-replay.jsonl
+Envelopes: 8
+Messages normalized: 2
+Total characters: 14
+
+Budget Results:
+  PASS Streaming Cadence: 0.00ms avg (budget: 16ms avg) [max 0.00ms, 4 payloads]
+  PASS First Interactive: 0.02ms (budget: 150ms) [7 envelopes to first done]
+  PASS Memory Growth: 0.00MB (budget: 50MB) [2 messages, 14 chars retained]
+
+Overall: ALL PASSED
+
+=== Performance Report ===
+Fixture: fixtures/canonical-10k-replay.jsonl
+Envelopes: 15004
+Messages normalized: 10000
+Total characters: 2845060
+
+Budget Results:
+  PASS Streaming Cadence: 0.00ms avg (budget: 16ms avg) [max 0.26ms, 15000 payloads]
+  PASS First Interactive: 0.01ms (budget: 150ms) [6 envelopes to first done]
+  PASS Memory Growth: -6.45MB (budget: 50MB) [10000 messages, 2845060 chars retained]
+
+Overall: ALL PASSED
+
+=== Summary ===
+All performance budgets passed.
+```
+
+## Verification Summary
+- All 19 React store adapter tests pass
+- Streaming store perf scenario validates batching contract:
+  - 1000 updates processed
+  - 20 notifications delivered (2.0% ratio)
+  - Batching works: notifications > 0 AND notifications < updates
+- All perf budgets pass

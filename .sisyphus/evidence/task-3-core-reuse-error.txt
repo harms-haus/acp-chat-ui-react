@@ -1,0 +1,14 @@
+=== Task 3: Framework Leakage Check ===
+Timestamp: 2026-03-28T15:51:00Z
+
+## Svelte Import Check
+Command: grep -r "svelte" packages/acp-chat-core/src --include="*.ts"
+Result: No svelte references found
+
+## .svelte File Reference Check
+Command: grep -r "\.svelte" packages/acp-chat-core/src --include="*.ts"
+Result: No .svelte references found
+
+## Conclusion
+No Svelte runtime imports or .svelte file references exist under packages/acp-chat-core.
+The core package is fully framework-agnostic.
