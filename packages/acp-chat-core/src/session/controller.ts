@@ -2,6 +2,13 @@ import type { BridgeEnvelope } from "../generated/index.js";
 import { TransportClient } from "../transport/client.js";
 import type { ConnectionStatus } from "../transport/client.js";
 
+export interface StartAgentConfig {
+  command: string;
+  args?: string[];
+  cwd?: string;
+  env?: Array<[string, string]>;
+}
+
 interface JsonRpcRequest {
     jsonrpc: "2.0";
     id: number;
@@ -160,12 +167,28 @@ async cancelPrompt(sessionId: string): Promise<void> {
 	this.sendNotification("session/cancel", { sessionId });
 }
 
-private sendNotification(method: string, params: unknown): void {
-	const notification: JsonRpcNotification = { jsonrpc: "2.0", method, params };
-	const json = JSON.stringify(notification);
-	this.transport.send(json);
-	this.emitTraffic("out", notification);
-}
+  async startAgent(config: StartAgentConfig): Promise<void> {
+    const envelope: BridgeEnvelope = {
+      version: 1,
+      seq: 0,
+      timestamp_ms: Date.now(),
+      type: "start_agent",
+      command: config.command,
+      args: config.args ?? [],
+      cwd: config.cwd ?? null,
+      env: config.env ?? [],
+    };
+    const json = JSON.stringify(envelope);
+    this.transport.send(json);
+    this.emitTraffic("out", envelope);
+  }
+
+  private sendNotification(method: string, params: unknown): void {
+    const notification: JsonRpcNotification = { jsonrpc: "2.0", method, params };
+    const json = JSON.stringify(notification);
+    this.transport.send(json);
+    this.emitTraffic("out", notification);
+  }
 
     private sendRequest(method: string, params: unknown): Promise<unknown> {
         return new Promise((resolve, reject) => {
@@ -204,25 +227,90 @@ private sendNotification(method: string, params: unknown): void {
         }
     }
 
-    private handleAcpPayload(payload: unknown): void {
-        const obj = payload as Record<string, unknown>;
-        if ("id" in obj && typeof obj.id === "number") {
-            const pending = this.pendingRequests.get(obj.id);
-            if (pending) {
-                clearTimeout(pending.timeout);
-                this.pendingRequests.delete(obj.id);
+  private handleAcpPayload(payload: unknown): void {
+    const obj = payload as Record<string, unknown>;
+    console.log("[SessionController] handleAcpPayload:", Object.keys(obj), "id:", obj.id, "method:", obj.method);
+    if ("id" in obj && typeof obj.id === "number") {
+      const pending = this.pendingRequests.get(obj.id);
+      console.log("[SessionController] Found pending request:", pending ? "yes" : "no", "for id:", obj.id);
+      if (pending) {
+        clearTimeout(pending.timeout);
+        this.pendingRequests.delete(obj.id);
 
-                if ("error" in obj && obj.error) {
-                    const err = obj.error as { message: string };
-                    pending.reject(new Error(err.message));
-                } else {
-                    pending.resolve(obj.result);
-                }
+        if ("error" in obj && obj.error) {
+          const err = obj.error as { message: string };
+          pending.reject(new Error(err.message));
+        } else {
+          if (obj.result) {
+            const result = obj.result as Record<string, unknown>;
+            console.log("[SessionController] Response result keys:", Object.keys(result));
+
+            try {
+              const w = globalThis as Record<string, unknown>;
+              if (!w.__ACP_DEBUG) w.__ACP_DEBUG = { loads: [] as unknown[] };
+              const debug = w.__ACP_DEBUG as { loads: unknown[] };
+              debug.loads.push({
+                timestamp: new Date().toISOString(),
+                result: JSON.parse(JSON.stringify(result)),
+              });
+              console.log("[SessionController] Raw result dumped to window.__ACP_DEBUG.loads");
+            } catch (e) {
+              console.warn("[SessionController] Failed to dump debug result:", e);
             }
-        } else if ("method" in obj && obj.method === "session/update") {
-            this.emitSessionUpdate(obj.params);
+
+            if (Array.isArray(result.messages)) {
+              console.log("[SessionController] result.messages count:", result.messages.length);
+              if (result.messages.length > 0) {
+                console.log("[SessionController] First message keys:", Object.keys(result.messages[0] as object));
+                console.log("[SessionController] First message sample:", JSON.stringify(result.messages[0]).slice(0, 500));
+              }
+              for (const msg of result.messages) {
+                console.log("[SessionController] Emitting message update, type:", (msg as Record<string, unknown>).type ?? (msg as Record<string, unknown>).sessionUpdate);
+                this.emitSessionUpdate({ sessionId: result.sessionId, update: msg });
+              }
+            } else {
+              console.log("[SessionController] result.messages is NOT an array:", typeof result.messages);
+            }
+            if (Array.isArray(result.thoughts)) {
+              console.log("[SessionController] result.thoughts count:", result.thoughts.length);
+              for (const thought of result.thoughts) {
+                console.log("[SessionController] Emitting thought update, type:", (thought as Record<string, unknown>).type ?? (thought as Record<string, unknown>).sessionUpdate);
+                this.emitSessionUpdate({ sessionId: result.sessionId, update: thought });
+              }
+            }
+            if (!Array.isArray(result.messages) && !Array.isArray(result.thoughts)) {
+              console.log("[SessionController] No messages or thoughts arrays found in result. Full result:", JSON.stringify(result).slice(0, 1000));
+            }
+          } else {
+            console.log("[SessionController] Response has no result field");
+          }
+          pending.resolve(obj.result);
         }
+      }
+    } else if ("method" in obj && obj.method === "session/update") {
+      const params = obj.params as Record<string, unknown> | undefined;
+      if (params && params.batched === true && Array.isArray(params.updates)) {
+        const updates = params.updates as Record<string, unknown>[];
+        console.log("[SessionController] Batched session/update with", updates.length, "items");
+        for (let i = 0; i < updates.length; i++) {
+          const item = updates[i]!;
+          const itemParams = item.params as Record<string, unknown> | undefined;
+          if (itemParams && typeof itemParams.update === "object" && itemParams.update !== null) {
+            console.log("[SessionController] Batched item", i, "type:", (itemParams.update as Record<string, unknown>).type ?? (itemParams.update as Record<string, unknown>).sessionUpdate);
+            this.emitSessionUpdate({ sessionId: itemParams.sessionId, update: itemParams.update });
+          } else if (typeof item.update === "object" && item.update !== null) {
+            console.log("[SessionController] Batched item", i, "flat type:", (item.update as Record<string, unknown>).type ?? (item.update as Record<string, unknown>).sessionUpdate);
+            this.emitSessionUpdate({ sessionId: item.sessionId, update: item.update });
+          } else {
+            console.log("[SessionController] Batched item", i, "unrecognized shape, keys:", Object.keys(item));
+          }
+        }
+      } else {
+        console.log("[SessionController] Non-batched session/update, update keys:", params?.update ? Object.keys(params.update as object) : "no update");
+        this.emitSessionUpdate(obj.params);
+      }
     }
+  }
 
     private handleError(error: Error): void {
         this.emitError(error);

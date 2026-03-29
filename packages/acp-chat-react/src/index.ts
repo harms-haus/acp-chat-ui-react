@@ -107,3 +107,12 @@ export {
   type PromptLifecycleState,
   type ComposerLogicState,
 } from "./composer/index.js";
+
+export { SessionList } from "./session-list/index.js";
+export type {
+  SessionListProps,
+  SessionItem,
+  SessionItemRenderProps,
+  SessionListState,
+  SessionListActions,
+} from "./session-list/index.js";

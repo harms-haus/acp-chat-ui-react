@@ -10,8 +10,10 @@ import {
   useStoreVersion,
   Thread,
   Composer,
+  SessionList,
 } from "@acp/chat-react";
-import { PACKAGE_VERSION, SessionController, type SessionControllerState } from "@acp/chat-core";
+import { PACKAGE_VERSION, SessionController, type SessionControllerState, type StartAgentConfig } from "@acp/chat-core";
+import type { SessionItem } from "@acp/chat-react";
 
 type SessionSource = "replay" | "live" | "demo";
 type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
@@ -290,6 +292,12 @@ function SessionSourceSelector({
   onReplayFileChange,
   bridgeUrl,
   onBridgeUrlChange,
+  command,
+  onCommandChange,
+  commandArgs,
+  onCommandArgsChange,
+  commandCwd,
+  onCommandCwdChange,
   connectionStatus,
   onLoadReplay,
   onConnectLive,
@@ -302,6 +310,12 @@ function SessionSourceSelector({
   onReplayFileChange: (file: string) => void;
   bridgeUrl: string;
   onBridgeUrlChange: (url: string) => void;
+  command: string;
+  onCommandChange: (cmd: string) => void;
+  commandArgs: string;
+  onCommandArgsChange: (args: string) => void;
+  commandCwd: string;
+  onCommandCwdChange: (cwd: string) => void;
   connectionStatus: ConnectionStatus;
   onLoadReplay: () => void;
   onConnectLive: () => void;
@@ -320,6 +334,7 @@ function SessionSourceSelector({
         <Tabs.Tab data-acp-session-source-tab value="live" data-selected={source === "live"}>
           Live
         </Tabs.Tab>
+
         <Tabs.Tab data-acp-session-source-tab value="demo" data-selected={source === "demo"}>
           Demo
         </Tabs.Tab>
@@ -389,27 +404,88 @@ function SessionSourceSelector({
               opacity: isConnected || isConnecting ? 0.6 : 1,
             }}
           />
-          <div style={{ display: "flex", gap: "8px" }}>
+          <label htmlFor="command-input" style={{ color: "var(--harness-muted)", fontSize: "12px", marginTop: "8px" }}>
+            Command to run
+          </label>
+          <input
+            id="command-input"
+            type="text"
+            value={command}
+            onChange={(e) => onCommandChange(e.target.value)}
+            placeholder="node"
+            disabled={isConnected || isConnecting}
+            style={{
+              padding: "8px 12px",
+              borderRadius: "4px",
+              border: "1px solid var(--harness-border)",
+              backgroundColor: "var(--harness-card-bg)",
+              color: "var(--harness-text)",
+              fontSize: "14px",
+              opacity: isConnected || isConnecting ? 0.6 : 1,
+            }}
+          />
+          <label htmlFor="command-args-input" style={{ color: "var(--harness-muted)", fontSize: "12px" }}>
+            Arguments (space-separated)
+          </label>
+          <input
+            id="command-args-input"
+            type="text"
+            value={commandArgs}
+            onChange={(e) => onCommandArgsChange(e.target.value)}
+            placeholder="./dist/server.js"
+            disabled={isConnected || isConnecting}
+            style={{
+              padding: "8px 12px",
+              borderRadius: "4px",
+              border: "1px solid var(--harness-border)",
+              backgroundColor: "var(--harness-card-bg)",
+              color: "var(--harness-text)",
+              fontSize: "14px",
+              opacity: isConnected || isConnecting ? 0.6 : 1,
+            }}
+          />
+          <label htmlFor="command-cwd-input" style={{ color: "var(--harness-muted)", fontSize: "12px" }}>
+            Working Directory (optional)
+          </label>
+          <input
+            id="command-cwd-input"
+            type="text"
+            value={commandCwd}
+            onChange={(e) => onCommandCwdChange(e.target.value)}
+            placeholder="/path/to/working/dir"
+            disabled={isConnected || isConnecting}
+            style={{
+              padding: "8px 12px",
+              borderRadius: "4px",
+              border: "1px solid var(--harness-border)",
+              backgroundColor: "var(--harness-card-bg)",
+              color: "var(--harness-text)",
+              fontSize: "14px",
+              opacity: isConnected || isConnecting ? 0.6 : 1,
+            }}
+          />
+          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
             <Button
               onClick={isConnected ? onDisconnect : onConnectLive}
-              disabled={isConnecting}
+              disabled={isConnecting || (!isConnected && !command)}
               style={{
                 padding: "8px 16px",
                 backgroundColor: isConnected ? "var(--harness-error)" : "var(--harness-accent)",
                 borderRadius: "4px",
                 fontSize: "14px",
+                opacity: isConnecting || (!isConnected && !command) ? 0.6 : 1,
               }}
             >
               {isConnected ? "Disconnect" : isConnecting ? "Connecting..." : "Connect Live"}
             </Button>
           </div>
           <p style={{ color: "var(--harness-muted)", fontSize: "11px", marginTop: "4px" }}>
-            Connects to a running ACP bridge at the specified WebSocket URL
+            Start bridge with: cargo run --manifest-path crates/acp-bridge/Cargo.toml -- dynamic
           </p>
         </div>
       </Tabs.Panel>
 
-      <Tabs.Panel value="demo">
+    <Tabs.Panel value="demo">
         <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
           <p style={{ color: "var(--harness-text)", fontSize: "14px" }}>
             Demo mode simulates a working ACP session for testing the composer.
@@ -437,6 +513,47 @@ function SessionSourceSelector({
   );
 }
 
+function SessionsSidebar({
+  controller,
+  isConnected,
+  onSessionLoaded,
+  onSessionLoadError,
+}: {
+  controller: SessionController | null;
+  isConnected: boolean;
+  onSessionLoaded?: (session: SessionItem) => void;
+  onSessionLoadError?: (error: Error, session: SessionItem) => void;
+}) {
+  console.log("[SessionsSidebar] isConnected:", isConnected, "controller:", controller ? "exists" : "null", "listSessions:", controller?.listSessions ? "function" : "undefined");
+  return (
+    <div data-acp-sessions-sidebar style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <h3 style={{ fontSize: "14px", marginBottom: "12px", flexShrink: 0 }}>Sessions</h3>
+      <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+        {!isConnected ? (
+          <div style={{ padding: "16px", textAlign: "center", color: "var(--harness-muted)" }}>
+            Connect to browse sessions (isConnected=false)
+          </div>
+        ) : controller ? (
+          <SessionList
+            controller={controller}
+            autoFetch={true}
+            onSessionLoaded={onSessionLoaded}
+            onSessionLoadError={onSessionLoadError}
+            style={{
+              border: "1px solid var(--harness-border)",
+              borderRadius: "4px",
+            }}
+          />
+        ) : (
+          <div style={{ padding: "16px", textAlign: "center", color: "var(--harness-muted)" }}>
+            No controller available
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ShellHeader() {
   return (
     <header data-acp-shell-header>
@@ -448,11 +565,52 @@ function ShellHeader() {
   );
 }
 
+const STORAGE_KEY = "acp-harness-settings";
+
+interface HarnessSettings {
+  bridgeUrl: string;
+  command: string;
+  commandArgs: string;
+  commandCwd: string;
+}
+
+function loadSettings(): HarnessSettings {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    // Ignore localStorage errors
+  }
+  return {
+    bridgeUrl: "ws://127.0.0.1:8765",
+    command: "",
+    commandArgs: "",
+    commandCwd: "",
+  };
+}
+
+function saveSettings(settings: HarnessSettings) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // Ignore localStorage errors
+  }
+}
+
 export default function App() {
+  const initialSettings = useMemo(() => loadSettings(), []);
+
   const [source, setSource] = useState<SessionSource>("replay");
   const [replayFile, setReplayFile] = useState("fixtures/sample-replay.jsonl");
-  const [bridgeUrl, setBridgeUrl] = useState("ws://127.0.0.1:8765");
+  const [bridgeUrl, setBridgeUrl] = useState(initialSettings.bridgeUrl);
+  const [command, setCommand] = useState(initialSettings.command);
+  const [commandArgs, setCommandArgs] = useState(initialSettings.commandArgs);
+  const [commandCwd, setCommandCwd] = useState(initialSettings.commandCwd);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
+  const [bridgeStatus, setBridgeStatus] = useState<string>("disconnected");
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const controllerRef = useRef<SessionController | null>(null);
   const storeRef = useRef<AcpStore | null>(null);
@@ -468,6 +626,10 @@ export default function App() {
     };
   }, [stableMockStore]);
 
+  useEffect(() => {
+    saveSettings({ bridgeUrl, command, commandArgs, commandCwd });
+  }, [bridgeUrl, command, commandArgs, commandCwd]);
+
   const disconnect = useCallback(() => {
     if (controllerRef.current) {
       controllerRef.current.disconnect();
@@ -479,9 +641,11 @@ export default function App() {
     }
     setActiveStore(null);
     setConnectionStatus("disconnected");
+    setBridgeStatus("disconnected");
+    setIsInitialized(false);
   }, []);
 
-  const connectToBridge = useCallback((url: string, shouldInitialize: boolean) => {
+  const connectToBridge = useCallback((url: string, shouldInitialize: boolean, agentConfig?: { command: string; args: string[]; cwd?: string }) => {
     if (controllerRef.current || storeRef.current) {
       disconnect();
     }
@@ -495,9 +659,24 @@ export default function App() {
     storeRef.current = store;
 
     const unsubStatus = controller.on("statusChange", (state: SessionControllerState) => {
+      setConnectionStatus(state.connectionStatus as ConnectionStatus);
+      setBridgeStatus(state.bridgeStatus);
+      setIsInitialized(state.initialized);
+
       if (state.connectionStatus === "connected") {
-        setConnectionStatus("connected");
-        if (shouldInitialize) {
+        if (agentConfig) {
+          const startAgentConfig: { command: string; args: string[]; cwd?: string } = {
+            command: agentConfig.command,
+            args: agentConfig.args,
+          };
+          if (agentConfig.cwd) {
+            startAgentConfig.cwd = agentConfig.cwd;
+          }
+          controller.startAgent(startAgentConfig).catch((err: unknown) => {
+            console.error("Failed to start agent:", err);
+          });
+        }
+        if (shouldInitialize && !state.initialized) {
           controller.initialize({
             name: "acp-chat-harness",
             version: "0.0.1",
@@ -505,10 +684,6 @@ export default function App() {
             console.error("Failed to initialize:", err);
           });
         }
-      } else if (state.connectionStatus === "disconnected") {
-        setConnectionStatus("disconnected");
-      } else if (state.connectionStatus === "connecting" || state.connectionStatus === "reconnecting") {
-        setConnectionStatus("connecting");
       }
     });
 
@@ -522,11 +697,15 @@ export default function App() {
   }, [disconnect]);
 
   const handleSourceChange = useCallback((newSource: SessionSource) => {
-    if (connectionStatus !== "disconnected") {
+    const activeModes: SessionSource[] = ["replay", "live", "demo"];
+    const wasActiveSession = activeModes.includes(source);
+    const isActiveSession = activeModes.includes(newSource);
+    const isSwitchingToDisconnectedMode = wasActiveSession && !isActiveSession;
+    if (connectionStatus !== "disconnected" && isSwitchingToDisconnectedMode) {
       disconnect();
     }
     setSource(newSource);
-  }, [connectionStatus, disconnect]);
+  }, [connectionStatus, disconnect, source]);
 
   const handleLoadReplay = useCallback(() => {
     if (connectionStatus === "connected") {
@@ -537,8 +716,19 @@ export default function App() {
   }, [connectionStatus, bridgeUrl, connectToBridge, disconnect]);
 
   const handleConnectLive = useCallback(() => {
-    connectToBridge(bridgeUrl, true);
-  }, [bridgeUrl, connectToBridge]);
+    const args = commandArgs.trim() ? commandArgs.trim().split(/\s+/) : [];
+    const cwdValue = commandCwd.trim();
+
+    const agentConfig: { command: string; args: string[]; cwd?: string } = {
+      command,
+      args,
+    };
+    if (cwdValue) {
+      agentConfig.cwd = cwdValue;
+    }
+
+    connectToBridge(bridgeUrl, true, agentConfig);
+  }, [bridgeUrl, connectToBridge, command, commandArgs, commandCwd]);
 
   const connectToDemo = useCallback(() => {
     if (controllerRef.current || storeRef.current) {
@@ -591,20 +781,50 @@ export default function App() {
       <ShellHeader />
 
       <div data-acp-shell-main>
+        <aside
+          data-acp-sessions-sidebar-container
+          style={{
+            width: "250px",
+            flexShrink: 0,
+            borderRight: "1px solid var(--harness-border)",
+            padding: "16px",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+      <SessionsSidebar
+        controller={controllerRef.current}
+        isConnected={connectionStatus === "connected" && bridgeStatus === "connected" && isInitialized}
+        onSessionLoaded={(session: SessionItem) => {
+          console.log("Session loaded:", session.sessionId, session.title);
+        }}
+        onSessionLoadError={(error, session) => {
+          console.error("Failed to load session:", session.sessionId, error.message);
+        }}
+      />
+        </aside>
+
         <div data-acp-shell-content>
-        <SessionSourceSelector
-          source={source}
-          onSourceChange={handleSourceChange}
-          replayFile={replayFile}
-          onReplayFileChange={setReplayFile}
-          bridgeUrl={bridgeUrl}
-          onBridgeUrlChange={setBridgeUrl}
-          connectionStatus={connectionStatus}
-          onLoadReplay={handleLoadReplay}
-          onConnectLive={handleConnectLive}
-          onStartDemo={handleStartDemo}
-          onDisconnect={disconnect}
-        />
+          <SessionSourceSelector
+            source={source}
+            onSourceChange={handleSourceChange}
+            replayFile={replayFile}
+            onReplayFileChange={setReplayFile}
+            bridgeUrl={bridgeUrl}
+            onBridgeUrlChange={setBridgeUrl}
+            command={command}
+            onCommandChange={setCommand}
+            commandArgs={commandArgs}
+            onCommandArgsChange={setCommandArgs}
+            commandCwd={commandCwd}
+            onCommandCwdChange={setCommandCwd}
+            connectionStatus={connectionStatus}
+            onLoadReplay={handleLoadReplay}
+            onConnectLive={handleConnectLive}
+            onStartDemo={handleStartDemo}
+            onDisconnect={disconnect}
+          />
 
           <Separator orientation="horizontal" style={{ margin: "16px 0" }} />
 

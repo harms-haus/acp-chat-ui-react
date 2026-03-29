@@ -50,6 +50,18 @@ pub enum BridgeMessage {
         /// Optional description of the captured session.
         description: Option<String>,
     },
+
+    /// Command to spawn an ACP agent process (client-to-server).
+    StartAgent {
+        /// Command to execute.
+        command: String,
+        /// Command arguments.
+        args: Vec<String>,
+        /// Working directory for the process.
+        cwd: Option<String>,
+        /// Environment variables as key-value pairs.
+        env: Vec<(String, String)>,
+    },
 }
 
 /// Bridge lifecycle states.
@@ -100,6 +112,21 @@ impl BridgeMessage {
             captured_at_ms,
             total_envelopes,
             description,
+        }
+    }
+
+    /// Creates a new start agent message.
+    pub fn start_agent(
+        command: String,
+        args: Vec<String>,
+        cwd: Option<String>,
+        env: Vec<(String, String)>,
+    ) -> Self {
+        Self::StartAgent {
+            command,
+            args,
+            cwd,
+            env,
         }
     }
 }

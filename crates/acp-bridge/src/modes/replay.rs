@@ -69,9 +69,16 @@ pub async fn run_replay_mode(
 
     for envelope in envelopes {
         tokio::select! {
-            _ = ws_rx.next() => {
-                tracing::info!("Client disconnected during replay");
-                return Ok(());
+            msg = ws_rx.next() => {
+                match msg {
+                    Some(Ok(Message::Close(_))) | None => {
+                        tracing::info!("Client disconnected during replay");
+                        return Ok(());
+                    }
+                    _ => {
+                        continue;
+                    }
+                }
             }
             _ = shutdown_rx.recv() => {
                 tracing::info!("Shutdown signal received");

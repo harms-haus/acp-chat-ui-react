@@ -162,30 +162,38 @@ function getUpdateType(update: AcpUpdate): string | undefined {
 
 export function applySessionUpdate(state: NormalizedState, params: SessionUpdateParams): NormalizedMessage | NormalizedThought | NormalizedToolCall | null {
   if (!params.update) {
+    console.log("[applySessionUpdate] params.update is falsy, returning null. params:", JSON.stringify(params).slice(0, 500));
     return null;
   }
 
   const update = params.update as AcpUpdate;
   const updateType = getUpdateType(update);
+  console.log("[applySessionUpdate] updateType:", updateType, "update keys:", Object.keys(update));
 
   switch (updateType) {
     case "agent_message_chunk": {
+      console.log("[applySessionUpdate] Handling agent_message_chunk");
       return applyAgentMessageChunk(state, update as AgentMessageChunk);
     }
     case "agent_thought_chunk": {
+      console.log("[applySessionUpdate] Handling agent_thought_chunk");
       return applyAgentThoughtChunk(state, update as AgentMessageChunk);
     }
     case "user_message_chunk":
     case "user_message": {
+      console.log("[applySessionUpdate] Handling user_message/user_message_chunk");
       return applyUserMessage(state, update as UserMessage);
     }
     case "tool_call": {
+      console.log("[applySessionUpdate] Handling tool_call");
       return applyToolCall(state, update as ToolCallUpdate);
     }
     case "tool_call_update": {
+      console.log("[applySessionUpdate] Handling tool_call_update");
       return applyToolCallUpdate(state, update as ToolCallUpdate);
     }
     default:
+      console.warn("[applySessionUpdate] Unrecognized updateType:", updateType, "- full update:", JSON.stringify(update).slice(0, 500));
       return null;
   }
 }

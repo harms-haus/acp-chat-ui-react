@@ -5,7 +5,7 @@ use std::net::SocketAddr;
 use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
-use acp_bridge::{BridgeMode, ProxyConfig, ReplayConfig, ServerConfig, run_server};
+use acp_bridge::{BridgeMode, DynamicConfig, ProxyConfig, ReplayConfig, ServerConfig, run_server};
 
 #[derive(Parser)]
 #[command(name = "acp-bridge")]
@@ -18,6 +18,14 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Dynamic mode: waits for client to send StartAgent command
+    Dynamic {
+        #[arg(short, long, default_value = "127.0.0.1:8765")]
+        addr: SocketAddr,
+        #[arg(short = 'w', long)]
+        cwd: Option<String>,
+    },
+    /// Proxy mode: spawns ACP agent at startup
     Proxy {
         #[arg(short, long, default_value = "127.0.0.1:8765")]
         addr: SocketAddr,
@@ -28,6 +36,7 @@ enum Commands {
         #[arg(short = 'w', long)]
         cwd: Option<String>,
     },
+    /// Replay mode: replays captured session from file
     Replay {
         #[arg(short, long, default_value = "127.0.0.1:8765")]
         addr: SocketAddr,
@@ -47,6 +56,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let cli = Cli::parse();
 
     let server_config = match cli.command {
+        Commands::Dynamic { addr, cwd } => {
+            tracing::info!("Starting dynamic mode, waiting for client command");
+            ServerConfig {
+                addr,
+                mode: BridgeMode::Dynamic(DynamicConfig {
+                    default_cwd: cwd,
+                    default_env: Vec::new(),
+                }),
+            }
+        }
         Commands::Proxy { addr, command, args, cwd } => {
             tracing::info!("Starting proxy mode: {} {:?}", command, args);
             ServerConfig {

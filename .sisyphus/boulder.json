@@ -12,7 +12,8 @@
     "ses_2cad86a2affeI4GsE5QVDwZ76c",
     "ses_2ca937c38ffeokGkvZ0jq4rsfY",
     "ses_2ca2ecb76ffe99MgyupDZFpRDC",
-    "ses_2ca046430ffeH0r3DBsHRotCN6"
+    "ses_2ca046430ffeH0r3DBsHRotCN6",
+    "ses_2c9b271a4ffe1qdEjZC7uq5Btg"
   ],
   "plan_name": "acp-react-chat-library",
   "task_sessions": {
@@ -78,6 +79,15 @@
       "agent": "Sisyphus-Junior",
       "category": "visual-engineering",
       "updated_at": "2026-03-28T20:09:41.359Z"
+    },
+    "todo:9": {
+      "task_key": "todo:9",
+      "task_label": "9",
+      "task_title": "Build chain-of-thought and tool-call surfaces with React-specific render isolation",
+      "session_id": "ses_2c9b271a4ffe1qdEjZC7uq5Btg",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-03-28T21:45:07.398Z"
     }
   }
 }

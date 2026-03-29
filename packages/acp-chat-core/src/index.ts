@@ -33,7 +33,7 @@ export type { ConnectionStatus, TransportConfig, TransportEvents } from "./trans
 
 // Session controller
 export { SessionController } from "./session/index.js";
-export type { SessionControllerState } from "./session/index.js";
+export type { SessionControllerState, StartAgentConfig } from "./session/index.js";
 
 // Normalization
 export {

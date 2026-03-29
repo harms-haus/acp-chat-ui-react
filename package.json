@@ -9,12 +9,14 @@
     "perf:test": "node --experimental-strip-types scripts/perf-runner.ts",
     "bundle:check": "node --experimental-strip-types scripts/bundle-check.ts",
     "dev:harness": "pnpm --filter @acp/harness dev",
-    "dev:bridge": "cargo run --manifest-path crates/acp-bridge/Cargo.toml -- replay -f fixtures/sample-replay.jsonl",
+    "dev:bridge": "cargo run --manifest-path crates/acp-bridge/Cargo.toml -- dynamic",
+    "debug": "concurrently \"pnpm dev:harness\" \"pnpm dev:bridge\"",
     "kill": "fuser -k 4173/tcp 8765/tcp 2>/dev/null || true"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
     "@types/node": "^22.0.0",
+    "concurrently": "^9.2.1",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   },

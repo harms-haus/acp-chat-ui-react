@@ -15,6 +15,7 @@ export default defineConfig({
       ["**/virtualized-thread.test.tsx", "jsdom"],
       ["**/message-rendering.test.tsx", "jsdom"],
       ["**/composer-flow.test.tsx", "jsdom"],
+      ["**/settings-session-list.test.tsx", "jsdom"],
     ],
   },
 });

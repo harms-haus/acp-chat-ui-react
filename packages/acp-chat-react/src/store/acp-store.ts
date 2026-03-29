@@ -98,7 +98,14 @@ export class AcpStore {
     });
 
     const unsubUpdate = sessionController.on("sessionUpdate", (params) => {
-      applySessionUpdate(this.normalizedState, params as SessionUpdateParams);
+      const p = params as SessionUpdateParams;
+      console.log("[AcpStore] sessionUpdate received, sessionId:", p.sessionId, "has update:", !!p.update);
+      if (p.update) {
+        const update = p.update as Record<string, unknown>;
+        console.log("[AcpStore] update keys:", Object.keys(update), "type:", update.type, "sessionUpdate:", update.sessionUpdate);
+      }
+      const result = applySessionUpdate(this.normalizedState, p);
+      console.log("[AcpStore] applySessionUpdate returned:", result ? "item" : "null", "- messages:", this.normalizedState.messages.size, "timeline:", this.normalizedState.timelineOrder.length);
       this.version++;
       this.scheduleNotification();
     });

@@ -8,50 +8,66 @@ import type { JsonValue } from "./serde_json/JsonValue";
  * This is the single source of truth for the wire format. The bridge never
  * mutates ACP payload contents — it only wraps them in this envelope.
  */
-export type BridgeEnvelope = { 
+export type BridgeEnvelope = {
 /**
  * Envelope format version. Must be one of SUPPORTED_VERSIONS.
  */
-version: number, 
+version: number,
 /**
  * Sequence number for ordering messages in replay mode.
  * Zero in live mode; monotonically increasing in replay mode.
  */
-seq: number, 
+seq: number,
 /**
  * Unix timestamp in milliseconds when the envelope was created.
  */
-timestamp_ms: number, } & ({ "type": "acp_payload", 
+timestamp_ms: number, } & ({ "type": "acp_payload",
 /**
  * The raw JSON-RPC message as received from the ACP agent.
  * This is an opaque value — the bridge does not interpret it.
  */
-payload: JsonValue, } | { "type": "bridge_status", 
+payload: JsonValue, } | { "type": "bridge_status",
 /**
  * The new bridge state.
  */
-status: BridgeStatus, } | { "type": "stderr", 
+status: BridgeStatus, } | { "type": "stderr",
 /**
  * The stderr line content.
  */
-line: string, } | { "type": "process_exit", 
+line: string, } | { "type": "process_exit",
 /**
  * The exit code, if available.
  */
-code: number | null, 
+code: number | null,
 /**
  * Signal that terminated the process, if any.
  */
-signal: string | null, } | { "type": "replay_metadata", 
+signal: string | null, } | { "type": "replay_metadata",
 /**
  * Original capture timestamp in milliseconds.
  */
-captured_at_ms: number, 
+captured_at_ms: number,
 /**
  * Total number of envelopes in the replay file.
  */
-total_envelopes: number, 
+total_envelopes: number,
 /**
  * Optional description of the captured session.
  */
-description: string | null, });
+description: string | null, } | { "type": "start_agent",
+/**
+ * Command to execute.
+ */
+command: string,
+/**
+ * Command arguments.
+ */
+args: Array<string>,
+/**
+ * Working directory for the process.
+ */
+cwd: string | null,
+/**
+ * Environment variables as key-value pairs.
+ */
+env: Array<[string, string]>, });

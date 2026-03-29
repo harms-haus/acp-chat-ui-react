@@ -362,3 +362,51 @@ Implemented `getBlockStableId()` function in ContentRenderer.tsx that derives de
 ### Evidence
 - Screenshot: `.sisyphus/evidence/task-8-composer-flow.png`
 - Shows composer with disabled Send button (no active session)
+
+## 2026-03-28 Task 10: Session-List Component (Partial - Wave 3)
+
+### Implementation Summary
+Created standalone SessionList React component for Wave 3 Task 10 (session-list subset only).
+
+### Files Created
+- packages/acp-chat-react/src/session-list/types.ts - TypeScript interfaces
+- packages/acp-chat-react/src/session-list/SessionList.tsx - Main component
+- packages/acp-chat-react/src/session-list/index.ts - Public exports
+- packages/acp-chat-react/src/session-list/session-list.test.tsx - Test suite
+
+### Harness Integration
+- Added 'Sessions' tab to SessionSourceSelector in apps/harness/src/App.tsx
+- SessionList connects to live ACP bridge via SessionController
+- Supports listing sessions via listSessions() and loading via loadSession()
+
+### Base UI Primitives Used
+- Button: For load/retry actions
+- ScrollArea: For scrollable session list
+- Separator: For visual separation in session rows
+
+### SessionController API Usage
+- listSessions(cursor?, cwd?) - Fetches paginated session list
+- loadSession(sessionId, cwd) - Loads selected session
+
+### Test Coverage
+- 18 tests covering rendering, selection, loading, pagination, error handling
+- All tests pass (178 total tests in suite)
+
+### Verification
+- pnpm build: PASS
+- pnpm check: PASS (no TypeScript errors)
+- pnpm test: PASS (178 tests)
+- pnpm bundle:check: PASS (42.21 KB gzip, under 120 KB budget)
+
+### Data Attributes (Stable Selectors)
+- data-acp-session-list: Root container
+- data-acp-session-row: Individual session row
+- data-acp-session-id: Session ID attribute
+- data-acp-session-selected: Selection state
+- data-acp-session-loading: Loading state
+- data-acp-session-select-button: Select action
+- data-acp-session-load-button: Load action
+- data-acp-session-title: Session title
+- data-acp-session-cwd: Working directory
+- data-acp-session-date: Last updated
+
