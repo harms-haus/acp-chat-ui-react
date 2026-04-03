@@ -1,5 +1,7 @@
 import type { ReactNode, MouseEvent } from "react";
 import type { NormalizedMessage } from "@acp/chat-core";
+import type { ClipboardAPI } from "../types/browser-apis.js";
+import { defaultClipboardWithFallback } from "../utils/clipboard.js";
 
 export interface MessageAction {
   id: string;
@@ -14,6 +16,29 @@ export interface MessageActionBarProps {
   actions?: MessageAction[] | undefined;
   onCopy?: ((message: NormalizedMessage) => void) | undefined;
   className?: string;
+  /**
+   * Clipboard API implementation for copy operations.
+   *
+   * Optional. If not provided, defaults to `defaultClipboardWithFallback`
+   * which provides navigator.clipboard with fallback to document.execCommand.
+   *
+   * @example
+   * ```tsx
+   * import { MessageActionBar, defaultClipboardWithFallback } from '@acp/chat-react';
+   *
+   * // Use default
+   * <MessageActionBar message={message} />
+   *
+   * // Inject custom implementation
+   * const customClipboard = { async writeText(text) { ... } };
+   * <MessageActionBar message={message} clipboard={customClipboard} />
+   *
+   * // Use strict (no fallback)
+   * import { strictClipboard } from '@acp/chat-react';
+   * <MessageActionBar message={message} clipboard={strictClipboard} />
+   * ```
+   */
+  clipboard?: ClipboardAPI;
 }
 
 export interface MessageActionMenuProps {
@@ -29,6 +54,13 @@ export interface UseMessageActionsOptions {
   message: NormalizedMessage;
   customActions?: MessageAction[];
   onCopy?: (message: NormalizedMessage) => void;
+  /**
+   * Clipboard API implementation for copy operations.
+   *
+   * Optional. If not provided, defaults to `defaultClipboardWithFallback`
+   * which provides navigator.clipboard with fallback to document.execCommand.
+   */
+  clipboard?: ClipboardAPI;
 }
 
 export interface UseMessageActionsReturn {

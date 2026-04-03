@@ -1,23 +1,38 @@
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useState, useEffect } from "react";
 import { Menu } from "@base-ui-components/react/menu";
 import { Separator } from "@base-ui-components/react/separator";
 import type { MessageActionBarProps } from "./types.js";
+import { defaultClipboardWithFallback } from "../utils/clipboard.js";
 
 export const MessageActionBar = memo(function MessageActionBar({
   message,
   actions,
   onCopy,
   className = "",
+  clipboard: injectedClipboard,
 }: MessageActionBarProps) {
   const [isHovered, setIsHovered] = useState(false);
 
+  const clipboard = injectedClipboard ?? defaultClipboardWithFallback;
+
+  useEffect(() => {
+    if (injectedClipboard === undefined) {
+      console.warn(
+        "[@acp/chat-react] MessageActionBar: Using default clipboard implementation. " +
+          "For production, consider providing a custom clipboard implementation via the 'clipboard' prop " +
+          "to ensure consistent behavior across environments. " +
+          "Example: clipboard={strictClipboard} or clipboard={defaultClipboardWithFallback}"
+      );
+    }
+  }, [injectedClipboard]);
+
   const handleCopy = useCallback(() => {
     const textToCopy = message.content || "";
-    navigator.clipboard.writeText(textToCopy).catch((err) => {
+    clipboard.writeText(textToCopy).catch((err) => {
       console.error("Failed to copy message:", err);
     });
     onCopy?.(message);
-  }, [message, onCopy]);
+  }, [message, onCopy, clipboard]);
 
   const actionsArray = actions ?? [];
   const copyAction = actionsArray.find((a) => a.id === "copy");

@@ -30,6 +30,7 @@ export {
 } from "./hooks/index.js";
 
 export { VirtualizedThread, MessagePlaceholder, Thread } from "./thread/index.js";
+export { createPretextEstimator, defaultPretextEstimator } from "./thread/index.js";
 export type {
   VirtualizedThreadProps,
   VirtualizedThreadRef,
@@ -176,3 +177,59 @@ export type {
   UseMessageActionsOptions,
   UseMessageActionsReturn,
 } from "./actions/index.js";
+
+export type {
+  AcpCssVariables,
+  AcpColorVariables,
+  AcpSpacingVariables,
+  AcpTypographyVariables,
+  AcpLayoutVariables,
+} from "./types/css-variables.js";
+
+export type {
+  HeightEstimator,
+  HeightEstimatorConfig,
+  HeightEstimatorPlugin,
+  HeightEstimatorRegistry,
+  PreparedTextEntry,
+} from "./types/height-estimator.js";
+
+export {
+  DEFAULT_HEIGHT_ESTIMATOR_CONFIG,
+} from "./types/height-estimator.js";
+
+export type {
+  ClipboardAPI,
+  ResizeObserverEntry,
+  ResizeObserverCallback,
+  ViewportObserverOptions,
+  ViewportObserver,
+  ViewportObserverFactory,
+  AnimationFrameCallback,
+  TimeoutCallback,
+  Scheduler,
+} from "./types/browser-apis.js";
+
+export {
+  defaultClipboard,
+  createViewportObserverFactory,
+  defaultScheduler,
+} from "./utils/browser-apis.js";
+
+export {
+  createViewportObserver,
+} from "./utils/viewport-observer.js";
+
+export {
+  createClipboardAPI,
+  defaultClipboardWithFallback,
+  strictClipboard,
+} from "./utils/clipboard.js";
+export type {
+  CreateClipboardAPIOptions,
+} from "./utils/clipboard.js";
+
+export {
+  SimpleFixedHeightEstimator,
+  AsyncImageAwareEstimator,
+} from "./examples/height-estimators.js";

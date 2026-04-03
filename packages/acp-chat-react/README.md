@@ -17,6 +17,15 @@ All interactive elements use `data-acp-*` attributes for reliable test targeting
 
 Use these selectors in tests instead of CSS classes or DOM structure.
 
+## Styling
+
+The library uses CSS variables for styling customization. See [CSS-VARIABLES.md](./CSS-VARIABLES.md) for the complete styling contract.
+
+Key points:
+- Override `--acp-*` variables in your application's CSS to customize appearance
+- Fallback values are preserved as defaults
+- CSS classes (`acp-*`) and data attributes (`data-acp-*`) remain available as styling and test hooks
+
 ## Dependency Policy
 
 Base UI (`@base-ui-components/react`) is the only allowed generic primitive library.

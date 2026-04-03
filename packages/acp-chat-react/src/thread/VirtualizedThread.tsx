@@ -16,8 +16,16 @@ import type {
   ScrollState,
 } from "./types.js";
 import { DEFAULT_VIRTUALIZATION_CONFIG } from "./types.js";
-import { estimateMessageHeight } from "./estimateMessageHeight.js";
-import type { NormalizedMessage } from "@acp/chat-core";
+import { createPretextEstimator } from "./pretext-estimator.js";
+import { DEFAULT_HEIGHT_ESTIMATOR_CONFIG } from "../types/height-estimator.js";
+import type {
+  ViewportObserverFactory,
+  Scheduler,
+} from "../types/browser-apis.js";
+import {
+  createViewportObserverFactory,
+  defaultScheduler,
+} from "../utils/browser-apis.js";
 
 interface ThreadRowProps {
   virtualItem: VirtualItem;
@@ -69,6 +77,12 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
       estimatedRowHeight = DEFAULT_VIRTUALIZATION_CONFIG.estimatedRowHeight,
       rowGap = DEFAULT_VIRTUALIZATION_CONFIG.gap,
       padding = DEFAULT_VIRTUALIZATION_CONFIG.padding,
+      heightEstimator = createPretextEstimator(DEFAULT_HEIGHT_ESTIMATOR_CONFIG),
+      onHeightRecalculated,
+      onContainerResize,
+      onContentChange,
+      viewportObserverFactory,
+      scheduler,
     },
     ref
   ) {
@@ -86,35 +100,44 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
     const [containerWidth, setContainerWidth] = useState(600);
     const scrollRafRef = useRef<number | null>(null);
     const previousItemCountRef = useRef(items.length);
+    const previousItemsRef = useRef<ThreadItem[]>(items);
+    const [recalcTrigger, setRecalcTrigger] = useState(0);
+    const recalculateIdsRef = useRef<Set<string>>(new Set());
+
+    const injectedViewportObserverFactory = viewportObserverFactory ?? createViewportObserverFactory();
+    const injectedScheduler = scheduler ?? defaultScheduler;
 
     const itemHeights = useMemo(() => {
       const heights = new Map<string, number>();
-      
+
       items.forEach((item) => {
-        if (item.type === 'message') {
-          const msg = item.data as NormalizedMessage;
-          heights.set(item.id, estimateMessageHeight(msg, containerWidth));
-        } else {
-          heights.set(item.id, 120);
-        }
+        const height = heightEstimator.estimate(item, containerWidth, DEFAULT_HEIGHT_ESTIMATOR_CONFIG) as number;
+        heights.set(item.id, height);
       });
-      
+
+      recalcTrigger;
       return heights;
-    }, [items, containerWidth]);
+    }, [items, containerWidth, heightEstimator, recalcTrigger]);
+
+    useEffect(() => {
+      onHeightRecalculated?.(new Map(itemHeights));
+    }, [itemHeights, onHeightRecalculated]);
 
     useEffect(() => {
       const viewport = viewportRef.current;
       if (!viewport) return;
-      
-      const resizeObserver = new ResizeObserver((entries) => {
+
+      const observer = injectedViewportObserverFactory.create((entries) => {
         for (const entry of entries) {
-          setContainerWidth(entry.contentRect.width);
+          const newWidth = entry.contentRect.width;
+          setContainerWidth(newWidth);
+          onContainerResize?.(newWidth);
         }
       });
-      
-      resizeObserver.observe(viewport);
-      return () => resizeObserver.disconnect();
-    }, []);
+
+      observer.observe(viewport);
+      return () => observer.disconnect();
+    }, [onContainerResize, injectedViewportObserverFactory]);
 
     const virtualizer = useVirtualizer({
       count: items.length,
@@ -162,14 +185,14 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
 
     const handleScroll = useCallback(() => {
       if (scrollRafRef.current !== null) {
-        cancelAnimationFrame(scrollRafRef.current);
+        injectedScheduler.cancelAnimationFrame(scrollRafRef.current);
       }
 
-      scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = injectedScheduler.requestAnimationFrame(() => {
         scrollRafRef.current = null;
         checkScrollPosition();
       });
-    }, [checkScrollPosition]);
+    }, [checkScrollPosition, injectedScheduler]);
 
     const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
       const viewport = viewportRef.current;
@@ -199,6 +222,10 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
       setFollowScrollEnabled(enabled);
     }, []);
 
+    const recalculateHeights = useCallback((messageIds?: string[]) => {
+      setRecalcTrigger((prev) => prev + 1);
+    }, []);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -207,9 +234,22 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
         getViewport,
         isNearBottom,
         setFollowScroll,
+        recalculateHeights,
       }),
-      [scrollToBottom, scrollToItem, getViewport, isNearBottom, setFollowScroll]
+      [scrollToBottom, scrollToItem, getViewport, isNearBottom, setFollowScroll, recalculateHeights]
     );
+
+    useEffect(() => {
+      const currentItems = items;
+      const previousItems = previousItemsRef.current;
+
+      if (currentItems !== previousItems) {
+        previousItemsRef.current = currentItems;
+
+        const lastItem = currentItems[currentItems.length - 1];
+        onContentChange?.(lastItem?.id ?? "");
+      }
+    }, [items, onContentChange]);
 
     useEffect(() => {
       const currentItemCount = items.length;
@@ -228,10 +268,10 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
     useEffect(() => {
       return () => {
         if (scrollRafRef.current !== null) {
-          cancelAnimationFrame(scrollRafRef.current);
+          injectedScheduler.cancelAnimationFrame(scrollRafRef.current);
         }
       };
-    }, []);
+    }, [injectedScheduler]);
 
     const layoutClass = layout === "centered" ? "acp-thread--centered" : "acp-thread--expanded";
 

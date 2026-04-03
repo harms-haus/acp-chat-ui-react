@@ -1,6 +1,8 @@
 import type { ReactNode, RefObject } from "react";
 import type { NormalizedMessage } from "@acp/chat-core";
 import type { ThoughtGroupWithState } from "../thought/types.js";
+import type { HeightEstimator } from "../types/height-estimator.js";
+import type { ViewportObserverFactory, Scheduler } from "../types/browser-apis.js";
 
 /**
  * Item types in the thread timeline
@@ -42,6 +44,42 @@ export interface VirtualizedThreadProps {
   rowGap?: number | undefined;
   /** Padding at top and bottom of the list */
   padding?: number | undefined;
+  /** Height estimator for calculating item heights before actual measurement. Defaults to pretext-based estimator. */
+  heightEstimator?: HeightEstimator | undefined;
+  /** Callback called after item heights are recalculated. Receives a Map of item IDs to heights. */
+  onHeightRecalculated?: ((heights: Map<string, number>) => void) | undefined;
+  /** Callback called when container width changes. Receives new width in pixels. */
+  onContainerResize?: ((width: number) => void) | undefined;
+  /** Callback called when message content changes. Receives message ID that changed. */
+  onContentChange?: ((messageId: string) => void) | undefined;
+  /**
+   * Viewport observer factory for tracking container resize events.
+   *
+   * Optional. If not provided, defaults to native ResizeObserver wrapper.
+   * Provide a custom implementation for testing or SSR environments.
+   *
+   * @example
+   * ```tsx
+   * import { createViewportObserverFactory } from '@acp/chat-react';
+   *
+   * <VirtualizedThread items={items} renderItem={renderItem} viewportObserverFactory={createViewportObserverFactory()} />
+   * ```
+   */
+  viewportObserverFactory?: ViewportObserverFactory | undefined;
+  /**
+   * Scheduler for requestAnimationFrame and timeout operations.
+   *
+   * Optional. If not provided, defaults to native browser scheduler.
+   * Provide a custom implementation for testing or SSR environments.
+   *
+   * @example
+   * ```tsx
+   * import { defaultScheduler } from '@acp/chat-react';
+   *
+   * <VirtualizedThread items={items} renderItem={renderItem} scheduler={defaultScheduler} />
+   * ```
+   */
+  scheduler?: Scheduler | undefined;
 }
 
 /**
@@ -58,6 +96,8 @@ export interface VirtualizedThreadRef {
   isNearBottom: () => boolean;
   /** Programmatically enable/disable follow scroll */
   setFollowScroll: (enabled: boolean) => void;
+  /** Manually recalculate heights for specific message IDs or all messages if not specified */
+  recalculateHeights?: (messageIds?: string[]) => void;
 }
 
 /**

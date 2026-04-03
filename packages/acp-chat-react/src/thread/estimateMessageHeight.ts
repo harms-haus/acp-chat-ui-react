@@ -1,7 +1,8 @@
 import { prepare, layout } from '@chenglou/pretext';
 import type { NormalizedMessage } from '@acp/chat-core';
 
-const MESSAGE_FONT = '14px Inter';
+// System font stack to match actual rendered fonts (fixes documented Inter mismatch)
+const MESSAGE_FONT = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 const LINE_HEIGHT = 22;
 const HEADER_HEIGHT = 48;
 const CONTENT_PADDING = 24;

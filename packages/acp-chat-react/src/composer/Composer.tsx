@@ -22,7 +22,7 @@ export interface ComposerRootProps extends ComposerProps {
 }
 
 function useComposerState(props: ComposerProps, slashCommands: SlashCommand[] = []) {
-  const { store, controller, disabled = false } = props;
+  const { store, controller, disabled = false, logger } = props;
   const session = useSessionState(store);
   const streamingMessage = useActiveStreamingMessage(store);
 
@@ -57,9 +57,9 @@ function useComposerState(props: ComposerProps, slashCommands: SlashCommand[] = 
       setValue("");
       props.onSend?.(text);
     } catch (error) {
-      console.error("Failed to send prompt:", error);
+      logger?.error("Failed to send prompt:", error);
     }
-  }, [sendAllowed, sessionId, value, controller, props.onSend]);
+  }, [sendAllowed, sessionId, value, controller, props.onSend, logger]);
 
   const handleStop = useCallback(async () => {
     if (!stopAllowed || !sessionId) return;
@@ -68,9 +68,9 @@ function useComposerState(props: ComposerProps, slashCommands: SlashCommand[] = 
       await controller.cancelPrompt(sessionId);
       props.onStop?.();
     } catch (error) {
-      console.error("Failed to cancel prompt:", error);
+      logger?.error("Failed to cancel prompt:", error);
     }
-  }, [stopAllowed, sessionId, controller, props.onStop]);
+  }, [stopAllowed, sessionId, controller, props.onStop, logger]);
 
   const handleSlashSelect = useCallback((command: SlashCommand) => {
     setValue((prev) => {
@@ -106,13 +106,14 @@ function useComposerState(props: ComposerProps, slashCommands: SlashCommand[] = 
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newValue = event.target.value;
       setValue(newValue);
+      props.onValueChange?.(newValue);
 
       if (newValue.endsWith("/") && slashCommands.length > 0) {
         slashState.handleSlashKey();
         slashState.setAnchorElement(event.target);
       }
     },
-    [slashCommands.length, slashState]
+    [slashCommands.length, slashState, props.onValueChange]
   );
 
   const handleCompositionStart = useCallback(() => {
@@ -140,10 +141,18 @@ function useComposerState(props: ComposerProps, slashCommands: SlashCommand[] = 
   }, [slashState]);
 
   useEffect(() => {
-    if (props.autoFocus && textareaRef.current) {
-      textareaRef.current.focus();
+    if (props.autoFocus) {
+      if (props.onFocusRequest) {
+        props.onFocusRequest();
+      } else if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
     }
-  }, [props.autoFocus]);
+  }, [props.autoFocus, props.onFocusRequest]);
+
+  useEffect(() => {
+    props.onMount?.();
+  }, [props.onMount]);
 
   const minRows = props.minRows ?? 2;
   const maxRows = props.maxRows ?? 8;
@@ -208,6 +217,7 @@ export const Composer = memo(function Composer(props: ComposerRootProps) {
     renderSettingsRow,
     controller,
     slashCommands = [],
+    logger,
   } = props;
 
   const {
@@ -271,65 +281,35 @@ export const Composer = memo(function Composer(props: ComposerRootProps) {
       data-acp-composer-disabled={disabled}
       data-acp-composer-has-settings={!!renderSettingsRow}
       className={`acp-composer ${className}`}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        position: "relative",
-      }}
     >
+    <div
+      data-acp-composer-input-container
+      className="acp-composer__input-container"
+    >
+      <textarea
+        ref={textareaRef}
+        id="acp-composer-textarea"
+        name="acp-composer-message"
+        data-acp-composer-input
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onCompositionStart={handleCompositionStart}
+        onCompositionEnd={handleCompositionEnd}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholder={placeholder}
+        disabled={disabled}
+        rows={rows}
+        className="acp-composer__textarea"
+        aria-label="Message input"
+        data-min-rows={minRows}
+        data-max-rows={maxRows}
+      />
       <div
-        data-acp-composer-input-container
-        className="acp-composer__input-container"
-        style={{
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-        }}
+        data-acp-composer-controls
+        className="acp-composer__controls"
       >
-        <textarea
-          ref={textareaRef}
-          id="acp-composer-textarea"
-          name="acp-composer-message"
-          data-acp-composer-input
-          value={value}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-          onCompositionStart={handleCompositionStart}
-          onCompositionEnd={handleCompositionEnd}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          placeholder={placeholder}
-          disabled={disabled}
-          rows={rows}
-          className="acp-composer__textarea"
-          aria-label="Message input"
-          style={{
-            width: "100%",
-            minHeight: `${minRows * 1.5}em`,
-            maxHeight: `${maxRows * 1.5}em`,
-            resize: "none",
-            padding: "12px",
-            paddingRight: "80px",
-            fontSize: "14px",
-            lineHeight: "1.5",
-            border: "1px solid var(--acp-border, #ccc)",
-            borderRadius: "8px",
-            backgroundColor: "var(--acp-bg, #fff)",
-            color: "var(--acp-text, #000)",
-          }}
-        />
-        <div
-          data-acp-composer-controls
-          className="acp-composer__controls"
-          style={{
-            position: "absolute",
-            top: "8px",
-            right: "8px",
-            display: "flex",
-            gap: "8px",
-          }}
-        >
           {buttonState === "send" ? (
             <Button
               data-acp-send-button
@@ -347,10 +327,10 @@ export const Composer = memo(function Composer(props: ComposerRootProps) {
                 strokeWidth="2"
                 aria-hidden="true"
               >
-                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-              </svg>
-              <span>Send</span>
-            </Button>
+        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+        </svg>
+        <span className="acp-composer__button-text">Send</span>
+      </Button>
           ) : (
             <Button
               data-acp-stop-button
@@ -366,25 +346,22 @@ export const Composer = memo(function Composer(props: ComposerRootProps) {
                 fill="currentColor"
                 aria-hidden="true"
               >
-                <rect x="6" y="6" width="12" height="12" rx="2" />
-              </svg>
-              <span>Stop</span>
-            </Button>
+        <rect x="6" y="6" width="12" height="12" rx="2" />
+        </svg>
+        <span className="acp-composer__button-text">Stop</span>
+      </Button>
           )}
         </div>
       </div>
 
-      {renderSettingsRow && (
-        <div
-          data-acp-composer-settings-row
-          className="acp-composer__settings-row"
-          style={{
-            marginTop: "8px",
-          }}
-        >
-          <SettingsRowComponent {...settingsRowProps} />
-        </div>
-      )}
+    {renderSettingsRow && (
+      <div
+        data-acp-composer-settings-row
+        className="acp-composer__settings-row"
+      >
+        <SettingsRowComponent {...settingsRowProps} />
+      </div>
+    )}
 
       <SlashSuggestions
         commands={slashState.filteredCommands}
