@@ -368,4 +368,130 @@ describe("Composer disabled states", () => {
     const input = screen.getByLabelText("Message input");
     expect(input).toBeDisabled();
   });
+
+  describe("settings row", () => {
+    it("should not render settings row by default", () => {
+      const store = createMockStore();
+      const mockController = createMockController();
+
+      const { container } = render(<Composer store={store} controller={mockController} />);
+
+      expect(container.querySelector("[data-acp-composer-has-settings='false']")).not.toBeNull();
+      expect(container.querySelector("[data-acp-composer-settings-row]")).toBeNull();
+    });
+
+    it("should render settings row when renderSettingsRow is provided", () => {
+      const store = createMockStore();
+      const mockController = createMockController();
+      const customSettingsRow = vi.fn(() => <div data-testid="custom-settings">Custom Settings</div>);
+
+      render(<Composer store={store} controller={mockController} renderSettingsRow={customSettingsRow} />);
+
+      expect(screen.getByTestId("custom-settings")).toBeInTheDocument();
+    });
+
+    it("should pass settings data to renderSettingsRow", async () => {
+      const store = createMockStore();
+      const mockController = createMockController();
+      const customSettingsRow = vi.fn(() => <div data-testid="custom-settings">Custom Settings</div>);
+
+      render(<Composer store={store} controller={mockController} renderSettingsRow={customSettingsRow} />);
+
+      await waitFor(() => {
+        expect(customSettingsRow).toHaveBeenCalled();
+      });
+
+      const firstCall = (customSettingsRow.mock.calls as unknown[][])[0]!;
+      const props = firstCall[0] as Record<string, unknown>;
+      expect(props).toMatchObject({
+        modes: expect.any(Array),
+        models: expect.any(Array),
+        sessions: expect.any(Array),
+        onModeChange: expect.any(Function),
+        onModelChange: expect.any(Function),
+        onSessionChange: expect.any(Function),
+        disabled: expect.any(Boolean),
+      });
+    });
+
+    it("should call onModeChange when mode is selected", async () => {
+      const store = createMockStore();
+      const mockController = createMockController();
+      const onModeChange = vi.fn();
+
+      const customSettingsRow = vi.fn(({ onModeChange: onChange }) => (
+        <button
+          type="button"
+          data-testid="mode-btn"
+          onClick={() => onChange({ id: "proxy", name: "Proxy" })}
+        >
+          Select Mode
+        </button>
+      ));
+
+      render(<Composer store={store} controller={mockController} renderSettingsRow={customSettingsRow} />);
+
+      fireEvent.click(screen.getByTestId("mode-btn"));
+
+      await waitFor(() => {
+        expect(customSettingsRow.mock.calls[0]?.[0].onModeChange).toBeDefined();
+      });
+    });
+
+    it("should call onModelChange when model is selected", async () => {
+      const store = createMockStore();
+      const mockController = createMockController();
+
+      const customSettingsRow = vi.fn(({ onModelChange: onChange }) => (
+        <button
+          type="button"
+          data-testid="model-btn"
+          onClick={() => onChange({ id: "gpt-4", name: "GPT-4" })}
+        >
+          Select Model
+        </button>
+      ));
+
+      render(<Composer store={store} controller={mockController} renderSettingsRow={customSettingsRow} />);
+
+      fireEvent.click(screen.getByTestId("model-btn"));
+
+      await waitFor(() => {
+        expect(customSettingsRow.mock.calls[0]?.[0].onModelChange).toBeDefined();
+      });
+    });
+
+    it("should call onSessionChange when session is selected", async () => {
+      const store = createMockStore();
+      const mockController = createMockController();
+
+      const customSettingsRow = vi.fn(({ onSessionChange: onChange }) => (
+        <button
+          type="button"
+          data-testid="session-btn"
+          onClick={() => onChange({ sessionId: "session-1", cwd: "/test" })}
+        >
+          Select Session
+        </button>
+      ));
+
+      render(<Composer store={store} controller={mockController} renderSettingsRow={customSettingsRow} />);
+
+      fireEvent.click(screen.getByTestId("session-btn"));
+
+      await waitFor(() => {
+        expect(customSettingsRow.mock.calls[0]?.[0].onSessionChange).toBeDefined();
+      });
+    });
+
+    it("should have data-acp-composer-has-settings attribute when settings row is provided", () => {
+      const store = createMockStore();
+      const mockController = createMockController();
+      const customSettingsRow = vi.fn(() => <div>Settings</div>);
+
+      const { container } = render(<Composer store={store} controller={mockController} renderSettingsRow={customSettingsRow} />);
+
+      expect(container.querySelector("[data-acp-composer-has-settings='true']")).not.toBeNull();
+    });
+  });
 });

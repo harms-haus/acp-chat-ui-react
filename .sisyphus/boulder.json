@@ -2,6 +2,7 @@
   "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/acp-react-chat-library.md",
   "started_at": "2026-03-28T14:47:16.988Z",
   "session_ids": [
+    "ses_2c3766a0dffep5XGHlMrwxR9h4",
     "ses_2cb161b2bffeV60p5aEXz77yIa",
     "ses_2cb156750ffeB4IAHESYPnQPUP",
     "ses_2cb156723ffeLHpm2KuFoe1ZQb",
@@ -13,7 +14,17 @@
     "ses_2ca937c38ffeokGkvZ0jq4rsfY",
     "ses_2ca2ecb76ffe99MgyupDZFpRDC",
     "ses_2ca046430ffeH0r3DBsHRotCN6",
-    "ses_2c9b271a4ffe1qdEjZC7uq5Btg"
+    "ses_2c9b271a4ffe1qdEjZC7uq5Btg",
+    "ses_2c3759553ffekn43nKCf6WmC9G",
+    "ses_2c3759531ffeHNP38H5oBgI9bx",
+    "ses_2c33ff231ffedpqnugCn0rkMm6",
+    "ses_2c3405f29ffentJI6rC4YsrJzF",
+    "ses_2c31dbfb1ffevDgKvqU7ChQMkj",
+    "ses_2c31dbfffffeLgskZD4PTIAfJI",
+    "ses_2c3139198ffeMLDf5Kia1Td4Cp",
+    "ses_2c0ec7014ffeBlw34l8oQFjXGL",
+    "ses_2c09e28adffecsWgPE8L3KCzk1",
+    "ses_2c09e2911ffeWw6KOfwwCMdX1k"
   ],
   "plan_name": "acp-react-chat-library",
   "task_sessions": {
@@ -88,6 +99,24 @@
       "agent": "Sisyphus-Junior",
       "category": "visual-engineering",
       "updated_at": "2026-03-28T21:45:07.398Z"
+    },
+    "todo:10": {
+      "task_key": "todo:10",
+      "task_label": "10",
+      "task_title": "Build the settings panel API and standalone session-list surface",
+      "session_id": "ses_2c0e4c05bffeD3PAytFarPnhqW",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-03-30T14:45:35.202Z"
+    },
+    "todo:11": {
+      "task_key": "todo:11",
+      "task_label": "11",
+      "task_title": "Build slash-command and message action surfaces without breaking render budgets",
+      "session_id": "ses_2c09aafd4ffePhcrYNlsvudM1v",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-03-30T16:08:18.086Z"
     }
   }
 }

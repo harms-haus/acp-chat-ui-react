@@ -15,8 +15,12 @@ global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 Element.prototype.scrollTo = vi.fn();
 
 function getContent(item: ThreadItem): string {
-  if (item.type === "message" || item.type === "thought") {
+  if (item.type === "message") {
     return (item.data as { content?: string }).content ?? "";
+  }
+  if (item.type === "thought_group") {
+    const group = item.data as { items?: Array<{ data?: { content?: string } }> };
+    return group.items?.[0]?.data?.content ?? "";
   }
   return "";
 }
@@ -177,7 +181,7 @@ describe("VirtualizedThread", () => {
     expect(screen.getByTestId("custom-empty")).toBeTruthy();
   });
 
-  it("handles thought and tool_call item types", () => {
+  it("handles thought_group item type", () => {
     const mixedItems: ThreadItem[] = [
       {
         type: "message",
@@ -185,18 +189,16 @@ describe("VirtualizedThread", () => {
         data: { id: "msg-1", role: "user", status: "complete", content: "Hello", contentBlocks: [] },
       },
       {
-        type: "thought",
-        id: "thought-1",
-        data: { id: "thought-1", content: "Thinking..." },
-      },
-      {
-        type: "tool_call",
-        id: "tool-1",
+        type: "thought_group",
+        id: "thought-group-1",
         data: {
-          toolCallId: "tool-1",
-          kind: "read",
-          title: "Read file",
-          status: "completed",
+          id: "thought-group-1",
+          items: [
+            { type: "thought", id: "thought-1", data: { id: "thought-1", content: "Thinking..." } },
+          ],
+          startTime: Date.now() - 1000,
+          endTime: Date.now(),
+          isActive: false,
         },
       },
     ];

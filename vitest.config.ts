@@ -16,6 +16,10 @@ export default defineConfig({
       ["**/message-rendering.test.tsx", "jsdom"],
       ["**/composer-flow.test.tsx", "jsdom"],
       ["**/settings-session-list.test.tsx", "jsdom"],
+      ["**/thought-tool-surfaces.test.tsx", "jsdom"],
+      ["**/settings.test.tsx", "jsdom"],
+      ["**/slash-and-actions.test.tsx", "jsdom"],
+      ["**/message-actions.test.tsx", "jsdom"],
     ],
   },
 });

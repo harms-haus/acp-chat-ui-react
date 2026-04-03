@@ -1,10 +1,11 @@
 import type { ReactNode, RefObject } from "react";
-import type { NormalizedMessage, NormalizedThought, NormalizedToolCall } from "@acp/chat-core";
+import type { NormalizedMessage } from "@acp/chat-core";
+import type { ThoughtGroupWithState } from "../thought/types.js";
 
 /**
  * Item types in the thread timeline
  */
-export type ThreadItemType = "message" | "thought" | "tool_call";
+export type ThreadItemType = "message" | "thought_group";
 
 /**
  * A thread item represents any renderable entity in the thread
@@ -12,7 +13,7 @@ export type ThreadItemType = "message" | "thought" | "tool_call";
 export interface ThreadItem {
   type: ThreadItemType;
   id: string;
-  data: NormalizedMessage | NormalizedThought | NormalizedToolCall;
+  data: NormalizedMessage | ThoughtGroupWithState;
 }
 
 /**

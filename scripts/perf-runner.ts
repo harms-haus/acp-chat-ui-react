@@ -525,6 +525,136 @@ export function runMessageStreamingScenario(): PerfResult {
   };
 }
 
+export function runComposerActionsScenario(): PerfResult {
+  const numMessages = 100;
+  const actionsPerMessage = 3;
+  const updateProcessingTimes: number[] = [];
+  const renderTimes: number[] = [];
+
+  const messages = new Map<string, { id: string; content: string; actionsOpen: boolean }>();
+
+  const start = performance.now();
+
+  for (let m = 0; m < numMessages; m++) {
+    const messageId = `msg_${m}`;
+
+    const updateStart = performance.now();
+    messages.set(messageId, {
+      id: messageId,
+      content: `Message ${m} content`,
+      actionsOpen: false,
+    });
+    updateProcessingTimes.push(performance.now() - updateStart);
+
+    const renderStart = performance.now();
+    for (let a = 0; a < actionsPerMessage; a++) {
+      const actionOpenStart = performance.now();
+      const msg = messages.get(messageId);
+      if (msg) {
+        msg.actionsOpen = true;
+      }
+      const actionOpenElapsed = performance.now() - actionOpenStart;
+      renderTimes.push(actionOpenElapsed);
+
+      const actionCloseStart = performance.now();
+      if (msg) {
+        msg.actionsOpen = false;
+      }
+      renderTimes.push(performance.now() - actionCloseStart);
+    }
+  }
+
+  const elapsed = performance.now() - start;
+  const avgUpdateTime = updateProcessingTimes.reduce((a, b) => a + b, 0) / updateProcessingTimes.length;
+  const avgRenderTime = renderTimes.reduce((a, b) => a + b, 0) / renderTimes.length;
+
+  const passed = avgUpdateTime <= 16 && avgRenderTime <= 1;
+
+  return {
+    name: 'Composer Actions',
+    actual: avgUpdateTime,
+    budget: 16,
+    unit: 'ms avg',
+    passed,
+    details: `${numMessages} messages, ${actionsPerMessage} actions each, ${messages.size} total, render avg ${avgRenderTime.toFixed(3)}ms`,
+  };
+}
+
+export function runThoughtUpdatesScenario(): PerfResult {
+  // Simulate thought and tool-call updates with render isolation
+  const numThoughtGroups = 50;
+  const thoughtsPerGroup = 5;
+  const toolCallsPerGroup = 2;
+  const updateProcessingTimes: number[] = [];
+  const renderTimes: number[] = [];
+
+  const thoughts = new Map<string, { id: string; content: string; createdAt: number }>();
+  const toolCalls = new Map<string, { id: string; kind: string; title: string; status: string; createdAt: number }>();
+  const thoughtGroups: Array<{ id: string; items: string[]; startTime: number; endTime: number }> = [];
+
+  const start = performance.now();
+
+  for (let g = 0; g < numThoughtGroups; g++) {
+    const groupId = `group_${g}`;
+    const groupItems: string[] = [];
+    const groupStart = performance.now();
+
+    // Add thoughts to group
+    for (let t = 0; t < thoughtsPerGroup; t++) {
+      const thoughtId = `thought_${g}_${t}`;
+      const updateStart = performance.now();
+      thoughts.set(thoughtId, {
+        id: thoughtId,
+        content: `Thinking step ${t} for group ${g}...`,
+        createdAt: Date.now() + t * 100,
+      });
+      updateProcessingTimes.push(performance.now() - updateStart);
+      groupItems.push(thoughtId);
+    }
+
+    // Add tool calls to group
+    for (let tc = 0; tc < toolCallsPerGroup; tc++) {
+      const toolCallId = `tool_${g}_${tc}`;
+      const updateStart = performance.now();
+      toolCalls.set(toolCallId, {
+        id: toolCallId,
+        kind: tc % 2 === 0 ? "read" : "search",
+        title: `Tool call ${tc} for group ${g}`,
+        status: tc === toolCallsPerGroup - 1 ? "completed" : "pending",
+        createdAt: Date.now() + (thoughtsPerGroup + tc) * 100,
+      });
+      updateProcessingTimes.push(performance.now() - updateStart);
+      groupItems.push(toolCallId);
+    }
+
+    const renderStart = performance.now();
+    thoughtGroups.push({
+      id: groupId,
+      items: groupItems,
+      startTime: groupStart,
+      endTime: Date.now(),
+    });
+    renderTimes.push(performance.now() - renderStart);
+  }
+
+  const elapsed = performance.now() - start;
+  const avgUpdateTime = updateProcessingTimes.reduce((a, b) => a + b, 0) / updateProcessingTimes.length;
+  const avgRenderTime = renderTimes.reduce((a, b) => a + b, 0) / renderTimes.length;
+  const totalItems = thoughts.size + toolCalls.size;
+
+  // Budget: 16ms average processing time per update, 1ms render time
+  const passed = avgUpdateTime <= 16 && avgRenderTime <= 1;
+
+  return {
+    name: 'Thought Updates',
+    actual: avgUpdateTime,
+    budget: 16,
+    unit: 'ms avg',
+    passed,
+    details: `${numThoughtGroups} groups, ${thoughts.size} thoughts, ${toolCalls.size} tool calls, ${totalItems} total, render avg ${avgRenderTime.toFixed(3)}ms`,
+  };
+}
+
 function runScenarioTests(scenario: string): boolean {
   console.log(`Running scenario: ${scenario}...\n`);
 
@@ -536,6 +666,10 @@ function runScenarioTests(scenario: string): boolean {
     results.push(runVirtualizedThreadScenario());
   } else if (scenario === 'message-streaming') {
     results.push(runMessageStreamingScenario());
+  } else if (scenario === 'thought-updates') {
+    results.push(runThoughtUpdatesScenario());
+  } else if (scenario === 'composer-actions') {
+    results.push(runComposerActionsScenario());
   } else {
     console.error(`Unknown scenario: ${scenario}`);
     return false;

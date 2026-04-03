@@ -1,70 +1,97 @@
 import { useState, useCallback, useEffect, memo } from "react";
 import { Button } from "@base-ui-components/react/button";
 import { ScrollArea } from "@base-ui-components/react/scroll-area";
-import { Separator } from "@base-ui-components/react/separator";
 import type { SessionListProps, SessionItem, SessionItemRenderProps } from "./types.js";
+
+function formatSessionDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
+  const timeStr = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).toLowerCase().replace(" am", "a").replace(" pm", "p").replace(" ", "");
+
+  if (isToday) {
+    return timeStr;
+  }
+
+  const datePart = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+
+  return `${datePart}, ${timeStr}`;
+}
 
 interface SessionRowProps {
   session: SessionItem;
   isSelected: boolean;
   isLoading: boolean;
-  onSelect: () => void;
   onLoad: () => void;
-  loadButtonText: string;
 }
 
 const SessionRow = memo(function SessionRow({
   session,
   isSelected,
   isLoading,
-  onSelect,
   onLoad,
-  loadButtonText,
 }: SessionRowProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const formattedDate = session.updatedAt
-    ? new Date(session.updatedAt).toLocaleString()
+    ? formatSessionDate(session.updatedAt)
     : null;
 
   return (
-    <div
+    <button
+      type="button"
       data-acp-session-row
       data-acp-session-id={session.sessionId}
       data-acp-session-selected={isSelected}
       data-acp-session-loading={isLoading}
-      className="acp-session-row"
+      onClick={onLoad}
+      title={session.cwd}
+      disabled={isLoading}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        width: "100%",
+        padding: "10px 12px",
+        border: "none",
+        background: isSelected 
+          ? "rgba(74, 158, 255, 0.1)" 
+          : isHovered 
+            ? "rgba(255, 255, 255, 0.05)"
+            : "transparent",
+        cursor: isLoading ? "default" : "pointer",
+        textAlign: "left",
+        borderRadius: "6px",
+        transition: "background-color 0.15s ease",
+        color: "inherit",
+        font: "inherit",
+        opacity: isLoading ? 0.7 : 1,
+      }}
     >
-      <button
-        type="button"
-        data-acp-session-select-button
-        onClick={onSelect}
-        className="acp-session-row__select"
-        aria-pressed={isSelected}
-      >
-        <div data-acp-session-info className="acp-session-row__info">
-          <div data-acp-session-title className="acp-session-row__title">
-            {session.title || session.sessionId}
-          </div>
-          <div data-acp-session-meta className="acp-session-row__meta">
-            <span data-acp-session-cwd>{session.cwd}</span>
-            {formattedDate && (
-              <>
-                <Separator orientation="vertical" className="acp-session-row__separator" />
-                <span data-acp-session-date>{formattedDate}</span>
-              </>
-            )}
-          </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <div style={{
+          fontSize: "13px",
+          fontWeight: 500,
+          lineHeight: 1.4,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}>
+          {session.title || session.sessionId}
         </div>
-      </button>
-      <Button
-        data-acp-session-load-button
-        onClick={onLoad}
-        disabled={isLoading}
-        className="acp-session-row__load"
-        aria-label={`Load session ${session.title || session.sessionId}`}
-      >
-        {isLoading ? "Loading..." : loadButtonText}
-      </Button>
-    </div>
+        {formattedDate && (
+          <div style={{ fontSize: "11px", opacity: 0.7 }}>
+            {formattedDate}
+          </div>
+        )}
+      </div>
+    </button>
   );
 });
 
@@ -74,33 +101,62 @@ function DefaultSessionItemRender({
   session,
   isSelected,
   isLoading,
-  onSelect,
   onLoad,
+  onSelect: _onSelect,
 }: SessionItemRenderProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const formattedDate = session.updatedAt
-    ? new Date(session.updatedAt).toLocaleString()
+    ? formatSessionDate(session.updatedAt)
     : null;
 
   return (
-    <div
+    <button
+      type="button"
       data-acp-session-row
       data-acp-session-id={session.sessionId}
       data-acp-session-selected={isSelected}
       data-acp-session-loading={isLoading}
+      onClick={onLoad}
+      title={session.cwd}
+      disabled={isLoading}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        width: "100%",
+        padding: "10px 12px",
+        border: "none",
+        background: isSelected 
+          ? "rgba(74, 158, 255, 0.1)" 
+          : isHovered 
+            ? "rgba(255, 255, 255, 0.05)"
+            : "transparent",
+        cursor: isLoading ? "default" : "pointer",
+        textAlign: "left",
+        borderRadius: "6px",
+        transition: "background-color 0.15s ease",
+        color: "inherit",
+        font: "inherit",
+        opacity: isLoading ? 0.7 : 1,
+      }}
     >
-      <button type="button" data-acp-session-select-button onClick={onSelect} aria-pressed={isSelected}>
-        <div data-acp-session-info>
-          <div data-acp-session-title>{session.title || session.sessionId}</div>
-          <div data-acp-session-meta>
-            <span data-acp-session-cwd>{session.cwd}</span>
-            {formattedDate && <span data-acp-session-date>{formattedDate}</span>}
-          </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+        <div style={{
+          fontSize: "13px",
+          fontWeight: 500,
+          lineHeight: 1.4,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}>
+          {session.title || session.sessionId}
         </div>
-      </button>
-      <Button data-acp-session-load-button onClick={onLoad} disabled={isLoading}>
-        {isLoading ? "Loading..." : "Load"}
-      </Button>
-    </div>
+        {formattedDate && (
+          <div style={{ fontSize: "11px", opacity: 0.7 }}>
+            {formattedDate}
+          </div>
+        )}
+      </div>
+    </button>
   );
 }
 
@@ -115,7 +171,6 @@ function SessionListInner({
   autoFetch = true,
   emptyText = "No sessions found",
   loadingText = "Loading sessions...",
-  loadButtonText = "Load",
   style,
 }: SessionListProps) {
   const [sessions, setSessions] = useState<SessionItem[]>([]);
@@ -262,17 +317,15 @@ function SessionListInner({
                 );
               }
 
-              return (
-                <SessionRow
-                  key={session.sessionId}
-                  session={session}
-                  isSelected={isSelected}
-                  isLoading={isLoadingSession && isSelected}
-                  onSelect={() => handleSelect(session.sessionId)}
-                  onLoad={() => handleLoad(session)}
-                  loadButtonText={loadButtonText}
-                />
-              );
+    return (
+      <SessionRow
+        key={session.sessionId}
+        session={session}
+        isSelected={isSelected}
+        isLoading={isLoadingSession && isSelected}
+        onLoad={() => handleLoad(session)}
+      />
+    );
             })}
 
             {hasMore && (

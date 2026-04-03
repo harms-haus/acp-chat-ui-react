@@ -22,7 +22,12 @@ export default defineConfig({
       formats: ["es"],
     },
     rollupOptions: {
-      external: ["react", "react-dom", "@base-ui-components/react", "@acp/chat-core"],
+      external: [
+        "react",
+        "react-dom",
+        /^@base-ui-components\/react/,
+        "@acp/chat-core"
+      ],
     },
   },
 });

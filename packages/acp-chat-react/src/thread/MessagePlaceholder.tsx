@@ -5,16 +5,29 @@ interface MessagePlaceholderProps {
   item: ThreadItem;
 }
 
+function getContent(item: ThreadItem): string {
+  if (item.type === "message") {
+    return (item.data as { content?: string }).content ?? "";
+  }
+  if (item.type === "thought_group") {
+    const group = item.data as { items?: Array<{ data?: { content?: string } }> };
+    return group.items?.[0]?.data?.content ?? "Thought group";
+  }
+  return "";
+}
+
+function getLabel(item: ThreadItem, isUser: boolean): string {
+  if (isUser) return "User";
+  if (item.type === "thought_group") return "Thought";
+  return "Agent";
+}
+
 export const MessagePlaceholder = memo(function MessagePlaceholder({
   item,
 }: MessagePlaceholderProps) {
   const isUser = item.type === "message" && "role" in item.data && item.data.role === "user";
-  const content =
-    item.type === "message"
-      ? (item.data as { content?: string }).content ?? ""
-      : item.type === "thought"
-        ? (item.data as { content?: string }).content ?? ""
-        : "Tool call";
+  const content = getContent(item);
+  const label = getLabel(item, isUser);
 
   return (
     <div
@@ -31,7 +44,7 @@ export const MessagePlaceholder = memo(function MessagePlaceholder({
       }}
     >
       <div style={{ fontSize: "12px", color: "var(--acp-color-muted, #666)", marginBottom: "4px" }}>
-        {isUser ? "User" : item.type === "thought" ? "Thought" : item.type === "tool_call" ? "Tool" : "Agent"}
+        {label}
       </div>
       <div style={{ fontSize: "14px", lineHeight: "1.5" }}>
         {content.slice(0, 200)}

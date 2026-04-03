@@ -6,6 +6,7 @@ import {
   useEffect,
   useImperativeHandle,
   memo,
+  useMemo,
 } from "react";
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 import type {
@@ -15,12 +16,15 @@ import type {
   ScrollState,
 } from "./types.js";
 import { DEFAULT_VIRTUALIZATION_CONFIG } from "./types.js";
+import { estimateMessageHeight } from "./estimateMessageHeight.js";
+import type { NormalizedMessage } from "@acp/chat-core";
 
 interface ThreadRowProps {
   virtualItem: VirtualItem;
   item: ThreadItem;
   renderItem: (item: ThreadItem, index: number) => React.ReactNode;
   index: number;
+  measureRef: (el: HTMLElement | null) => void;
 }
 
 const ThreadRow = memo(function ThreadRow({
@@ -28,9 +32,12 @@ const ThreadRow = memo(function ThreadRow({
   item,
   renderItem,
   index,
+  measureRef,
 }: ThreadRowProps) {
   return (
     <div
+      ref={measureRef}
+      data-index={index}
       data-acp-thread-row
       data-acp-message-id={item.id}
       data-acp-item-type={item.type}
@@ -76,13 +83,47 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
     });
     const [followScrollEnabled, setFollowScrollEnabled] = useState(followScroll);
     const [isNearBottomState, setIsNearBottomState] = useState(true);
+    const [containerWidth, setContainerWidth] = useState(600);
     const scrollRafRef = useRef<number | null>(null);
     const previousItemCountRef = useRef(items.length);
+
+    const itemHeights = useMemo(() => {
+      const heights = new Map<string, number>();
+      
+      items.forEach((item) => {
+        if (item.type === 'message') {
+          const msg = item.data as NormalizedMessage;
+          heights.set(item.id, estimateMessageHeight(msg, containerWidth));
+        } else {
+          heights.set(item.id, 120);
+        }
+      });
+      
+      return heights;
+    }, [items, containerWidth]);
+
+    useEffect(() => {
+      const viewport = viewportRef.current;
+      if (!viewport) return;
+      
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          setContainerWidth(entry.contentRect.width);
+        }
+      });
+      
+      resizeObserver.observe(viewport);
+      return () => resizeObserver.disconnect();
+    }, []);
 
     const virtualizer = useVirtualizer({
       count: items.length,
       getScrollElement: () => viewportRef.current,
-      estimateSize: () => estimatedRowHeight,
+      estimateSize: (index) => {
+        const item = items[index];
+        if (!item) return estimatedRowHeight;
+        return itemHeights.get(item.id) ?? estimatedRowHeight;
+      },
       overscan: DEFAULT_VIRTUALIZATION_CONFIG.overscan,
       measureElement: (el) => el.getBoundingClientRect().height,
       getItemKey: (index) => items[index]?.id ?? `fallback-${index}`,
@@ -240,15 +281,16 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
               const item = items[virtualItem.index];
               if (!item) return null;
 
-              return (
-                <ThreadRow
-                  key={virtualItem.key}
-                  virtualItem={virtualItem}
-                  item={item}
-                  renderItem={renderItem}
-                  index={virtualItem.index}
-                />
-              );
+            return (
+              <ThreadRow
+                key={virtualItem.key}
+                virtualItem={virtualItem}
+                item={item}
+                renderItem={renderItem}
+                index={virtualItem.index}
+                measureRef={virtualizer.measureElement}
+              />
+            );
             })}
           </div>
         </div>

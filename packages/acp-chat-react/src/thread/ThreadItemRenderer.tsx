@@ -1,15 +1,28 @@
 import { memo, useMemo } from "react";
 import type { ThreadItem } from "./types.js";
+import type { ThoughtGroupWithState, ThoughtStackRenderContext } from "../thought/types.js";
 import { MessageCard } from "../message/MessageCard.js";
-import { UpdateRow } from "../update/UpdateRow.js";
-import type { NormalizedMessage, NormalizedThought, NormalizedToolCall } from "@acp/chat-core";
+import { ThoughtStack } from "../thought/ThoughtStack.js";
+import type { NormalizedMessage } from "@acp/chat-core";
+import type { MessageAction } from "../actions/types.js";
+import type { ReactNode } from "react";
 
-interface ThreadItemRendererProps {
+export interface ThreadItemRendererProps {
   item: ThreadItem;
+  messageActions?: MessageAction[] | undefined;
+  renderThoughtClosed?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
+  renderThoughtOpen?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
+}
+
+function isThoughtGroup(data: NormalizedMessage | ThoughtGroupWithState): data is ThoughtGroupWithState {
+  return "items" in data && "startTime" in data;
 }
 
 export const ThreadItemRenderer = memo(function ThreadItemRenderer({
   item,
+  messageActions,
+  renderThoughtClosed,
+  renderThoughtOpen,
 }: ThreadItemRendererProps) {
   const rendered = useMemo(() => {
     switch (item.type) {
@@ -19,28 +32,18 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
           <MessageCard
             message={message}
             showStatus={message.role === "agent"}
+            actions={messageActions}
           />
         );
       }
-      case "thought": {
-        const thought = item.data as NormalizedThought;
+      case "thought_group": {
+        const group = item.data as ThoughtGroupWithState;
         return (
-          <UpdateRow
-            type="thought"
-            title={thought.content.slice(0, 50)}
-            status="completed"
-            timestamp={thought.createdAt}
-          />
-        );
-      }
-      case "tool_call": {
-        const toolCall = item.data as NormalizedToolCall;
-        return (
-          <UpdateRow
-            type={toolCall.kind}
-            title={toolCall.title}
-            status={toolCall.status === "completed" ? "completed" : "pending"}
-            timestamp={toolCall.createdAt}
+          <ThoughtStack
+            group={group}
+            isActive={group.isActive}
+            renderClosed={renderThoughtClosed}
+            renderOpen={renderThoughtOpen}
           />
         );
       }
@@ -51,7 +54,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
           </div>
         );
     }
-  }, [item]);
+  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen]);
 
   return (
     <div

@@ -35,8 +35,6 @@ export interface SessionListProps {
   emptyText?: string;
   /** Placeholder text when loading */
   loadingText?: string;
-  /** Text for the load button */
-  loadButtonText?: string;
   /** Inline styles for the container */
   style?: React.CSSProperties;
 }

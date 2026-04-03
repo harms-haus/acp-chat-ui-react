@@ -1,5 +1,6 @@
 import type { AcpStore } from "../store/index.js";
 import type { SessionController } from "@acp/chat-core";
+import type { SettingsRowRenderProps } from "../settings/types.js";
 
 export interface ComposerProps {
   /** The ACP store instance */
@@ -22,6 +23,8 @@ export interface ComposerProps {
   maxRows?: number;
   /** Minimum number of rows for the textarea */
   minRows?: number;
+  /** Custom renderer for the session settings row */
+  renderSettingsRow?: ((props: SettingsRowRenderProps) => React.ReactNode) | undefined;
 }
 
 export interface ComposerState {

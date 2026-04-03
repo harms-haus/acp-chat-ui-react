@@ -1,5 +1,6 @@
 export { Composer } from "./Composer.js";
 export type { ComposerProps, ComposerState, ComposerTextareaProps, ComposerControlsProps } from "./types.js";
+export type { SettingsRowRenderProps } from "../settings/types.js";
 export {
   shouldSendOnKeydown,
   canSend,

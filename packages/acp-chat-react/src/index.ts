@@ -39,6 +39,7 @@ export type {
   ThreadRowProps,
   VirtualizationConfig,
   DEFAULT_VIRTUALIZATION_CONFIG,
+  ThreadProps,
 } from "./thread/index.js";
 
 export {
@@ -89,6 +90,7 @@ export type {
   ComposerState,
   ComposerTextareaProps,
   ComposerControlsProps,
+  SettingsRowRenderProps,
 } from "./composer/index.js";
 export {
   shouldSendOnKeydown,
@@ -108,6 +110,29 @@ export {
   type ComposerLogicState,
 } from "./composer/index.js";
 
+export {
+  SettingsPanel,
+  useSettings,
+  SettingsSelect,
+  SettingsCheckbox,
+  SettingsSwitch,
+  SettingsTabs,
+} from "./settings/index.js";
+export type {
+  AcpMode,
+  AcpModel,
+  SettingsPanelProps,
+  SettingsPanelState,
+  SettingsPanelActions,
+  SettingsSelectOption,
+  SettingsSelectProps,
+  SettingsCheckboxProps,
+  SettingsSwitchProps,
+  SettingsTabItem,
+  SettingsTabsProps,
+} from "./settings/index.js";
+export { DEFAULT_ACP_MODES, DEFAULT_ACP_MODELS } from "./settings/index.js";
+
 export { SessionList } from "./session-list/index.js";
 export type {
   SessionListProps,
@@ -116,3 +141,38 @@ export type {
   SessionListState,
   SessionListActions,
 } from "./session-list/index.js";
+
+export { ThoughtStack } from "./thought/index.js";
+export type {
+  ThoughtStackProps,
+  ThoughtItem,
+  ThoughtGroup,
+  ThoughtItemProps,
+  ThoughtItemRenderProps,
+  ThoughtStackRenderContext,
+} from "./thought/index.js";
+
+export { ToolCall } from "./tool-call/index.js";
+export type {
+  ToolCallProps,
+  ToolCallHeaderProps,
+  ToolCallContentProps,
+} from "./tool-call/index.js";
+
+export { SlashSuggestions, useSlashCommands } from "./slash/index.js";
+export type {
+  SlashCommand,
+  SlashSuggestionProps,
+  SlashTriggerProps,
+  UseSlashCommandsOptions,
+  UseSlashCommandsReturn,
+} from "./slash/index.js";
+
+export { MessageActionBar, useMessageActions } from "./actions/index.js";
+export type {
+  MessageAction,
+  MessageActionBarProps,
+  MessageActionMenuProps,
+  UseMessageActionsOptions,
+  UseMessageActionsReturn,
+} from "./actions/index.js";

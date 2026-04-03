@@ -494,7 +494,7 @@ Wave 4: file-system surfaces, terminal surfaces, packaging/docs/final perf harde
 
   **Commit**: YES | Message: `feat(composer): add react basic composer` | Files: `packages/acp-chat-react/src/composer/*`, `apps/harness/*`
 
-- [ ] 9. Build chain-of-thought and tool-call surfaces with React-specific render isolation
+- [x] 9. Build chain-of-thought and tool-call surfaces with React-specific render isolation
 
   **What to do**: Implement thought-stack, reasoning blocks, and tool-call surfaces as isolated memoized subtrees that subscribe only to the data they need. Reuse pure grouping logic where possible, but rewrite the component model for React so active/completed transitions do not churn unrelated thread rows. Use Base UI Collapsible for expandable thought/tool sections, plus Base UI Tooltip, Menu, Context Menu, and Separator wherever generic disclosure/contextual controls are needed.
   **Must NOT do**: Do not expose raw ACP payload JSON by default, do not keep completed sections permanently expanded unless configured, do not entangle thought/tool rendering with the composer, and do not replace ACP-specific content structure with generic Base UI content containers.
@@ -540,7 +540,7 @@ Wave 4: file-system surfaces, terminal surfaces, packaging/docs/final perf harde
 
   **Commit**: YES | Message: `feat(ui): add thought and tool call surfaces` | Files: `packages/acp-chat-react/src/thought/*`, `packages/acp-chat-react/src/tool-call/*`
 
-- [ ] 10. Build the settings panel API and standalone session-list surface
+- [x] 10. Build the settings panel API and standalone session-list surface
 
   **What to do**: Add a React-native settings panel API with render props/slots for consumer-owned settings content, plus a standalone session-list component that can be used in a sidebar but does not require a packaged shell. Keep session list, model/mode selection, and generic config-option rendering composable and separately memoized. Use Base UI Select, Checkbox, Switch, Tabs, Button, Separator, Scroll Area, Menu, and Context Menu wherever those semantics match the settings/session-list surface.
   **Must NOT do**: Do not hardwire one settings layout, do not make the session list depend on a shell component, do not place session data in hidden component-local stores that bypass the planned ACP state adapter, and do not build bespoke select/checkbox/switch/tab primitives when Base UI already covers the need.
@@ -590,7 +590,7 @@ Wave 4: file-system surfaces, terminal surfaces, packaging/docs/final perf harde
 
   **Commit**: YES | Message: `feat(ui): add settings api and standalone session list` | Files: `packages/acp-chat-react/src/settings/*`, `packages/acp-chat-react/src/session-list/*`, `apps/harness/*`
 
-- [ ] 11. Build slash-command and message action surfaces without breaking render budgets
+- [x] 11. Build slash-command and message action surfaces without breaking render budgets
 
   **What to do**: Implement slash-command autocomplete in the React composer and message action surfaces for copy/consumer-defined actions. Keep both surfaces isolated from the core thread render path so toggling menus or hover/focus states does not force large list rerenders. Use Base UI Autocomplete for slash suggestions, Popover for anchored suggestion placement where needed, and Base UI Menu/Tooltip/Button/Separator for message action affordances.
   **Must NOT do**: Do not turn slash commands into a plugin system, do not hardcode business-specific actions, do not introduce unstable callback props that defeat memoization, and do not implement bespoke autocomplete/menu primitives where Base UI already satisfies the interaction.
