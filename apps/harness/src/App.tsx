@@ -500,7 +500,7 @@ function ThreadPanel({
     <div
       data-acp-thread-panel
       style={{
-        flex: 1,
+        flex: "1 1 0",
         minHeight: 0,
         display: "flex",
         flexDirection: "column",
@@ -509,7 +509,7 @@ function ThreadPanel({
         overflow: "hidden",
       }}
     >
-      <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+      <div style={{ flex: "1 1 0", minHeight: 0, overflow: "hidden" }}>
         <Thread store={store} layout="centered" followScroll={true} messageActions={messageActions} />
       </div>
       <div
@@ -1096,9 +1096,9 @@ function SessionsSidebar({
   onSessionLoadError?: (error: Error, session: SessionItem) => void;
 }) {
   return (
-    <div data-acp-sessions-sidebar style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <div data-acp-sessions-sidebar style={{ flex: "1 1 0", minHeight: 0, display: "flex", flexDirection: "column" }}>
       <h3 style={{ fontSize: "14px", marginBottom: "12px", flexShrink: 0 }}>Sessions</h3>
-      <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+      <div style={{ flex: "1 1 0", minHeight: 0, overflow: "auto" }}>
         {!isConnected ? (
           <div style={{ padding: "16px", textAlign: "center", color: "var(--harness-muted)" }}>
             Connect to browse sessions (isConnected=false)

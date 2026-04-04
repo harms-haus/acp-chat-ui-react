@@ -206,9 +206,11 @@ function SessionListInner({
 
   const handleLoad = useCallback(
     (session: SessionItem) => {
+      // Select the session first so loading state appears on the correct row
+      selectSession(session.sessionId);
       loadSession(session);
     },
-    [loadSession]
+    [selectSession, loadSession]
   );
 
   if (isLoading && sessions.length === 0) {

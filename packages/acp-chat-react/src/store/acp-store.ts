@@ -108,7 +108,14 @@ export class AcpStore {
       this.scheduleNotification();
     });
 
-    this.unsubscribes = [unsubStatus, unsubUpdate, unsubError];
+    const unsubClearing = sessionController.on("sessionClearing", () => {
+      this.normalizedState = createNormalizedState();
+      this.cachedSnapshot = null;
+      this.cachedSnapshotVersion = -1;
+      this.version++;
+    });
+
+    this.unsubscribes = [unsubStatus, unsubUpdate, unsubError, unsubClearing];
   }
 
   /**

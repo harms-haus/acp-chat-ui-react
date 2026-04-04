@@ -40,6 +40,7 @@ type StatusHandler = (state: SessionControllerState) => void;
 type SessionUpdateHandler = (params: unknown) => void;
 type TrafficHandler = (direction: "in" | "out", data: unknown) => void;
 type ErrorHandler = (error: Error) => void;
+type SessionClearingHandler = () => void;
 
 export class SessionController {
     private transport: TransportClient;
@@ -47,10 +48,11 @@ export class SessionController {
     private pendingRequests = new Map<number, PendingRequest>();
     private requestTimeoutMs: number;
     private state: SessionControllerState;
-    private statusHandlers = new Set<StatusHandler>();
-    private sessionUpdateHandlers = new Set<SessionUpdateHandler>();
-    private trafficHandlers = new Set<TrafficHandler>();
-    private errorHandlers = new Set<ErrorHandler>();
+  private statusHandlers = new Set<StatusHandler>();
+  private sessionUpdateHandlers = new Set<SessionUpdateHandler>();
+  private trafficHandlers = new Set<TrafficHandler>();
+  private errorHandlers = new Set<ErrorHandler>();
+  private sessionClearingHandlers = new Set<SessionClearingHandler>();
 
     constructor(bridgeUrl: string, requestTimeoutMs = 30000) {
         this.requestTimeoutMs = requestTimeoutMs;
@@ -68,26 +70,30 @@ export class SessionController {
         this.transport.on("error", (error: Error) => this.handleError(error));
     }
 
-    on(event: "statusChange", handler: StatusHandler): () => void;
-    on(event: "sessionUpdate", handler: SessionUpdateHandler): () => void;
-    on(event: "traffic", handler: TrafficHandler): () => void;
-    on(event: "error", handler: ErrorHandler): () => void;
-    on(event: "statusChange" | "sessionUpdate" | "traffic" | "error", handler: unknown): () => void {
-        switch (event) {
-            case "statusChange":
-                this.statusHandlers.add(handler as StatusHandler);
-                return () => this.statusHandlers.delete(handler as StatusHandler);
-            case "sessionUpdate":
-                this.sessionUpdateHandlers.add(handler as SessionUpdateHandler);
-                return () => this.sessionUpdateHandlers.delete(handler as SessionUpdateHandler);
-            case "traffic":
-                this.trafficHandlers.add(handler as TrafficHandler);
-                return () => this.trafficHandlers.delete(handler as TrafficHandler);
-            case "error":
-                this.errorHandlers.add(handler as ErrorHandler);
-                return () => this.errorHandlers.delete(handler as ErrorHandler);
-        }
+  on(event: "statusChange", handler: StatusHandler): () => void;
+  on(event: "sessionUpdate", handler: SessionUpdateHandler): () => void;
+  on(event: "traffic", handler: TrafficHandler): () => void;
+  on(event: "error", handler: ErrorHandler): () => void;
+  on(event: "sessionClearing", handler: SessionClearingHandler): () => void;
+  on(event: "statusChange" | "sessionUpdate" | "traffic" | "error" | "sessionClearing", handler: unknown): () => void {
+    switch (event) {
+      case "statusChange":
+        this.statusHandlers.add(handler as StatusHandler);
+        return () => this.statusHandlers.delete(handler as StatusHandler);
+      case "sessionUpdate":
+        this.sessionUpdateHandlers.add(handler as SessionUpdateHandler);
+        return () => this.sessionUpdateHandlers.delete(handler as SessionUpdateHandler);
+      case "traffic":
+        this.trafficHandlers.add(handler as TrafficHandler);
+        return () => this.trafficHandlers.delete(handler as TrafficHandler);
+      case "error":
+        this.errorHandlers.add(handler as ErrorHandler);
+        return () => this.errorHandlers.delete(handler as ErrorHandler);
+      case "sessionClearing":
+        this.sessionClearingHandlers.add(handler as SessionClearingHandler);
+        return () => this.sessionClearingHandlers.delete(handler as SessionClearingHandler);
     }
+  }
 
     private emitStatusChange(): void {
         this.statusHandlers.forEach((h) => { h(this.getState()); });
@@ -97,13 +103,17 @@ export class SessionController {
         this.sessionUpdateHandlers.forEach((h) => { h(params); });
     }
 
-    private emitTraffic(direction: "in" | "out", data: unknown): void {
-        this.trafficHandlers.forEach((h) => { h(direction, data); });
-    }
+  private emitTraffic(direction: "in" | "out", data: unknown): void {
+    this.trafficHandlers.forEach((h) => { h(direction, data); });
+  }
 
-    private emitError(error: Error): void {
-        this.errorHandlers.forEach((h) => { h(error); });
-    }
+  private emitError(error: Error): void {
+    this.errorHandlers.forEach((h) => { h(error); });
+  }
+
+  private emitSessionClearing(): void {
+    this.sessionClearingHandlers.forEach((h) => { h(); });
+  }
 
     getState(): SessionControllerState {
         return { ...this.state };
@@ -147,16 +157,18 @@ export class SessionController {
     return result;
   }
 
-    async loadSession(sessionId: string, cwd: string, mcpServers?: unknown[]): Promise<unknown> {
-        const result = await this.sendRequest("session/load", {
-            sessionId,
-            cwd,
-            mcpServers: mcpServers ?? [],
-        });
-        this.state.sessionId = sessionId;
-        this.emitStatusChange();
-        return result;
-    }
+  async loadSession(sessionId: string, cwd: string, mcpServers?: unknown[]): Promise<unknown> {
+    // Emit clearing event before loading to allow state reset
+    this.emitSessionClearing();
+    const result = await this.sendRequest("session/load", {
+      sessionId,
+      cwd,
+      mcpServers: mcpServers ?? [],
+    });
+    this.state.sessionId = sessionId;
+    this.emitStatusChange();
+    return result;
+  }
 
   async sendPrompt(sessionId: string, prompt: string): Promise<void> {
     const promptBlocks = [{ type: "text", text: prompt }];
