@@ -29,7 +29,7 @@ import { PACKAGE_VERSION, SessionController, type SessionControllerState, type S
 import { SettingsRow } from "./SettingsRow.js";
 import { StandaloneSessionListDemo } from "./StandaloneSessionListDemo.js";
 
-type SessionSource = "replay" | "live" | "demo" | "thought-tool" | "standalone-session-list" | "settings-panel" | "slash-actions";
+type SessionSource = "replay" | "live" | "demo" | "thought-tool" | "standalone-session-list" | "settings-panel" | "slash-actions" | "permission";
 type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
 
 interface PerfMetrics {
@@ -390,6 +390,248 @@ function createThoughtToolDemoController(
   return controller;
 }
 
+function createPermissionDemoController(
+  onMessageSent?: (text: string) => void,
+  onStreamingStart?: () => void,
+  onStreamingStop?: () => void
+): SessionController {
+  let sessionId = "permission-demo-" + Date.now();
+  let isStreaming = false;
+  let pendingPermissionRequest: { requestId: string; turnId: string } | null = null;
+  const handlers: {
+    statusChange?: Array<(state: SessionControllerState) => void>;
+    sessionUpdate?: Array<(params: unknown) => void>;
+  } = { statusChange: [], sessionUpdate: [] };
+
+  const demoSessions = [
+    {
+      sessionId: "permission-session-1",
+      cwd: "/home/user/permission-project",
+      title: "Permission Demo Session",
+      updatedAt: new Date(Date.now() - 3600000).toISOString(),
+    },
+  ];
+
+  const notifyStatusChange = (state: SessionControllerState) => {
+    handlers.statusChange?.forEach((h) => { h(state); });
+  };
+
+  const notifySessionUpdate = (params: unknown) => {
+    handlers.sessionUpdate?.forEach((h) => { h(params); });
+  };
+
+  const controller: SessionController = {
+    getState: () => ({
+      connectionStatus: "connected" as const,
+      bridgeStatus: "ready",
+      sessionId,
+      initialized: true,
+      capabilities: {},
+    }),
+    on: (event: string, handler: unknown) => {
+      if (event === "statusChange") {
+        handlers.statusChange?.push(handler as (state: SessionControllerState) => void);
+      } else if (event === "sessionUpdate") {
+        handlers.sessionUpdate?.push(handler as (params: unknown) => void);
+      }
+      return () => {};
+    },
+    connect: () => {},
+    disconnect: () => {
+      notifyStatusChange({
+        connectionStatus: "disconnected",
+        bridgeStatus: "disconnected",
+        sessionId: null,
+        initialized: false,
+        capabilities: null,
+      });
+    },
+    initialize: async () => ({}),
+    createSession: async () => ({ sessionId }),
+    listSessions: async (cursor?: string, cwd?: string) => {
+      if (cursor) {
+        return { sessions: [], nextCursor: undefined };
+      }
+      const filteredSessions = cwd
+        ? demoSessions.filter((s) => s.cwd.startsWith(cwd))
+        : demoSessions;
+      return { sessions: filteredSessions, nextCursor: undefined };
+    },
+    loadSession: async (sessionId: string, cwd: string) => {
+      const session = demoSessions.find((s) => s.sessionId === sessionId);
+      if (!session) {
+        throw new Error(`Session ${sessionId} not found`);
+      }
+      return { sessionId };
+    },
+    sendPrompt: async (sid: string, prompt: string) => {
+      onMessageSent?.(prompt);
+
+      notifySessionUpdate({
+        update: {
+          sessionUpdate: "user_message",
+          turnId: `turn-${Date.now()}`,
+          role: "user",
+          content: [{ type: "text", text: prompt }],
+          timestamp: Date.now(),
+        },
+      });
+
+      setTimeout(() => {
+        isStreaming = true;
+        onStreamingStart?.();
+
+        const turnId = `agent-turn-${Date.now()}`;
+        const requestId = `permission-request-${Date.now()}`;
+        const toolCallId = `tool-${Date.now()}`;
+
+        notifySessionUpdate({
+          update: {
+            sessionUpdate: "agent_thought_chunk",
+            turnId,
+            role: "agent",
+            content: [{ type: "text", text: "I need to read a file to help you with this task." }],
+            status: "in_progress",
+            timestamp: Date.now(),
+          },
+        });
+
+        setTimeout(() => {
+          pendingPermissionRequest = { requestId, turnId };
+
+          notifySessionUpdate({
+            update: {
+              sessionUpdate: "permission_request",
+              turnId,
+              role: "agent",
+              requestId,
+              toolCallId,
+              toolName: "read",
+              title: "Read file: /home/user/secret-config.txt",
+              description: "The agent wants to read a configuration file that may contain sensitive information.",
+              options: [
+                { id: "allow", label: "Allow", description: "Allow reading the file" },
+                { id: "deny", label: "Deny", description: "Deny reading the file" },
+              ],
+              status: "pending",
+              timestamp: Date.now(),
+            },
+          });
+        }, 500);
+      }, 100);
+    },
+    respondToPermission: async (requestId: string, optionId: string) => {
+      if (!pendingPermissionRequest || pendingPermissionRequest.requestId !== requestId) {
+        console.warn("No matching pending permission request");
+        return;
+      }
+
+      const { turnId, requestId: _ignoredReqId } = pendingPermissionRequest;
+      const toolCallId = `tool-${Date.now()}`;
+
+      if (optionId === "allow") {
+        notifySessionUpdate({
+          update: {
+            sessionUpdate: "tool_call",
+            turnId,
+            role: "agent",
+            toolCallId,
+            kind: "read",
+            title: "Read file: /home/user/secret-config.txt",
+            status: "in_progress",
+            rawInput: { filePath: "/home/user/secret-config.txt" },
+            timestamp: Date.now(),
+          },
+        });
+
+        setTimeout(() => {
+          notifySessionUpdate({
+            update: {
+              sessionUpdate: "tool_call_update",
+              turnId,
+              role: "agent",
+              toolCallId,
+              kind: "read",
+              title: "Read file: /home/user/secret-config.txt",
+              status: "completed",
+              rawInput: { filePath: "/home/user/secret-config.txt" },
+              rawOutput: {
+                output: "DATABASE_URL=postgresql://localhost:5432/myapp\\nAPI_KEY=sk-1234567890abcdef\\nDEBUG=true",
+                metadata: { truncated: false, exit: 0 },
+              },
+              timestamp: Date.now(),
+            },
+          });
+
+          setTimeout(() => {
+            notifySessionUpdate({
+              update: {
+                sessionUpdate: "agent_message_chunk",
+                turnId,
+                role: "agent",
+                content: [{ type: "text", text: "I've read the configuration file. I can see it contains database connection settings and an API key. How would you like me to proceed with this information?" }],
+                status: "done",
+                timestamp: Date.now(),
+              },
+            });
+            isStreaming = false;
+            onStreamingStop?.();
+          }, 500);
+        }, 500);
+      } else if (optionId === "deny") {
+        setTimeout(() => {
+          notifySessionUpdate({
+            update: {
+              sessionUpdate: "agent_message_chunk",
+              turnId,
+              role: "agent",
+              content: [{ type: "text", text: "I understand. I won't read the file. How else can I help you with your task?" }],
+              status: "done",
+              timestamp: Date.now(),
+            },
+          });
+          isStreaming = false;
+          onStreamingStop?.();
+        }, 500);
+      }
+
+      pendingPermissionRequest = null;
+    },
+    cancelPermission: async (requestId: string) => {
+      if (!pendingPermissionRequest || pendingPermissionRequest.requestId !== requestId) {
+        console.warn("No matching pending permission request");
+        return;
+      }
+
+      const { turnId } = pendingPermissionRequest;
+
+      setTimeout(() => {
+        notifySessionUpdate({
+          update: {
+            sessionUpdate: "agent_message_chunk",
+            turnId,
+            role: "agent",
+            content: [{ type: "text", text: "The permission request was cancelled. Is there something else I can help you with?" }],
+            status: "done",
+            timestamp: Date.now(),
+          },
+        });
+        isStreaming = false;
+        onStreamingStop?.();
+      }, 500);
+
+      pendingPermissionRequest = null;
+    },
+    cancelPrompt: async () => {
+      isStreaming = false;
+      pendingPermissionRequest = null;
+      onStreamingStop?.();
+    },
+  } as unknown as SessionController;
+
+  return controller;
+}
+
 function DiagnosticsPanel({ store }: { store: AcpStore }) {
   const session = useSessionState(store);
   const isConnected = useIsConnected(store);
@@ -601,6 +843,9 @@ function SessionSourceSelector({
       </Tabs.Tab>
       <Tabs.Tab data-acp-session-source-tab value="slash-actions" data-selected={source === "slash-actions"}>
         Slash/Actions Demo
+      </Tabs.Tab>
+      <Tabs.Tab data-acp-session-source-tab value="permission" data-selected={source === "permission"}>
+        Permission Demo
       </Tabs.Tab>
     </Tabs.List>
 
@@ -829,6 +1074,31 @@ function SessionSourceSelector({
           controller={controller}
           isConnected={isConnected}
         />
+      </Tabs.Panel>
+
+      <Tabs.Panel value="permission">
+        <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+          <p style={{ color: "var(--harness-text)", fontSize: "14px" }}>
+            Permission demo mode simulates agent permission requests.
+          </p>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <Button
+              onClick={isConnected ? onDisconnect : onStartDemo}
+              disabled={isConnecting}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: isConnected ? "var(--harness-error)" : "var(--harness-accent)",
+                borderRadius: "4px",
+                fontSize: "14px",
+              }}
+            >
+              {isConnected ? "Disconnect" : isConnecting ? "Connecting..." : "Start Permission Demo"}
+            </Button>
+          </div>
+          <p style={{ color: "var(--harness-muted)", fontSize: "11px", marginTop: "4px" }}>
+            Demonstrates permission request flow: prompt → permission → allow/deny → tool call
+          </p>
+        </div>
       </Tabs.Panel>
     </Tabs.Root>
   );
@@ -1268,7 +1538,7 @@ export default function App() {
   }, [disconnect]);
 
   const handleSourceChange = useCallback((newSource: SessionSource) => {
-    const activeModes: SessionSource[] = ["replay", "live", "demo", "settings-panel", "standalone-session-list", "slash-actions"];
+    const activeModes: SessionSource[] = ["replay", "live", "demo", "settings-panel", "standalone-session-list", "slash-actions", "permission"];
     const wasActiveSession = activeModes.includes(source);
     const isActiveSession = activeModes.includes(newSource);
     const isSwitchingToDisconnectedMode = wasActiveSession && !isActiveSession;
@@ -1361,15 +1631,47 @@ export default function App() {
     setConnectionStatus("connected");
   }, [disconnect]);
 
+  const connectToPermissionDemo = useCallback(() => {
+    if (controllerRef.current || storeRef.current) {
+      disconnect();
+    }
+
+    setConnectionStatus("connecting");
+
+    const controller = createPermissionDemoController();
+    const store = new AcpStore(controller);
+
+    controllerRef.current = controller;
+    storeRef.current = store;
+
+    const unsubStatus = controller.on("statusChange", (state: SessionControllerState) => {
+      if (state.connectionStatus === "connected") {
+        setConnectionStatus("connected");
+      } else if (state.connectionStatus === "disconnected") {
+        setConnectionStatus("disconnected");
+      }
+    });
+
+    const unsubError = controller.on("error", (error: Error) => {
+      console.error("Permission demo error:", error);
+      setConnectionStatus("error");
+    });
+
+    setActiveStore(store);
+    setConnectionStatus("connected");
+  }, [disconnect]);
+
   const handleStartDemo = useCallback(() => {
     if (connectionStatus === "connected") {
       disconnect();
     } else if (source === "thought-tool") {
       connectToThoughtToolDemo();
+    } else if (source === "permission") {
+      connectToPermissionDemo();
     } else {
       connectToDemo();
     }
-  }, [connectionStatus, source, connectToDemo, connectToThoughtToolDemo, disconnect]);
+  }, [connectionStatus, source, connectToDemo, connectToThoughtToolDemo, connectToPermissionDemo, disconnect]);
 
   useEffect(() => {
     return () => {

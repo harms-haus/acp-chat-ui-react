@@ -76,18 +76,36 @@ export interface NormalizedToolCall {
   updatedAt?: number;
 }
 
+export type PermissionRequestStatus = "pending" | "approved" | "denied" | "cancelled";
+
+export interface NormalizedPermissionRequest {
+  requestId: number;
+  sessionId: string;
+  toolCallId: string;
+  options: Array<{
+    optionId: string;
+    name: string;
+    kind: string;
+  }>;
+  status: PermissionRequestStatus;
+  selectedOptionId?: string;
+  createdAt: number;
+}
+
 export type TimelineItem =
   | { type: "message"; id: string; data: NormalizedMessage }
   | { type: "thought"; id: string; data: NormalizedThought }
-  | { type: "tool_call"; id: string; data: NormalizedToolCall };
+  | { type: "tool_call"; id: string; data: NormalizedToolCall }
+  | { type: "permission_request"; id: number; data: NormalizedPermissionRequest };
 
-export type TimelineItemType = "message" | "thought" | "tool_call";
+export type TimelineItemType = "message" | "thought" | "tool_call" | "permission_request";
 
 export interface NormalizedState {
   messages: Map<string, NormalizedMessage>;
   thoughts: Map<string, NormalizedThought>;
   toolCalls: Map<string, NormalizedToolCall>;
-  timelineOrder: Array<{ type: TimelineItemType; id: string }>;
+  permissionRequests: Map<number, NormalizedPermissionRequest>;
+  timelineOrder: Array<{ type: TimelineItemType; id: string | number }>;
   turnIdToMessageId: Map<string, string>;
 }
 
@@ -144,13 +162,30 @@ interface ToolCallUpdate {
   timestamp?: number;
 }
 
-type AcpUpdate = AgentMessageChunk | UserMessage | ToolCallUpdate | { type?: string; sessionUpdate?: string; [key: string]: unknown };
+interface PermissionRequestUpdate {
+  type?: string;
+  sessionUpdate?: string;
+  requestId?: number;
+  sessionId?: string;
+  toolCallId?: string;
+  options?: Array<{
+    optionId: string;
+    name: string;
+    kind: string;
+  }>;
+  status?: string;
+  selectedOptionId?: string;
+  timestamp?: number;
+}
+
+type AcpUpdate = AgentMessageChunk | UserMessage | ToolCallUpdate | PermissionRequestUpdate | { type?: string; sessionUpdate?: string; [key: string]: unknown };
 
 export function createNormalizedState(): NormalizedState {
   return {
     messages: new Map(),
     thoughts: new Map(),
     toolCalls: new Map(),
+    permissionRequests: new Map(),
     timelineOrder: [],
     turnIdToMessageId: new Map(),
   };
@@ -160,7 +195,7 @@ function getUpdateType(update: AcpUpdate): string | undefined {
     return update.sessionUpdate ?? update.type;
 }
 
-export function applySessionUpdate(state: NormalizedState, params: SessionUpdateParams): NormalizedMessage | NormalizedThought | NormalizedToolCall | null {
+export function applySessionUpdate(state: NormalizedState, params: SessionUpdateParams): NormalizedMessage | NormalizedThought | NormalizedToolCall | NormalizedPermissionRequest | null {
   if (!params.update) {
     console.log("[applySessionUpdate] params.update is falsy, returning null. params:", JSON.stringify(params).slice(0, 500));
     return null;
@@ -191,6 +226,10 @@ export function applySessionUpdate(state: NormalizedState, params: SessionUpdate
     case "tool_call_update": {
       console.log("[applySessionUpdate] Handling tool_call_update");
       return applyToolCallUpdate(state, update as ToolCallUpdate);
+    }
+    case "permission_request": {
+      console.log("[applySessionUpdate] Handling permission_request");
+      return applyPermissionRequest(state, update as PermissionRequestUpdate);
     }
     default:
       console.warn("[applySessionUpdate] Unrecognized updateType:", updateType, "- full update:", JSON.stringify(update).slice(0, 500));
@@ -455,6 +494,20 @@ function mapToolCallStatus(status: string | undefined): ToolCallStatus {
   }
 }
 
+function mapPermissionRequestStatus(status: string | undefined): PermissionRequestStatus {
+  switch (status) {
+    case "approved":
+      return "approved";
+    case "denied":
+      return "denied";
+    case "cancelled":
+      return "cancelled";
+    case "pending":
+    default:
+      return "pending";
+  }
+}
+
 function applyToolCall(state: NormalizedState, update: ToolCallUpdate): NormalizedToolCall | null {
   const toolCallId = update.toolCallId ?? generateToolCallId();
   const timestamp = getTimestamp(update);
@@ -536,10 +589,46 @@ function applyToolCallUpdate(state: NormalizedState, update: ToolCallUpdate): No
   return applyToolCall(state, update);
 }
 
+function applyPermissionRequest(state: NormalizedState, update: PermissionRequestUpdate): NormalizedPermissionRequest | null {
+  if (update.requestId === undefined) {
+    console.warn("[applyPermissionRequest] requestId is undefined, skipping");
+    return null;
+  }
+
+  const requestId = update.requestId;
+  const timestamp = update.timestamp ?? Date.now();
+
+  const existing = state.permissionRequests.get(requestId);
+  if (existing) {
+    const updated: NormalizedPermissionRequest = {
+      ...existing,
+      status: update.status ? mapPermissionRequestStatus(update.status) : existing.status,
+      ...(update.options !== undefined && { options: update.options }),
+      ...(update.selectedOptionId !== undefined && { selectedOptionId: update.selectedOptionId }),
+    };
+    state.permissionRequests.set(requestId, updated);
+    return updated;
+  }
+
+  const permissionRequest: NormalizedPermissionRequest = {
+    requestId,
+    sessionId: update.sessionId ?? "",
+    toolCallId: update.toolCallId ?? "",
+    options: update.options ?? [],
+    status: mapPermissionRequestStatus(update.status),
+    ...(update.selectedOptionId !== undefined && { selectedOptionId: update.selectedOptionId }),
+    createdAt: timestamp,
+  };
+
+  state.permissionRequests.set(requestId, permissionRequest);
+  state.timelineOrder.push({ type: "permission_request", id: requestId });
+  return permissionRequest;
+}
+
 export function getMessages(state: NormalizedState): NormalizedMessage[] {
     return state.timelineOrder
         .filter((item) => item.type === "message")
-        .map((item) => state.messages.get(item.id)!)
+        .map((item) => state.messages.get(item.id as string)!)
         .filter(Boolean);
 }
 
@@ -568,16 +657,52 @@ export function getTimeline(state: NormalizedState): TimelineItem[] {
   return state.timelineOrder
     .map((item) => {
       if (item.type === "message") {
-        const msg = state.messages.get(item.id);
-        return msg ? { type: "message" as const, id: item.id, data: msg } : null;
+        const msg = state.messages.get(item.id as string);
+        return msg ? { type: "message" as const, id: item.id as string, data: msg } : null;
       } else if (item.type === "thought") {
-        const thought = state.thoughts.get(item.id);
-        return thought ? { type: "thought" as const, id: item.id, data: thought } : null;
+        const thought = state.thoughts.get(item.id as string);
+        return thought ? { type: "thought" as const, id: item.id as string, data: thought } : null;
       } else if (item.type === "tool_call") {
-        const toolCall = state.toolCalls.get(item.id);
-        return toolCall ? { type: "tool_call" as const, id: item.id, data: toolCall } : null;
+        const toolCall = state.toolCalls.get(item.id as string);
+        return toolCall ? { type: "tool_call" as const, id: item.id as string, data: toolCall } : null;
+      } else if (item.type === "permission_request") {
+        const permissionRequest = state.permissionRequests.get(item.id as number);
+        return permissionRequest ? { type: "permission_request" as const, id: item.id as number, data: permissionRequest } : null;
       }
       return null;
     })
     .filter((item): item is TimelineItem => item !== null);
+}
+
+export function getPermissionRequests(state: NormalizedState): NormalizedPermissionRequest[] {
+  return Array.from(state.permissionRequests.values());
+}
+
+export function getPendingPermissionRequests(state: NormalizedState): NormalizedPermissionRequest[] {
+  return Array.from(state.permissionRequests.values()).filter((req) => req.status === "pending");
+}
+
+export function getPermissionRequest(state: NormalizedState, requestId: number): NormalizedPermissionRequest | undefined {
+  return state.permissionRequests.get(requestId);
+}
+
+export function updatePermissionRequestStatus(
+  state: NormalizedState,
+  requestId: number,
+  status: PermissionRequestStatus,
+  selectedOptionId?: string
+): NormalizedPermissionRequest | undefined {
+  const permissionRequest = state.permissionRequests.get(requestId);
+  if (!permissionRequest) {
+    return undefined;
+  }
+
+  const updated: NormalizedPermissionRequest = {
+    ...permissionRequest,
+    status,
+    ...(selectedOptionId !== undefined && { selectedOptionId }),
+  };
+
+  state.permissionRequests.set(requestId, updated);
+  return updated;
 }

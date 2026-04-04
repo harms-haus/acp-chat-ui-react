@@ -68,12 +68,12 @@ export function createGroupedTimeline(timeline: TimelineItem[]): GroupedTimeline
       if (item.data.createdAt) {
         currentGroup.endTime = item.data.createdAt;
       }
-    } else {
+    } else if (item.type === "message") {
       if (currentGroup) {
         result.push({ type: "thought_group", id: currentGroup.id, data: currentGroup });
         currentGroup = null;
       }
-      result.push({ type: "message", id: item.id, data: item.data as Extract<TimelineItem, { type: "message" }>["data"] });
+      result.push({ type: "message", id: item.id as string, data: item.data as Extract<TimelineItem, { type: "message" }>["data"] });
     }
   }
 

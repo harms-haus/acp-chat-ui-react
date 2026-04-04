@@ -6,7 +6,7 @@ import type { AcpStore } from "../store/index.js";
 import type { ThreadItem } from "./types.js";
 import type { ThoughtGroupWithState, ThoughtStackRenderContext } from "../thought/types.js";
 import { isThoughtGroupActive } from "@acp/chat-core";
-import type { NormalizedMessage } from "@acp/chat-core";
+import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedThought, NormalizedToolCall } from "@acp/chat-core";
 import type { MessageAction } from "../actions/types.js";
 import type { ReactNode } from "react";
 
@@ -51,24 +51,60 @@ export function Thread({
     let currentThoughtGroup: ThoughtGroupWithState | null = null;
 
     for (const item of timelineItems) {
-      if (item.type === "thought" || item.type === "tool_call") {
+      if (item.type === "thought") {
+        const thought = item.data as NormalizedThought;
         if (!currentThoughtGroup) {
           currentThoughtGroup = {
             id: `thought-group-${result.length}`,
             items: [],
-            startTime: item.data.createdAt ?? Date.now(),
-            endTime: item.data.createdAt ?? Date.now(),
+            startTime: thought.createdAt ?? Date.now(),
+            endTime: thought.createdAt ?? Date.now(),
             isActive: false,
           };
         }
         currentThoughtGroup.items.push({
           type: item.type,
           id: item.id,
-          data: item.data,
+          data: thought,
         });
-        if (item.data.createdAt) {
-          currentThoughtGroup.endTime = item.data.createdAt;
+        if (thought.createdAt) {
+          currentThoughtGroup.endTime = thought.createdAt;
         }
+      } else if (item.type === "tool_call") {
+        const toolCall = item.data as NormalizedToolCall;
+        if (!currentThoughtGroup) {
+          currentThoughtGroup = {
+            id: `thought-group-${result.length}`,
+            items: [],
+            startTime: toolCall.createdAt ?? Date.now(),
+            endTime: toolCall.createdAt ?? Date.now(),
+            isActive: false,
+          };
+        }
+        currentThoughtGroup.items.push({
+          type: item.type,
+          id: item.id,
+          data: toolCall,
+        });
+        if (toolCall.createdAt) {
+          currentThoughtGroup.endTime = toolCall.createdAt;
+        }
+      } else if (item.type === "permission_request") {
+        if (currentThoughtGroup) {
+          const isActive = isThoughtGroupActive([currentThoughtGroup], isAgentTyping);
+          currentThoughtGroup.isActive = isActive;
+          result.push({
+            type: "thought_group",
+            id: currentThoughtGroup.id,
+            data: currentThoughtGroup,
+          });
+          currentThoughtGroup = null;
+        }
+        result.push({
+          type: "permission_request",
+          id: item.id,
+          data: item.data as NormalizedPermissionRequest,
+        });
       } else {
         if (currentThoughtGroup) {
           const isActive = isThoughtGroupActive([currentThoughtGroup], isAgentTyping);

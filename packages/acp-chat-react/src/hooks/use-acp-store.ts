@@ -4,6 +4,7 @@ import type {
   NormalizedMessage,
   NormalizedThought,
   NormalizedToolCall,
+  NormalizedPermissionRequest,
   SessionControllerState,
 } from "@acp/chat-core";
 
@@ -82,27 +83,30 @@ export function useSnapshotSelector<T>(store: AcpStore, selector: SnapshotSelect
 }
 
 export function useTimelineItems(store: AcpStore): Array<{
-  type: "message" | "thought" | "tool_call";
+  type: "message" | "thought" | "tool_call" | "permission_request";
   id: string;
-  data: NormalizedMessage | NormalizedThought | NormalizedToolCall;
+  data: NormalizedMessage | NormalizedThought | NormalizedToolCall | NormalizedPermissionRequest;
 }> {
   const snapshot = useAcpStoreSnapshot(store);
   const items: Array<{
-    type: "message" | "thought" | "tool_call";
+    type: "message" | "thought" | "tool_call" | "permission_request";
     id: string;
-    data: NormalizedMessage | NormalizedThought | NormalizedToolCall;
+    data: NormalizedMessage | NormalizedThought | NormalizedToolCall | NormalizedPermissionRequest;
   }> = [];
 
   for (const item of snapshot.timelineOrder) {
     if (item.type === "message") {
-      const msg = snapshot.messages.get(item.id);
-      if (msg) items.push({ type: "message", id: item.id, data: msg });
+      const msg = snapshot.messages.get(item.id as string);
+      if (msg) items.push({ type: "message", id: item.id as string, data: msg });
     } else if (item.type === "thought") {
-      const thought = snapshot.thoughts.get(item.id);
-      if (thought) items.push({ type: "thought", id: item.id, data: thought });
+      const thought = snapshot.thoughts.get(item.id as string);
+      if (thought) items.push({ type: "thought", id: item.id as string, data: thought });
     } else if (item.type === "tool_call") {
-      const toolCall = snapshot.toolCalls.get(item.id);
-      if (toolCall) items.push({ type: "tool_call", id: item.id, data: toolCall });
+      const toolCall = snapshot.toolCalls.get(item.id as string);
+      if (toolCall) items.push({ type: "tool_call", id: item.id as string, data: toolCall });
+    } else if (item.type === "permission_request") {
+      const request = snapshot.permissionRequests.get(item.id as number);
+      if (request) items.push({ type: "permission_request", id: item.id as string, data: request });
     }
   }
 
@@ -132,4 +136,16 @@ export function useActiveStreamingMessage(store: AcpStore): NormalizedMessage | 
     }
   }
   return undefined;
+}
+
+export function usePermissionRequests(store: AcpStore): NormalizedPermissionRequest[] {
+  const snapshot = useAcpStoreSnapshot(store);
+  return Array.from(snapshot.permissionRequests.values());
+}
+
+export function usePendingPermissionRequests(store: AcpStore): NormalizedPermissionRequest[] {
+  const snapshot = useAcpStoreSnapshot(store);
+  return Array.from(snapshot.permissionRequests.values()).filter(
+    (r) => r.status === "pending"
+  );
 }

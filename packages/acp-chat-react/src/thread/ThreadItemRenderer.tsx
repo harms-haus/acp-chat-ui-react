@@ -3,7 +3,8 @@ import type { ThreadItem } from "./types.js";
 import type { ThoughtGroupWithState, ThoughtStackRenderContext } from "../thought/types.js";
 import { MessageCard } from "../message/MessageCard.js";
 import { ThoughtStack } from "../thought/ThoughtStack.js";
-import type { NormalizedMessage } from "@acp/chat-core";
+import { PermissionRequestCard } from "../permission-request/index.js";
+import type { NormalizedMessage, NormalizedPermissionRequest } from "@acp/chat-core";
 import type { MessageAction } from "../actions/types.js";
 import type { ReactNode } from "react";
 
@@ -12,9 +13,10 @@ export interface ThreadItemRendererProps {
   messageActions?: MessageAction[] | undefined;
   renderThoughtClosed?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
   renderThoughtOpen?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
+  onPermissionRespond?: (requestId: number, optionId: string) => void;
 }
 
-function isThoughtGroup(data: NormalizedMessage | ThoughtGroupWithState): data is ThoughtGroupWithState {
+function isThoughtGroup(data: NormalizedMessage | ThoughtGroupWithState | NormalizedPermissionRequest): data is ThoughtGroupWithState {
   return "items" in data && "startTime" in data;
 }
 
@@ -23,6 +25,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
   messageActions,
   renderThoughtClosed,
   renderThoughtOpen,
+  onPermissionRespond,
 }: ThreadItemRendererProps) {
   const rendered = useMemo(() => {
     switch (item.type) {
@@ -47,6 +50,17 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
           />
         );
       }
+      case "permission_request": {
+        const request = item.data as NormalizedPermissionRequest;
+        return (
+          <PermissionRequestCard
+            request={request}
+            onRespond={(optionId) => {
+              onPermissionRespond?.(request.requestId, optionId);
+            }}
+          />
+        );
+      }
       default:
         return (
           <div data-acp-thread-item-unknown>
@@ -54,7 +68,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
           </div>
         );
     }
-  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen]);
+  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond]);
 
   return (
     <div

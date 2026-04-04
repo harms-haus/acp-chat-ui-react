@@ -85,6 +85,9 @@ export type {
   UpdateEmptyStateProps,
 } from "./update/index.js";
 
+export { PermissionRequestCard } from "./permission-request/index.js";
+export type { PermissionRequestCardProps } from "./permission-request/index.js";
+
 export { Composer } from "./composer/index.js";
 export type {
   ComposerProps,

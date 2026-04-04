@@ -33,7 +33,7 @@ export type { ConnectionStatus, TransportConfig, TransportEvents } from "./trans
 
 // Session controller
 export { SessionController } from "./session/index.js";
-export type { SessionControllerState, StartAgentConfig } from "./session/index.js";
+export type { SessionControllerState, StartAgentConfig, PermissionRequestParams, PermissionOption } from "./session/index.js";
 
 // Normalization
 export {
@@ -46,6 +46,10 @@ export {
   getToolCalls,
   getToolCall,
   getTimeline,
+  getPermissionRequests,
+  getPendingPermissionRequests,
+  getPermissionRequest,
+  updatePermissionRequestStatus,
 } from "./normalization/index.js";
 export type {
   NormalizedMessage,
@@ -63,6 +67,8 @@ export type {
   ResourceLinkContentBlock,
   TimelineItem,
   SessionUpdateParams,
+  NormalizedPermissionRequest,
+  PermissionRequestStatus,
 } from "./normalization/index.js";
 
 // Launch presets

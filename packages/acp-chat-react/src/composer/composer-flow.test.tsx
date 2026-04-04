@@ -158,6 +158,7 @@ function createMockStore(overrides: Partial<SessionControllerState> = {}): AcpSt
     messages: new Map(),
     thoughts: new Map(),
     toolCalls: new Map(),
+    permissionRequests: new Map(),
     timelineOrder: [],
     turnIdToMessageId: new Map(),
     version: 0,

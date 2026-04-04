@@ -8,10 +8,15 @@ import {
   getToolCall,
   getTimeline,
   getMessagesByTurn,
+  getPermissionRequests,
+  getPendingPermissionRequests,
+  updatePermissionRequestStatus,
   type NormalizedState,
   type NormalizedMessage,
   type NormalizedThought,
   type NormalizedToolCall,
+  type NormalizedPermissionRequest,
+  type PermissionRequestStatus,
   type TimelineItem,
   type SessionUpdateParams,
 } from "@acp/chat-core";
@@ -40,8 +45,10 @@ export interface AcpStoreSnapshot {
   thoughts: Map<string, NormalizedThought>;
   /** Normalized tool calls indexed by ID */
   toolCalls: Map<string, NormalizedToolCall>;
-  /** Timeline order (messages, thoughts, tool calls in order) */
-  timelineOrder: Array<{ type: "message" | "thought" | "tool_call"; id: string }>;
+  /** Normalized permission requests indexed by request ID */
+  permissionRequests: Map<number, NormalizedPermissionRequest>;
+  /** Timeline order (messages, thoughts, tool calls, permission requests in order) */
+  timelineOrder: Array<{ type: "message" | "thought" | "tool_call" | "permission_request"; id: string | number }>;
   /** Turn ID to message ID mapping */
   turnIdToMessageId: Map<string, string>;
   /** Version number incremented on each state change for snapshot stability checks */
@@ -143,6 +150,7 @@ export class AcpStore {
       messages: new Map(this.normalizedState.messages),
       thoughts: new Map(this.normalizedState.thoughts),
       toolCalls: new Map(this.normalizedState.toolCalls),
+      permissionRequests: new Map(this.normalizedState.permissionRequests),
       timelineOrder: [...this.normalizedState.timelineOrder],
       turnIdToMessageId: new Map(this.normalizedState.turnIdToMessageId),
       version: this.version,
@@ -168,6 +176,7 @@ export class AcpStore {
       messages: new Map(),
       thoughts: new Map(),
       toolCalls: new Map(),
+      permissionRequests: new Map(),
       timelineOrder: [],
       turnIdToMessageId: new Map(),
       version: 0,
@@ -267,6 +276,38 @@ export class AcpStore {
    */
   getTimeline(): TimelineItem[] {
     return getTimeline(this.normalizedState);
+  }
+
+  /**
+   * Get permission requests as an array.
+   */
+  getPermissionRequests(): NormalizedPermissionRequest[] {
+    return getPermissionRequests(this.normalizedState);
+  }
+
+  /**
+   * Get pending permission requests.
+   */
+  getPendingPermissionRequests(): NormalizedPermissionRequest[] {
+    return getPendingPermissionRequests(this.normalizedState);
+  }
+
+  /**
+   * Respond to a permission request (approve).
+   */
+  respondToPermission(requestId: number, optionId: string): void {
+    updatePermissionRequestStatus(this.normalizedState, requestId, "approved", optionId);
+    this.version++;
+    this.scheduleNotification();
+  }
+
+  /**
+   * Deny a permission request.
+   */
+  denyPermission(requestId: number, optionId: string): void {
+    updatePermissionRequestStatus(this.normalizedState, requestId, "denied", optionId);
+    this.version++;
+    this.scheduleNotification();
   }
 
   /**

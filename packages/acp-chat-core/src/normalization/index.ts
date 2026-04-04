@@ -8,6 +8,10 @@ export {
   getToolCalls,
   getToolCall,
   getTimeline,
+  getPermissionRequests,
+  getPendingPermissionRequests,
+  getPermissionRequest,
+  updatePermissionRequestStatus,
 } from "./store.js";
 export type {
   NormalizedMessage,
@@ -25,4 +29,6 @@ export type {
   ResourceLinkContentBlock,
   TimelineItem,
   SessionUpdateParams,
+  NormalizedPermissionRequest,
+  PermissionRequestStatus,
 } from "./store.js";

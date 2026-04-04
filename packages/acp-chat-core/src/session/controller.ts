@@ -36,11 +36,26 @@ export interface SessionControllerState {
     capabilities: unknown | null;
 }
 
+export interface PermissionOption {
+  optionId: string;
+  name: string;
+  kind: "allow_once" | "allow_always" | "deny" | "deny_always";
+}
+
+export interface PermissionRequestParams {
+  sessionId: string;
+  toolCall: {
+    toolCallId: string;
+  };
+  options: PermissionOption[];
+}
+
 type StatusHandler = (state: SessionControllerState) => void;
 type SessionUpdateHandler = (params: unknown) => void;
 type TrafficHandler = (direction: "in" | "out", data: unknown) => void;
 type ErrorHandler = (error: Error) => void;
 type SessionClearingHandler = () => void;
+type PermissionRequestHandler = (params: PermissionRequestParams & { requestId: number }) => void;
 
 export class SessionController {
     private transport: TransportClient;
@@ -53,6 +68,7 @@ export class SessionController {
   private trafficHandlers = new Set<TrafficHandler>();
   private errorHandlers = new Set<ErrorHandler>();
   private sessionClearingHandlers = new Set<SessionClearingHandler>();
+  private permissionRequestHandlers = new Set<PermissionRequestHandler>();
 
     constructor(bridgeUrl: string, requestTimeoutMs = 30000) {
         this.requestTimeoutMs = requestTimeoutMs;
@@ -75,7 +91,8 @@ export class SessionController {
   on(event: "traffic", handler: TrafficHandler): () => void;
   on(event: "error", handler: ErrorHandler): () => void;
   on(event: "sessionClearing", handler: SessionClearingHandler): () => void;
-  on(event: "statusChange" | "sessionUpdate" | "traffic" | "error" | "sessionClearing", handler: unknown): () => void {
+  on(event: "permissionRequest", handler: PermissionRequestHandler): () => void;
+  on(event: "statusChange" | "sessionUpdate" | "traffic" | "error" | "sessionClearing" | "permissionRequest", handler: unknown): () => void {
     switch (event) {
       case "statusChange":
         this.statusHandlers.add(handler as StatusHandler);
@@ -92,6 +109,9 @@ export class SessionController {
       case "sessionClearing":
         this.sessionClearingHandlers.add(handler as SessionClearingHandler);
         return () => this.sessionClearingHandlers.delete(handler as SessionClearingHandler);
+      case "permissionRequest":
+        this.permissionRequestHandlers.add(handler as PermissionRequestHandler);
+        return () => this.permissionRequestHandlers.delete(handler as PermissionRequestHandler);
     }
   }
 
@@ -113,6 +133,10 @@ export class SessionController {
 
   private emitSessionClearing(): void {
     this.sessionClearingHandlers.forEach((h) => { h(); });
+  }
+
+  private emitPermissionRequest(params: PermissionRequestParams, requestId: number): void {
+    this.permissionRequestHandlers.forEach((h) => { h({ ...params, requestId }); });
   }
 
     getState(): SessionControllerState {
@@ -175,9 +199,17 @@ export class SessionController {
     await this.sendRequest("session/prompt", { sessionId, prompt: promptBlocks });
   }
 
-async cancelPrompt(sessionId: string): Promise<void> {
-	this.sendNotification("session/cancel", { sessionId });
-}
+ async cancelPrompt(sessionId: string): Promise<void> {
+ 	this.sendNotification("session/cancel", { sessionId });
+ }
+
+ async respondToPermission(requestId: number, optionId: string): Promise<void> {
+ 	this.sendResponse(requestId, { outcome: { outcome: "selected", optionId } });
+ }
+
+ async cancelPermission(requestId: number): Promise<void> {
+ 	this.sendResponse(requestId, { outcome: { outcome: "cancelled" } });
+ }
 
   async startAgent(config: StartAgentConfig): Promise<void> {
     const envelope: BridgeEnvelope = {
@@ -200,6 +232,13 @@ async cancelPrompt(sessionId: string): Promise<void> {
     const json = JSON.stringify(notification);
     this.transport.send(json);
     this.emitTraffic("out", notification);
+  }
+
+  private sendResponse(id: number, result: unknown): void {
+    const response: { jsonrpc: "2.0"; id: number; result: unknown } = { jsonrpc: "2.0", id, result };
+    const json = JSON.stringify(response);
+    this.transport.send(json);
+    this.emitTraffic("out", response);
   }
 
     private sendRequest(method: string, params: unknown): Promise<unknown> {
@@ -320,6 +359,12 @@ async cancelPrompt(sessionId: string): Promise<void> {
       } else {
         console.log("[SessionController] Non-batched session/update, update keys:", params?.update ? Object.keys(params.update as object) : "no update");
         this.emitSessionUpdate(obj.params);
+      }
+    } else if ("method" in obj && obj.method === "session/request_permission") {
+      const params = obj.params as PermissionRequestParams | undefined;
+      const requestId = obj.id as number | undefined;
+      if (params && typeof requestId === "number") {
+        this.emitPermissionRequest(params, requestId);
       }
     }
   }

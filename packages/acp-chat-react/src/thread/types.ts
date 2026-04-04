@@ -1,5 +1,5 @@
 import type { ReactNode, RefObject } from "react";
-import type { NormalizedMessage } from "@acp/chat-core";
+import type { NormalizedMessage, NormalizedPermissionRequest } from "@acp/chat-core";
 import type { ThoughtGroupWithState } from "../thought/types.js";
 import type { HeightEstimator } from "../types/height-estimator.js";
 import type { ViewportObserverFactory, Scheduler } from "../types/browser-apis.js";
@@ -7,7 +7,7 @@ import type { ViewportObserverFactory, Scheduler } from "../types/browser-apis.j
 /**
  * Item types in the thread timeline
  */
-export type ThreadItemType = "message" | "thought_group";
+export type ThreadItemType = "message" | "thought_group" | "permission_request";
 
 /**
  * A thread item represents any renderable entity in the thread
@@ -15,7 +15,7 @@ export type ThreadItemType = "message" | "thought_group";
 export interface ThreadItem {
   type: ThreadItemType;
   id: string;
-  data: NormalizedMessage | ThoughtGroupWithState;
+  data: NormalizedMessage | ThoughtGroupWithState | NormalizedPermissionRequest;
 }
 
 /**
