@@ -12,7 +12,7 @@
     "bundle:check": "node --experimental-strip-types scripts/bundle-check.ts",
     "dev:harness": "pnpm --filter @acp/harness dev",
     "dev:bridge": "cargo run --manifest-path crates/acp-bridge/Cargo.toml -- dynamic",
-    "debug": "concurrently \"pnpm dev:harness\" \"pnpm dev:bridge\"",
+    "debug": "fuser -k 4173/tcp 8765/tcp 2>/dev/null || true; rm -rf apps/harness/node_modules/.vite node_modules/.vite 2>/dev/null; concurrently \"pnpm dev:harness\" \"pnpm dev:bridge\"",
     "kill": "fuser -k 4173/tcp 8765/tcp 2>/dev/null || true"
   },
   "devDependencies": {
