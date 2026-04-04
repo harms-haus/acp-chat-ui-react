@@ -1,10 +1,18 @@
 /**
- * @fileoverview Harness styles for shell chrome
- * 
- * Minimal CSS for harness UI using CSS variables for theming.
- */
+* @fileoverview Harness styles for shell chrome and ACP component styling
+*
+* Comprehensive CSS variable theming system for @acp/chat-react components.
+* All CSS variables defined in :root with fallbacks for theming support.
+*/
+
+/* ==========================================================================
+   CSS Variable Definitions
+   ========================================================================== */
 
 :root {
+  /* -------------------------------------------------------------------------
+     Harness Theme Variables (Shell Chrome)
+     ------------------------------------------------------------------------- */
   --harness-bg: #1a1a2e;
   --harness-text: #e8e8f0;
   --harness-muted: #6b6b8d;
@@ -14,7 +22,161 @@
   --harness-success: #4ade80;
   --harness-warning: #fbbf24;
   --harness-error: #ef4444;
+
+  /* -------------------------------------------------------------------------
+     ACP Component Color Variables
+     ------------------------------------------------------------------------- */
+  /* Background Colors */
+  --acp-bg: #1e1e2e;
+  --acp-bg-hover: #2a2a3e;
+  --acp-bg-active: #32324a;
+  --acp-bg-disabled: #1a1a2a;
+  --acp-bg-selected: rgba(74, 158, 255, 0.15);
+  --acp-color-user-bg: rgba(74, 158, 255, 0.1);
+  --acp-color-agent-bg: rgba(139, 92, 246, 0.1);
+
+  /* Text Colors */
+  --acp-text: #e8e8f0;
+  --acp-text-muted: #8b8ba3;
+  --acp-text-secondary: #6b6b8d;
+  --acp-text-disabled: #4a4a6a;
+  --acp-muted: #8b8ba3;
+  --acp-color-muted: #6b6b8d;
+
+  /* Border Colors */
+  --acp-border: #3d3d5a;
+  --acp-border-hover: #4d4d6a;
+  --acp-border-active: #5d5d7a;
+  --acp-border-focus: var(--harness-accent);
+
+  /* Accent Colors */
+  --acp-accent: #4a9eff;
+  --acp-accent-hover: #3a8eef;
+  --acp-accent-active: #2a7edf;
+
+  /* Semantic Colors */
+  --acp-error: #ef4444;
+  --acp-error-bg: rgba(239, 68, 68, 0.1);
+  --acp-success: #4ade80;
+  --acp-success-bg: rgba(74, 222, 128, 0.1);
+  --acp-warning: #fbbf24;
+  --acp-warning-bg: rgba(251, 191, 36, 0.1);
+  --acp-info: #60a5fa;
+  --acp-info-bg: rgba(96, 165, 250, 0.1);
+
+  /* -------------------------------------------------------------------------
+     ACP Component Spacing Variables
+     ------------------------------------------------------------------------- */
+  --acp-spacing-xs: 2px;
+  --acp-spacing-sm: 4px;
+  --acp-spacing-md: 8px;
+  --acp-spacing-lg: 12px;
+  --acp-spacing-xl: 16px;
+  --acp-spacing-2xl: 24px;
+  --acp-spacing-3xl: 32px;
+
+  /* -------------------------------------------------------------------------
+     ACP Component Typography Variables
+     ------------------------------------------------------------------------- */
+  --acp-font-size-xs: 11px;
+  --acp-font-size-sm: 12px;
+  --acp-font-size-md: 13px;
+  --acp-font-size-lg: 14px;
+  --acp-font-size-xl: 16px;
+  --acp-font-size-2xl: 18px;
+
+  /* Line Heights */
+  --acp-line-height-tight: 1.25;
+  --acp-line-height-normal: 1.5;
+  --acp-line-height-loose: 1.75;
+  --acp-line-height-condensed: 1.4;
+
+  /* Font Weights */
+  --acp-font-weight-normal: 400;
+  --acp-font-weight-medium: 500;
+  --acp-font-weight-semibold: 600;
+  --acp-font-weight-bold: 700;
+
+  /* -------------------------------------------------------------------------
+     ACP Component Layout Variables
+     ------------------------------------------------------------------------- */
+  /* Border Radius */
+  --acp-radius-sm: 3px;
+  --acp-radius-md: 4px;
+  --acp-radius-lg: 6px;
+  --acp-radius-xl: 8px;
+  --acp-radius-2xl: 12px;
+  --acp-radius-full: 9999px;
+
+  /* Separator Heights */
+  --acp-separator-height: 16px;
+  --acp-separator-height-lg: 24px;
+
+  /* Shadows */
+  --acp-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --acp-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.15);
+  --acp-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.2);
+  --acp-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.25);
+  --acp-shadow-popover: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+  /* Transitions */
+  --acp-transition-fast: 150ms ease;
+  --acp-transition-normal: 200ms ease;
+  --acp-transition-slow: 300ms ease;
+
+  /* Z-Index Scale */
+  --acp-z-base: 1;
+  --acp-z-dropdown: 100;
+  --acp-z-popover: 200;
+  --acp-z-modal: 300;
+  --acp-z-toast: 400;
+
+  /* -------------------------------------------------------------------------
+     Component-Specific Variables
+     ------------------------------------------------------------------------- */
+  /* Composer */
+  --acp-composer-min-rows: 2;
+  --acp-composer-max-rows: 8;
+  --acp-composer-textarea-padding: var(--acp-spacing-lg);
+  --acp-composer-textarea-padding-right: 80px;
+
+  /* Thread */
+  --acp-thread-row-gap: var(--acp-spacing-md);
+  --acp-thread-padding: var(--acp-spacing-xl);
+
+  /* Message */
+  --acp-message-header-gap: var(--acp-spacing-md);
+  --acp-message-content-margin-top: var(--acp-spacing-md);
+  --acp-message-text-line-height: var(--acp-line-height-normal);
+
+  /* Thought Stack */
+  --acp-thought-trigger-gap: var(--acp-spacing-md);
+  --acp-thought-trigger-padding: var(--acp-spacing-sm) var(--acp-spacing-md);
+  --acp-thought-trigger-bg: transparent;
+  --acp-thought-trigger-border: none;
+  --acp-thought-trigger-cursor: pointer;
+  --acp-thought-trigger-font-size: var(--acp-font-size-lg);
+  --acp-thought-trigger-color: var(--acp-text);
+  --acp-thought-trigger-open-margin-bottom: var(--acp-spacing-md);
+  --acp-thought-content-margin-bottom: var(--acp-spacing-sm);
+  --acp-thought-expand-gap: var(--acp-spacing-sm);
+  --acp-thought-expand-padding: var(--acp-spacing-xs) 0;
+  --acp-thought-expand-bg: transparent;
+  --acp-thought-expand-border: none;
+  --acp-thought-expand-cursor: pointer;
+  --acp-thought-expand-font-size: var(--acp-font-size-md);
+  --acp-thought-expand-color: var(--acp-text-muted);
+  --acp-thought-label-font-weight: var(--acp-font-weight-semibold);
+  --acp-thought-filepath-opacity: 0.7;
+  --acp-thought-expanded-margin-left: var(--acp-spacing-xl);
+  --acp-thought-expanded-margin-top: var(--acp-spacing-sm);
+  --acp-thought-expanded-font-size: var(--acp-font-size-sm);
+  --acp-thought-expanded-opacity: 0.8;
 }
+
+/* ==========================================================================
+   Base Styles
+   ========================================================================== */
 
 * {
   box-sizing: border-box;
@@ -28,31 +190,35 @@ body {
   color: var(--harness-text);
 }
 
+/* ==========================================================================
+   Shell Chrome (Harness UI)
+   ========================================================================== */
+
 [data-acp-root] {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding: 16px;
-  gap: 16px;
+  padding: var(--acp-spacing-xl);
+  gap: var(--acp-spacing-xl);
 }
 
 [data-acp-shell-header] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
+  padding: var(--acp-spacing-md) var(--acp-spacing-xl);
   border-bottom: 1px solid var(--harness-border);
 }
 
 [data-acp-shell-title] {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--acp-font-size-2xl);
+  font-weight: var(--acp-font-weight-semibold);
 }
 
 [data-acp-shell-main] {
   display: flex;
   flex: 1;
-  gap: 16px;
+  gap: var(--acp-spacing-xl);
 }
 
 [data-acp-shell-content] {
@@ -63,24 +229,25 @@ body {
 
 [data-acp-shell-sidebar] {
   width: 280px;
-  padding: 16px;
+  padding: var(--acp-spacing-xl);
   background-color: var(--harness-card-bg);
-  border-radius: 8px;
+  border-radius: var(--acp-radius-xl);
 }
 
+/* Session Source Tabs */
 [data-acp-session-source-tabs] {
   display: flex;
-  gap: 4px;
-  padding: 4px;
+  gap: var(--acp-spacing-sm);
+  padding: var(--acp-spacing-sm);
   background-color: var(--harness-card-bg);
-  border-radius: 6px;
+  border-radius: var(--acp-radius-lg);
 }
 
 [data-acp-session-source-tab] {
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: var(--acp-spacing-md) var(--acp-spacing-xl);
+  border-radius: var(--acp-radius-md);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color var(--acp-transition-fast);
 }
 
 [data-acp-session-source-tab][data-selected="true"] {
@@ -91,42 +258,44 @@ body {
   background-color: var(--harness-border);
 }
 
+/* Diagnostics Panel */
 [data-acp-diagnostics-panel] {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--acp-spacing-lg);
 }
 
 [data-acp-diagnostic-row] {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px;
+  padding: var(--acp-spacing-md);
   background-color: var(--harness-card-bg);
-  border-radius: 4px;
+  border-radius: var(--acp-radius-md);
 }
 
 [data-acp-diagnostic-label] {
   color: var(--harness-muted);
-  font-size: 12px;
+  font-size: var(--acp-font-size-sm);
 }
 
 [data-acp-diagnostic-value] {
-  font-size: 14px;
+  font-size: var(--acp-font-size-md);
 }
 
+/* Performance Panel */
 [data-acp-perf-panel] {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--acp-spacing-md);
 }
 
 [data-acp-perf-metric] {
   display: flex;
   justify-content: space-between;
-  padding: 6px 12px;
+  padding: var(--acp-spacing-sm) var(--acp-spacing-lg);
   background-color: var(--harness-card-bg);
-  border-radius: 4px;
+  border-radius: var(--acp-radius-md);
 }
 
 [data-acp-perf-metric-label] {
@@ -134,7 +303,7 @@ body {
 }
 
 [data-acp-perf-metric-value] {
-  font-weight: 500;
+  font-weight: var(--acp-font-weight-medium);
 }
 
 [data-acp-perf-metric-value][data-status="good"] {
@@ -149,16 +318,21 @@ body {
   color: var(--harness-error);
 }
 
+/* Thread Placeholder */
 [data-acp-thread-placeholder] {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--harness-muted);
-  font-size: 14px;
+  font-size: var(--acp-font-size-md);
   background-color: var(--harness-card-bg);
-  border-radius: 8px;
+  border-radius: var(--acp-radius-xl);
 }
+
+/* ==========================================================================
+Session List
+========================================================================== */
 
 [data-acp-session-list] {
   width: 100%;
@@ -171,13 +345,13 @@ body {
 
 [data-acp-session-row] {
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px var(--acp-spacing-lg);
   border: none;
   background: none;
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.15s ease;
-  border-radius: 6px;
+  transition: background-color var(--acp-transition-fast);
+  border-radius: var(--acp-radius-lg);
 }
 
 [data-acp-session-row]:hover {
@@ -190,7 +364,7 @@ body {
 }
 
 [data-acp-session-row][data-acp-session-selected="true"] {
-  background-color: rgba(74, 158, 255, 0.1);
+  background-color: var(--acp-bg-selected);
 }
 
 [data-acp-session-row][data-acp-session-loading="true"] {
@@ -200,14 +374,14 @@ body {
 [data-acp-session-info] {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--acp-spacing-xs);
 }
 
 [data-acp-session-title] {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--acp-font-size-md);
+  font-weight: var(--acp-font-weight-medium);
   color: var(--harness-text);
-  line-height: 1.4;
+  line-height: var(--acp-line-height-condensed);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -216,29 +390,94 @@ body {
 [data-acp-session-meta] {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--acp-spacing-md);
 }
 
 [data-acp-session-date] {
-  font-size: 11px;
+  font-size: var(--acp-font-size-xs);
   color: var(--harness-muted);
 }
 
 [data-acp-session-list-load-more] {
-  padding: 12px;
+  padding: var(--acp-spacing-lg);
   text-align: center;
 }
 
 [data-acp-session-list-empty],
 [data-acp-session-list-loading],
 [data-acp-session-list-error] {
-  padding: 24px 16px;
+  padding: var(--acp-spacing-2xl) var(--acp-spacing-xl);
   text-align: center;
   color: var(--harness-muted);
-  font-size: 13px;
+  font-size: var(--acp-font-size-md);
 }
 
-/* Composer Component Styles */
+/* -------------------------------------------------------------------------
+Session List BEM Classes
+------------------------------------------------------------------------- */
+
+.acp-session-list {
+  width: 100%;
+}
+
+.acp-session-list__row {
+  width: 100%;
+  padding: 10px var(--acp-spacing-lg);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  border-radius: var(--acp-radius-lg);
+  transition: background-color var(--acp-transition-fast);
+  color: inherit;
+  font: inherit;
+}
+
+.acp-session-list__row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.acp-session-list__row--selected {
+  background-color: var(--acp-bg-selected);
+}
+
+.acp-session-list__row--selected:hover {
+  background-color: var(--acp-bg-selected);
+}
+
+.acp-session-list__row--loading {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.acp-session-list__row:disabled {
+  cursor: default;
+}
+
+.acp-session-list__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acp-spacing-sm);
+}
+
+.acp-session-list__title {
+  font-size: var(--acp-font-size-md);
+  font-weight: var(--acp-font-weight-medium);
+  line-height: var(--acp-line-height-condensed);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acp-session-list__date {
+  font-size: var(--acp-font-size-xs);
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Composer Component
+   ========================================================================== */
+
 .acp-composer {
   display: flex;
   flex-direction: column;
@@ -254,78 +493,109 @@ body {
 
 .acp-composer__textarea {
   width: 100%;
-  min-height: calc(2 * 1.5em);
-  max-height: calc(8 * 1.5em);
+  min-height: calc(var(--acp-composer-min-rows) * var(--acp-line-height-normal) * 1em);
+  max-height: calc(var(--acp-composer-max-rows) * var(--acp-line-height-normal) * 1em);
   resize: none;
-  padding: 12px;
-  padding-right: 80px;
-  font-size: 14px;
-  line-height: 1.5;
-  border: 1px solid var(--acp-border, #ccc);
-  border-radius: 8px;
-  background-color: var(--acp-bg, #fff);
-  color: var(--acp-text, #000);
+  padding: var(--acp-composer-textarea-padding);
+  padding-right: var(--acp-composer-textarea-padding-right);
+  font-size: var(--acp-font-size-lg);
+  line-height: var(--acp-line-height-normal);
+  border: 1px solid var(--acp-border);
+  border-radius: var(--acp-radius-xl);
+  background-color: var(--acp-bg);
+  color: var(--acp-text);
   box-sizing: border-box;
+  transition: border-color var(--acp-transition-fast), box-shadow var(--acp-transition-fast);
 }
 
-.acp-composer__textarea[data-min-rows="1"] { min-height: calc(1 * 1.5em); }
-.acp-composer__textarea[data-min-rows="2"] { min-height: calc(2 * 1.5em); }
-.acp-composer__textarea[data-min-rows="3"] { min-height: calc(3 * 1.5em); }
-.acp-composer__textarea[data-min-rows="4"] { min-height: calc(4 * 1.5em); }
-.acp-composer__textarea[data-min-rows="5"] { min-height: calc(5 * 1.5em); }
-.acp-composer__textarea[data-min-rows="6"] { min-height: calc(6 * 1.5em); }
-.acp-composer__textarea[data-min-rows="7"] { min-height: calc(7 * 1.5em); }
-.acp-composer__textarea[data-min-rows="8"] { min-height: calc(8 * 1.5em); }
-.acp-composer__textarea[data-min-rows="9"] { min-height: calc(9 * 1.5em); }
-.acp-composer__textarea[data-min-rows="10"] { min-height: calc(10 * 1.5em); }
+.acp-composer__textarea:hover {
+  border-color: var(--acp-border-hover);
+}
 
-.acp-composer__textarea[data-max-rows="1"] { max-height: calc(1 * 1.5em); }
-.acp-composer__textarea[data-max-rows="2"] { max-height: calc(2 * 1.5em); }
-.acp-composer__textarea[data-max-rows="3"] { max-height: calc(3 * 1.5em); }
-.acp-composer__textarea[data-max-rows="4"] { max-height: calc(4 * 1.5em); }
-.acp-composer__textarea[data-max-rows="5"] { max-height: calc(5 * 1.5em); }
-.acp-composer__textarea[data-max-rows="6"] { max-height: calc(6 * 1.5em); }
-.acp-composer__textarea[data-max-rows="7"] { max-height: calc(7 * 1.5em); }
-.acp-composer__textarea[data-max-rows="8"] { max-height: calc(8 * 1.5em); }
-.acp-composer__textarea[data-max-rows="9"] { max-height: calc(9 * 1.5em); }
-.acp-composer__textarea[data-max-rows="10"] { max-height: calc(10 * 1.5em); }
+.acp-composer__textarea:focus {
+  outline: none;
+  border-color: var(--acp-border-focus);
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+}
+
+.acp-composer__textarea:disabled {
+  background-color: var(--acp-bg-disabled);
+  color: var(--acp-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Dynamic min-rows */
+.acp-composer__textarea[data-min-rows="1"] { min-height: calc(1 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-min-rows="2"] { min-height: calc(2 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-min-rows="3"] { min-height: calc(3 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-min-rows="4"] { min-height: calc(4 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-min-rows="5"] { min-height: calc(5 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-min-rows="6"] { min-height: calc(6 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-min-rows="7"] { min-height: calc(7 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-min-rows="8"] { min-height: calc(8 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-min-rows="9"] { min-height: calc(9 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-min-rows="10"] { min-height: calc(10 * var(--acp-line-height-normal) * 1em); }
+
+/* Dynamic max-rows */
+.acp-composer__textarea[data-max-rows="1"] { max-height: calc(1 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-max-rows="2"] { max-height: calc(2 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-max-rows="3"] { max-height: calc(3 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-max-rows="4"] { max-height: calc(4 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-max-rows="5"] { max-height: calc(5 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-max-rows="6"] { max-height: calc(6 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-max-rows="7"] { max-height: calc(7 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-max-rows="8"] { max-height: calc(8 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-max-rows="9"] { max-height: calc(9 * var(--acp-line-height-normal) * 1em); }
+.acp-composer__textarea[data-max-rows="10"] { max-height: calc(10 * var(--acp-line-height-normal) * 1em); }
 
 .acp-composer__controls {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: var(--acp-spacing-md);
+  right: var(--acp-spacing-md);
   display: flex;
-  gap: 8px;
+  gap: var(--acp-spacing-md);
 }
 
 .acp-composer__settings-row {
-  margin-top: 8px;
+  margin-top: var(--acp-spacing-md);
 }
 
 .acp-composer__button {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  font-size: 13px;
-  font-weight: 500;
+  gap: var(--acp-spacing-sm);
+  padding: 6px var(--acp-spacing-lg);
+  font-size: var(--acp-font-size-md);
+  font-weight: var(--acp-font-weight-medium);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--acp-radius-md);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--acp-transition-fast), transform var(--acp-transition-fast);
+}
+
+.acp-composer__button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.acp-composer__button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .acp-composer__button--send {
-  background-color: var(--acp-accent, #0066cc);
+  background-color: var(--acp-accent);
   color: #fff;
 }
 
 .acp-composer__button--send:hover:not(:disabled) {
-  background-color: var(--acp-accent, #0052a3);
+  background-color: var(--acp-accent-hover);
+}
+
+.acp-composer__button--send:active:not(:disabled) {
+  background-color: var(--acp-accent-active);
 }
 
 .acp-composer__button--stop {
-  background-color: var(--harness-error, #ef4444);
+  background-color: var(--acp-error);
   color: #fff;
 }
 
@@ -336,4 +606,1126 @@ body {
 .acp-composer__button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Thread Component
+   ========================================================================== */
+
+.acp-thread__item {
+  /* Item container - minimal base styles */
+}
+
+.acp-thread__row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.acp-thread__viewport {
+  overflow: auto;
+  height: 100%;
+  position: relative;
+}
+
+.acp-thread__content {
+  width: 100%;
+  position: relative;
+}
+
+.acp-thread__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--acp-spacing-2xl);
+  color: var(--acp-color-muted);
+  font-size: var(--acp-font-size-md);
+}
+
+.acp-thread__empty-text {
+  color: inherit;
+  text-align: center;
+}
+
+.acp-thread__scroll-indicator {
+  position: absolute;
+  bottom: var(--acp-spacing-xl);
+  right: var(--acp-spacing-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--acp-spacing-md);
+  padding: var(--acp-spacing-md) var(--acp-spacing-xl);
+  background-color: var(--acp-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--acp-radius-full);
+  font-size: var(--acp-font-size-md);
+  font-weight: var(--acp-font-weight-medium);
+  cursor: pointer;
+  box-shadow: var(--acp-shadow-md);
+  transition: background-color var(--acp-transition-fast), transform var(--acp-transition-fast);
+}
+
+.acp-thread__scroll-indicator:hover {
+  background-color: var(--acp-accent-hover);
+  transform: translateY(-1px);
+}
+
+.acp-thread__scroll-indicator:active {
+  transform: translateY(0);
+}
+
+.acp-thread__scroll-indicator-text {
+  white-space: nowrap;
+}
+
+.acp-thread__scroll-indicator-icon {
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Settings Components
+   ========================================================================== */
+
+/* SettingsPanel */
+.acp-settings-panel {
+  width: 100%;
+}
+
+.acp-settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--acp-spacing-lg);
+  align-items: center;
+  padding: var(--acp-spacing-md) var(--acp-spacing-lg);
+  border-top: 1px solid var(--acp-border);
+  background-color: var(--acp-bg);
+  transition: opacity var(--acp-transition-fast);
+}
+
+.acp-settings-row:first-child {
+  border-top: none;
+}
+
+.acp-settings-row--disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.acp-settings__separator {
+  height: var(--acp-separator-height-lg);
+}
+
+.acp-settings__mode-value {
+  font-size: var(--acp-font-size-sm);
+  color: var(--acp-muted);
+  margin-left: auto;
+}
+
+.acp-settings__error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--acp-spacing-md);
+  padding: var(--acp-spacing-md) var(--acp-spacing-lg);
+  background-color: var(--acp-error);
+  color: #fff;
+  border-radius: var(--acp-radius-md);
+  font-size: var(--acp-font-size-md);
+}
+
+.acp-settings__error-dismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: var(--acp-font-size-xl);
+  cursor: pointer;
+  padding: 0 var(--acp-spacing-sm);
+  line-height: 1;
+  opacity: 0.8;
+  transition: opacity var(--acp-transition-fast);
+}
+
+.acp-settings__error-dismiss:hover {
+  opacity: 1;
+}
+
+/* SettingsSelect */
+.acp-settings-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-spacing-sm);
+  padding: 6px 10px;
+  border-radius: var(--acp-radius-md);
+  border: 1px solid var(--acp-border);
+  background-color: var(--acp-bg);
+  color: var(--acp-text);
+  font-size: var(--acp-font-size-md);
+  cursor: pointer;
+  min-width: 120px;
+  transition: border-color var(--acp-transition-fast), background-color var(--acp-transition-fast);
+}
+
+.acp-settings-select-trigger:hover:not(.acp-settings-select-trigger--disabled) {
+  border-color: var(--acp-border-hover);
+}
+
+.acp-settings-select-trigger:focus {
+  outline: none;
+  border-color: var(--acp-border-focus);
+}
+
+.acp-settings-select-trigger--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.acp-settings-select__input {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  width: 100%;
+  outline: none;
+}
+
+.acp-settings-select__popup {
+  background-color: var(--acp-bg);
+  border: 1px solid var(--acp-border);
+  border-radius: var(--acp-radius-md);
+  box-shadow: var(--acp-shadow-popover);
+  max-height: 200px;
+  overflow: auto;
+  z-index: var(--acp-z-popover);
+}
+
+.acp-settings-select__item {
+  padding: var(--acp-spacing-md) var(--acp-spacing-lg);
+  cursor: pointer;
+  font-size: var(--acp-font-size-md);
+  display: flex;
+  align-items: center;
+  gap: var(--acp-spacing-md);
+  transition: background-color var(--acp-transition-fast);
+}
+
+.acp-settings-select__item:hover,
+.acp-settings-select__item[data-highlighted="true"] {
+  background-color: var(--acp-bg-hover);
+}
+
+.acp-settings-select__item[data-selected="true"] {
+  background-color: var(--acp-bg-selected);
+}
+
+.acp-settings-select__tooltip {
+  background-color: var(--acp-text);
+  color: var(--acp-bg);
+  padding: var(--acp-spacing-md) 10px;
+  border-radius: var(--acp-radius-md);
+  font-size: var(--acp-font-size-sm);
+  max-width: 200px;
+  z-index: var(--acp-z-popover);
+}
+
+/* SettingsSwitch */
+.acp-settings-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--acp-spacing-lg);
+}
+
+.acp-settings-switch--disabled {
+  opacity: 0.6;
+}
+
+.acp-settings-switch__label-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acp-spacing-xs);
+}
+
+.acp-settings-switch__label {
+  font-size: var(--acp-font-size-lg);
+  color: var(--acp-text);
+  cursor: pointer;
+}
+
+.acp-settings-switch__label--disabled {
+  cursor: not-allowed;
+}
+
+.acp-settings-switch__description {
+  font-size: var(--acp-font-size-sm);
+  color: var(--acp-muted);
+}
+
+.acp-settings-switch__root {
+  width: 44px;
+  height: 24px;
+  border-radius: var(--acp-radius-2xl);
+  border: none;
+  background-color: var(--acp-border);
+  cursor: pointer;
+  position: relative;
+  transition: background-color var(--acp-transition-fast);
+}
+
+.acp-settings-switch__root:hover:not(.acp-settings-switch__root--disabled) {
+  background-color: var(--acp-border-hover);
+}
+
+.acp-settings-switch__root--checked {
+  background-color: var(--acp-accent);
+}
+
+.acp-settings-switch__root--checked:hover:not(.acp-settings-switch__root--disabled) {
+  background-color: var(--acp-accent-hover);
+}
+
+.acp-settings-switch__root--disabled {
+  cursor: not-allowed;
+}
+
+.acp-settings-switch__thumb {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--acp-radius-full);
+  background-color: var(--acp-bg);
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  transition: left var(--acp-transition-fast), transform var(--acp-transition-fast);
+  box-shadow: var(--acp-shadow-sm);
+}
+
+.acp-settings-switch__thumb--checked {
+  left: 23px;
+}
+
+/* SettingsCheckbox */
+.acp-settings-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--acp-spacing-md);
+  cursor: pointer;
+}
+
+.acp-settings-checkbox--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.acp-settings-checkbox__root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--acp-radius-sm);
+  border: 1px solid var(--acp-border);
+  background-color: var(--acp-bg);
+  color: var(--acp-bg);
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: border-color var(--acp-transition-fast), background-color var(--acp-transition-fast);
+}
+
+.acp-settings-checkbox__root:hover:not(.acp-settings-checkbox__root--disabled) {
+  border-color: var(--acp-border-hover);
+}
+
+.acp-settings-checkbox__root--checked {
+  background-color: var(--acp-accent);
+  border-color: var(--acp-accent);
+}
+
+.acp-settings-checkbox__root--checked:hover:not(.acp-settings-checkbox__root--disabled) {
+  background-color: var(--acp-accent-hover);
+  border-color: var(--acp-accent-hover);
+}
+
+.acp-settings-checkbox__root--disabled {
+  cursor: not-allowed;
+}
+
+.acp-settings-checkbox__indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.acp-settings-checkbox__label-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acp-spacing-xs);
+}
+
+.acp-settings-checkbox__label {
+  font-size: var(--acp-font-size-lg);
+  color: var(--acp-text);
+  cursor: pointer;
+}
+
+.acp-settings-checkbox__label--disabled {
+  cursor: not-allowed;
+}
+
+.acp-settings-checkbox__description {
+  font-size: var(--acp-font-size-sm);
+  color: var(--acp-muted);
+}
+
+/* SettingsTabs */
+.acp-settings-tabs {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.acp-settings-tabs__list {
+  display: flex;
+  border-bottom: 1px solid var(--acp-border);
+  gap: var(--acp-spacing-sm);
+}
+
+.acp-settings-tabs__tab {
+  padding: var(--acp-spacing-md) var(--acp-spacing-xl);
+  font-size: var(--acp-font-size-lg);
+  border: none;
+  background: transparent;
+  color: var(--acp-text);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  opacity: 1;
+  font-weight: var(--acp-font-weight-normal);
+  transition: color var(--acp-transition-fast), border-color var(--acp-transition-fast);
+}
+
+.acp-settings-tabs__tab:hover:not(.acp-settings-tabs__tab--disabled) {
+  color: var(--acp-text);
+  border-bottom-color: var(--acp-border-hover);
+}
+
+.acp-settings-tabs__tab--active {
+  color: var(--acp-accent);
+  border-bottom-color: var(--acp-accent);
+  font-weight: var(--acp-font-weight-semibold);
+}
+
+.acp-settings-tabs__tab--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.acp-settings-tabs__panel {
+  padding: var(--acp-spacing-xl);
+}
+
+/* ==========================================================================
+   SlashSuggestions Component
+   ========================================================================== */
+
+.acp-slash-popover {
+  background-color: var(--acp-bg);
+  border: 1px solid var(--acp-border);
+  border-radius: var(--acp-radius-xl);
+  box-shadow: var(--acp-shadow-popover);
+  min-width: 200px;
+  max-width: 300px;
+  max-height: 300px;
+  overflow: auto;
+  z-index: var(--acp-z-popover);
+  outline: none;
+}
+
+.acp-slash-header {
+  padding: var(--acp-spacing-md) var(--acp-spacing-lg);
+  font-size: var(--acp-font-size-sm);
+  font-weight: var(--acp-font-weight-semibold);
+  color: var(--acp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--acp-border);
+}
+
+.acp-slash-list {
+  padding: var(--acp-spacing-sm) 0;
+}
+
+.acp-slash-item {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-spacing-md);
+  width: 100%;
+  padding: var(--acp-spacing-md) var(--acp-spacing-lg);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--acp-font-size-lg);
+  color: var(--acp-text);
+  transition: background-color var(--acp-transition-fast);
+  outline: none;
+}
+
+.acp-slash-item:hover,
+.acp-slash-item--selected,
+.acp-slash-item[data-selected="true"] {
+  background-color: var(--acp-bg-hover);
+}
+
+.acp-slash-item:focus {
+  background-color: var(--acp-bg-hover);
+  outline: none;
+}
+
+.acp-slash-item-icon {
+  flex-shrink: 0;
+  color: var(--acp-text-muted);
+}
+
+.acp-slash-item-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.acp-slash-item-name {
+  font-weight: var(--acp-font-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acp-slash-item-description {
+  font-size: var(--acp-font-size-sm);
+  color: var(--acp-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+MessageList Component
+========================================================================== */
+
+.acp-message-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acp-message-list-gap, 8px);
+}
+
+/* ==========================================================================
+MessageCard Component
+========================================================================== */
+
+.acp-message {
+  position: relative;
+  padding: var(--acp-spacing-lg);
+  border-radius: var(--acp-radius-xl);
+  transition: background-color var(--acp-transition-fast);
+}
+
+.acp-message:hover {
+  background-color: var(--acp-bg-hover);
+}
+
+.acp-message--user {
+  background-color: var(--acp-color-user-bg);
+}
+
+.acp-message--agent {
+  background-color: var(--acp-color-agent-bg);
+}
+
+.acp-message__header {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-message-header-gap);
+}
+
+.acp-message__actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--acp-spacing-sm);
+}
+
+.acp-message__role-label {
+  font-weight: var(--acp-font-weight-medium);
+  font-size: var(--acp-font-size-sm);
+  color: var(--acp-text-muted);
+  text-transform: capitalize;
+}
+
+.acp-message__content {
+  margin-top: var(--acp-message-content-margin-top);
+}
+
+.acp-message__text {
+  line-height: var(--acp-message-text-line-height);
+  font-size: var(--acp-font-size-lg);
+  color: var(--acp-text);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.acp-message__text--empty {
+  color: var(--acp-text-muted);
+  font-style: italic;
+}
+
+.acp-message__timestamp {
+  font-size: var(--acp-font-size-xs);
+  color: var(--acp-text-muted);
+  margin-left: auto;
+}
+
+/* Message Status Indicators */
+.acp-message__status {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-spacing-xs);
+  font-size: var(--acp-font-size-xs);
+}
+
+.acp-message__status--sending {
+  color: var(--acp-text-muted);
+}
+
+.acp-message__status--sent {
+  color: var(--acp-success);
+}
+
+.acp-message__status--error {
+  color: var(--acp-error);
+}
+
+/* ==========================================================================
+   ThoughtStack Component
+   ========================================================================== */
+
+.acp-thought-stack {
+  /* Root container - no specific styles needed */
+}
+
+.acp-thought-stack__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-thought-trigger-gap);
+  padding: var(--acp-thought-trigger-padding);
+  background: var(--acp-thought-trigger-bg);
+  border: var(--acp-thought-trigger-border);
+  cursor: var(--acp-thought-trigger-cursor);
+  font-size: var(--acp-thought-trigger-font-size);
+  color: var(--acp-thought-trigger-color);
+  border-radius: var(--acp-radius-md);
+  transition: background-color var(--acp-transition-fast);
+}
+
+.acp-thought-stack__trigger:hover {
+  background-color: var(--acp-bg-hover);
+}
+
+.acp-thought-stack__trigger--open {
+  margin-bottom: var(--acp-thought-trigger-open-margin-bottom);
+}
+
+.acp-thought-stack__content {
+  margin-bottom: var(--acp-thought-content-margin-bottom);
+}
+
+.acp-thought-stack__item {
+  /* Item container - no specific styles needed */
+}
+
+.acp-thought-stack__item--thought {
+  /* Thought item specific styles */
+}
+
+.acp-thought-stack__item--tool-call {
+  /* Tool call item specific styles */
+}
+
+.acp-thought-stack__expand-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-thought-expand-gap);
+  padding: var(--acp-thought-expand-padding);
+  background: var(--acp-thought-expand-bg);
+  border: var(--acp-thought-expand-border);
+  cursor: var(--acp-thought-expand-cursor);
+  font-size: var(--acp-thought-expand-font-size);
+  color: var(--acp-thought-expand-color);
+  border-radius: var(--acp-radius-sm);
+  transition: color var(--acp-transition-fast);
+}
+
+.acp-thought-stack__expand-btn:hover {
+  color: var(--acp-text);
+}
+
+.acp-thought-stack__label {
+  font-weight: var(--acp-thought-label-font-weight);
+}
+
+.acp-thought-stack__filepath {
+  opacity: var(--acp-thought-filepath-opacity);
+}
+
+.acp-thought-stack__expanded-content {
+  margin-left: var(--acp-thought-expanded-margin-left);
+  margin-top: var(--acp-thought-expanded-margin-top);
+  font-size: var(--acp-thought-expanded-font-size);
+  opacity: var(--acp-thought-expanded-opacity);
+  color: var(--acp-text-muted);
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ==========================================================================
+MessagePlaceholder Component
+========================================================================== */
+
+.acp-message-placeholder {
+  padding: var(--acp-spacing-lg) var(--acp-spacing-xl);
+  border-radius: var(--acp-radius-xl);
+  max-width: 80%;
+  word-break: break-word;
+}
+
+.acp-message-placeholder--user {
+  background-color: var(--acp-color-user-bg);
+  align-self: flex-end;
+}
+
+.acp-message-placeholder--agent {
+  background-color: var(--acp-color-agent-bg);
+  align-self: flex-start;
+}
+
+.acp-message-placeholder__label {
+  font-size: var(--acp-font-size-sm);
+  color: var(--acp-color-muted);
+  margin-bottom: var(--acp-spacing-sm);
+}
+
+.acp-message-placeholder__content {
+  font-size: var(--acp-font-size-lg);
+  line-height: var(--acp-line-height-normal);
+}
+
+/* ==========================================================================
+ToolCall Component
+========================================================================== */
+
+.acp-tool-call {
+  border: 1px solid var(--acp-border);
+  border-radius: var(--acp-radius-lg);
+  overflow: hidden;
+  background-color: var(--acp-bg);
+  transition: border-color var(--acp-transition-fast);
+}
+
+.acp-tool-call:hover {
+  border-color: var(--acp-border-hover);
+}
+
+.acp-tool-call__header {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-spacing-md);
+  padding: var(--acp-spacing-md) var(--acp-spacing-lg);
+  background-color: var(--acp-bg-hover);
+  cursor: pointer;
+  transition: background-color var(--acp-transition-fast);
+}
+
+.acp-tool-call__header:hover {
+  background-color: var(--acp-bg-active);
+}
+
+.acp-tool-call__icon {
+  flex-shrink: 0;
+  color: var(--acp-accent);
+}
+
+.acp-tool-call__name {
+  font-weight: var(--acp-font-weight-medium);
+  font-size: var(--acp-font-size-md);
+  color: var(--acp-text);
+}
+
+.acp-tool-call__status {
+  margin-left: auto;
+  font-size: var(--acp-font-size-xs);
+  padding: var(--acp-spacing-xs) var(--acp-spacing-sm);
+  border-radius: var(--acp-radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.acp-tool-call__status--pending {
+  background-color: var(--acp-warning-bg);
+  color: var(--acp-warning);
+}
+
+.acp-tool-call__status--running {
+  background-color: var(--acp-info-bg);
+  color: var(--acp-info);
+}
+
+.acp-tool-call__status--success {
+  background-color: var(--acp-success-bg);
+  color: var(--acp-success);
+}
+
+.acp-tool-call__status--error {
+  background-color: var(--acp-error-bg);
+  color: var(--acp-error);
+}
+
+.acp-tool-call__toggle {
+  margin-left: var(--acp-spacing-sm);
+  background: none;
+  border: none;
+  color: var(--acp-text-muted);
+  cursor: pointer;
+  padding: var(--acp-spacing-xs);
+  transition: color var(--acp-transition-fast);
+}
+
+.acp-tool-call__toggle:hover {
+  color: var(--acp-text);
+}
+
+.acp-tool-call__details {
+  padding: var(--acp-spacing-lg);
+  border-top: 1px solid var(--acp-border);
+  background-color: var(--acp-bg);
+}
+
+.acp-tool-call__section {
+  margin-bottom: var(--acp-spacing-lg);
+}
+
+.acp-tool-call__section:last-child {
+  margin-bottom: 0;
+}
+
+.acp-tool-call__section-title {
+  font-size: var(--acp-font-size-sm);
+  font-weight: var(--acp-font-weight-semibold);
+  color: var(--acp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--acp-spacing-sm);
+}
+
+.acp-tool-call__code {
+  background-color: var(--acp-bg-active);
+  border-radius: var(--acp-radius-md);
+  padding: var(--acp-spacing-md);
+  font-family: monospace;
+  font-size: var(--acp-font-size-sm);
+  color: var(--acp-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.acp-tool-call__result {
+  background-color: var(--acp-bg-active);
+  border-radius: var(--acp-radius-md);
+  padding: var(--acp-spacing-md);
+  font-size: var(--acp-font-size-sm);
+  color: var(--acp-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.acp-tool-call__result--error {
+  background-color: var(--acp-error-bg);
+  color: var(--acp-error);
+}
+
+.acp-tool-call__result--success {
+  background-color: var(--acp-success-bg);
+  color: var(--acp-success);
+}
+
+/* ==========================================================================
+   Message Action Bar
+   ========================================================================== */
+
+.acp-action-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-spacing-sm);
+}
+
+.acp-action-bar__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--acp-spacing-xs);
+  padding: var(--acp-spacing-sm) var(--acp-spacing-md);
+  font-size: var(--acp-font-size-sm);
+  color: var(--acp-text-muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--acp-radius-md);
+  cursor: pointer;
+  transition: color var(--acp-transition-fast), background-color var(--acp-transition-fast), border-color var(--acp-transition-fast);
+}
+
+.acp-action-bar__button:hover {
+  color: var(--acp-text);
+  background-color: var(--acp-bg-hover);
+  border-color: var(--acp-border);
+}
+
+.acp-action-bar__button:active {
+  background-color: var(--acp-bg-active);
+}
+
+.acp-action-bar__button--active {
+  color: var(--acp-accent);
+  background-color: var(--acp-bg-selected);
+  border-color: var(--acp-accent);
+}
+
+.acp-action-bar__separator {
+  width: 1px;
+  height: var(--acp-separator-height);
+  background-color: var(--acp-border);
+  margin: 0 var(--acp-spacing-xs);
+}
+
+/* ==========================================================================
+Message Action Bar (MessageActionBar Component)
+========================================================================== */
+
+.acp-message-action-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-spacing-sm);
+  opacity: 0;
+  transition: opacity var(--acp-transition-fast);
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.acp-message-action-bar--visible {
+  opacity: 1;
+}
+
+.acp-message-action-bar__button {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-spacing-sm);
+  padding: var(--acp-spacing-sm) var(--acp-spacing-md);
+  font-size: var(--acp-font-size-sm);
+  border-radius: var(--acp-radius-md);
+  background-color: transparent;
+  border: 1px solid var(--acp-border);
+  color: var(--acp-text);
+  cursor: pointer;
+  transition: background-color var(--acp-transition-fast), border-color var(--acp-transition-fast);
+}
+
+.acp-message-action-bar__button:hover:not(.acp-message-action-bar__button--disabled) {
+  background-color: var(--acp-bg-hover);
+  border-color: var(--acp-border-hover);
+}
+
+.acp-message-action-bar__button--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.acp-message-action-bar__icon {
+  flex-shrink: 0;
+}
+
+.acp-message-action-bar__label {
+  white-space: nowrap;
+}
+
+.acp-message-action-bar__separator {
+  height: var(--acp-separator-height);
+  margin: 0 var(--acp-spacing-sm);
+}
+
+.acp-message-action-bar__menu {
+  background-color: var(--acp-bg);
+  border: 1px solid var(--acp-border);
+  border-radius: var(--acp-radius-xl);
+  box-shadow: var(--acp-shadow-popover);
+  min-width: 150px;
+  z-index: var(--acp-z-popover);
+}
+
+.acp-message-action-bar__menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--acp-spacing-md);
+  width: 100%;
+  padding: var(--acp-spacing-md) var(--acp-spacing-lg);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: var(--acp-font-size-md);
+  color: var(--acp-text);
+  transition: background-color var(--acp-transition-fast);
+}
+
+.acp-message-action-bar__menu-item:hover:not(.acp-message-action-bar__menu-item--disabled) {
+  background-color: var(--acp-bg-hover);
+}
+
+.acp-message-action-bar__menu-item--disabled {
+  cursor: not-allowed;
+  color: var(--acp-text-muted);
+  opacity: 0.5;
+}
+
+.acp-message-action-bar__menu-item-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.acp-message-action-bar__menu-item-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+UpdateList Component
+========================================================================== */
+
+.acp-update-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acp-update-list-gap, 8px);
+}
+
+.acp-update-list--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--acp-spacing-2xl);
+  color: var(--acp-color-muted);
+  font-size: var(--acp-font-size-md);
+}
+
+.acp-update-list__empty-text {
+  color: inherit;
+}
+
+/* ==========================================================================
+Utility Classes
+========================================================================== */
+
+.acp-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.acp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* ==========================================================================
+   Focus Styles (Accessibility)
+   ========================================================================== */
+
+.acp-composer__textarea:focus-visible,
+.acp-composer__button:focus-visible,
+.acp-settings-select-trigger:focus-visible,
+.acp-settings-switch__root:focus-visible,
+.acp-settings-checkbox__root:focus-visible,
+.acp-settings-tabs__tab:focus-visible,
+.acp-slash-item:focus-visible,
+.acp-thought-stack__trigger:focus-visible,
+.acp-thought-stack__expand-btn:focus-visible,
+.acp-tool-call__header:focus-visible,
+.acp-tool-call__toggle:focus-visible,
+.acp-action-bar__button:focus-visible {
+  outline: 2px solid var(--acp-accent);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Animation Keyframes
+   ========================================================================== */
+
+@keyframes acp-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes acp-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes acp-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Animation Utility Classes */
+.acp-animate-fade-in {
+  animation: acp-fade-in var(--acp-transition-normal) ease;
+}
+
+.acp-animate-slide-up {
+  animation: acp-slide-up var(--acp-transition-normal) ease;
+}
+
+.acp-animate-pulse {
+  animation: acp-pulse 2s ease-in-out infinite;
 }

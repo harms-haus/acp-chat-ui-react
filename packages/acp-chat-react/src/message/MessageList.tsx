@@ -25,7 +25,7 @@ export const MessageList = memo(function MessageList({
     <div
       data-acp-message-list
       className={`acp-message-list ${className}`}
-      style={{ display: "flex", flexDirection: "column", gap }}
+      style={{ "--acp-message-list-gap": `${gap}px` } as React.CSSProperties}
     >
       {messages.map((message, index) => (
         <div

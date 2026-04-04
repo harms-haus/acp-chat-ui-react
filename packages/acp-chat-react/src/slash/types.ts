@@ -11,7 +11,17 @@ export interface SlashSuggestionProps {
   commands: SlashCommand[];
   selectedIndex: number;
   onSelect: (command: SlashCommand) => void;
-  onClose: () => void;
+  /**
+   * Optional callback fired when a command is selected.
+   * Allows consumers to handle command selection for custom behavior.
+   * @param command - The selected slash command
+   */
+  onSelectCommand?: (command: SlashCommand) => void;
+  /**
+   * Optional callback fired when the suggestions menu is closed.
+   * Allows consumers to handle menu closure for custom behavior.
+   */
+  onClose?: () => void;
   anchorElement: HTMLElement | null;
   open: boolean;
 }

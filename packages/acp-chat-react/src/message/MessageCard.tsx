@@ -1,6 +1,8 @@
 import { memo, useMemo, useCallback } from "react";
 import type { NormalizedMessage } from "@acp/chat-core";
 import type { MessageCardProps } from "./types.js";
+import type { Logger } from "../utils/logger.js";
+import { noOpLogger } from "../utils/logger.js";
 import { ContentRenderer } from "../content/ContentRenderer.js";
 import { MessageStatusIndicator } from "./MessageStatusIndicator.js";
 import { MessageTimestamp } from "./MessageTimestamp.js";
@@ -17,6 +19,7 @@ function formatTime(timestamp: number): string {
 export interface MessageCardExtendedProps extends MessageCardProps {
   actions?: MessageAction[] | undefined;
   onCopy?: ((msg: NormalizedMessage) => void) | undefined;
+  logger?: Logger;
 }
 
 export const MessageCard = memo(function MessageCard({
@@ -26,6 +29,7 @@ export const MessageCard = memo(function MessageCard({
   className = "",
   actions,
   onCopy,
+  logger = noOpLogger,
 }: MessageCardExtendedProps) {
   const roleClass = useMemo(
     () => (message.role === "user" ? "acp-message--user" : "acp-message--agent"),
@@ -49,11 +53,8 @@ export const MessageCard = memo(function MessageCard({
       data-acp-message-status={message.status}
       data-acp-message-id={message.id}
       className={`acp-message ${roleClass} ${statusClass} ${className}`}
-      style={{
-        position: "relative",
-      }}
     >
-      <div className="acp-message__header" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      <div className="acp-message__header">
         <span className="acp-message__role-label">
           {message.role === "user" ? "You" : "Agent"}
         </span>
@@ -61,13 +62,13 @@ export const MessageCard = memo(function MessageCard({
           <MessageTimestamp timestamp={message.createdAt} />
         )}
         {showStatus && <MessageStatusIndicator status={message.status} />}
-        <div style={{ marginLeft: "auto" }}>
-          <MessageActionBar
-            message={message}
-            actions={actions}
-            onCopy={handleCopy}
-          />
-        </div>
+      <div className="acp-message__actions">
+        <MessageActionBar
+          message={message}
+          actions={actions}
+          onCopy={handleCopy}
+        />
+      </div>
       </div>
 
       <div className="acp-message__content">

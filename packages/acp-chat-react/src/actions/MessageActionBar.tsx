@@ -19,9 +19,9 @@ export const MessageActionBar = memo(function MessageActionBar({
     if (injectedClipboard === undefined) {
       console.warn(
         "[@acp/chat-react] MessageActionBar: Using default clipboard implementation. " +
-          "For production, consider providing a custom clipboard implementation via the 'clipboard' prop " +
-          "to ensure consistent behavior across environments. " +
-          "Example: clipboard={strictClipboard} or clipboard={defaultClipboardWithFallback}"
+        "For production, consider providing a custom clipboard implementation via the 'clipboard' prop " +
+        "to ensure consistent behavior across environments. " +
+        "Example: clipboard={strictClipboard} or clipboard={defaultClipboardWithFallback}"
       );
     }
   }, [injectedClipboard]);
@@ -42,80 +42,48 @@ export const MessageActionBar = memo(function MessageActionBar({
     <fieldset
       data-acp-message-action-bar
       data-acp-message-id={message.id}
-      className={`acp-message-action-bar ${className}`}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "4px",
-        opacity: isHovered ? 1 : 0,
-        transition: "opacity 0.15s ease",
-        border: "none",
-        margin: 0,
-        padding: 0,
-        minWidth: 0,
-      }}
+      className={`acp-message-action-bar ${isHovered ? "acp-message-action-bar--visible" : ""} ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-  {copyAction && (
-    <button
-      type="button"
-      data-acp-message-action
-      data-acp-message-action-id="copy"
-      onClick={handleCopy}
-      disabled={copyAction.disabled === true}
-      style={{
-        padding: "4px 8px",
-        fontSize: "12px",
-        borderRadius: "4px",
-        backgroundColor: "transparent",
-        border: "1px solid var(--acp-border, #ccc)",
-        color: "var(--acp-text, #000)",
-        cursor: copyAction.disabled ? "not-allowed" : "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: "4px",
-      }}
-    >
-      {copyAction.icon || (
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden="true"
+      {copyAction && (
+        <button
+          type="button"
+          data-acp-message-action
+          data-acp-message-action-id="copy"
+          onClick={handleCopy}
+          disabled={copyAction.disabled === true}
+          className={`acp-message-action-bar__button ${copyAction.disabled ? "acp-message-action-bar__button--disabled" : ""}`}
         >
-          <title>Copy icon</title>
-          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-        </svg>
+          {copyAction.icon || (
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+              className="acp-message-action-bar__icon"
+            >
+              <title>Copy icon</title>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          )}
+          <span className="acp-message-action-bar__label">{copyAction.label}</span>
+        </button>
       )}
-      <span>{copyAction.label}</span>
-    </button>
-  )}
 
       {customActions.length > 0 && (
         <>
-          <Separator orientation="vertical" style={{ height: "16px", margin: "0 4px" }} />
+          <Separator orientation="vertical" className="acp-message-action-bar__separator" />
 
           <Menu.Root>
             <Menu.Trigger
               data-acp-message-action-menu-trigger
               disabled={false}
-              style={{
-                padding: "4px 8px",
-                fontSize: "12px",
-                borderRadius: "4px",
-                backgroundColor: "transparent",
-                border: "1px solid var(--acp-border, #ccc)",
-                color: "var(--acp-text, #000)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
+              className="acp-message-action-bar__button acp-message-action-bar__button--menu"
             >
               <svg
                 width="12"
@@ -125,26 +93,20 @@ export const MessageActionBar = memo(function MessageActionBar({
                 stroke="currentColor"
                 strokeWidth="2"
                 aria-hidden="true"
+                className="acp-message-action-bar__icon"
               >
                 <title>Actions menu</title>
                 <circle cx="12" cy="12" r="1" />
                 <circle cx="19" cy="12" r="1" />
                 <circle cx="5" cy="12" r="1" />
               </svg>
-              <span>Actions</span>
+              <span className="acp-message-action-bar__label">Actions</span>
             </Menu.Trigger>
             <Menu.Portal>
               <Menu.Positioner align="end" side="bottom" sideOffset={4}>
                 <Menu.Popup
                   data-acp-message-action-menu
-                  style={{
-                    backgroundColor: "var(--acp-bg, #fff)",
-                    border: "1px solid var(--acp-border, #ccc)",
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                    minWidth: "150px",
-                    zIndex: 1000,
-                  }}
+                  className="acp-message-action-bar__menu"
                 >
                   {customActions.map((action) => (
                     <Menu.Item
@@ -155,37 +117,12 @@ export const MessageActionBar = memo(function MessageActionBar({
                       onClick={(event) => {
                         action.onClick(message, event as unknown as React.MouseEvent<HTMLButtonElement>);
                       }}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        width: "100%",
-                        padding: "8px 12px",
-                        border: "none",
-                        background: "transparent",
-                        cursor: action.disabled ? "not-allowed" : "pointer",
-                        textAlign: "left",
-                        fontSize: "13px",
-                        color: action.disabled
-                          ? "var(--acp-text-muted, #999)"
-                          : "var(--acp-text, #000)",
-                        opacity: action.disabled ? 0.5 : 1,
-                        transition: "background-color 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!action.disabled) {
-                          (e.currentTarget as HTMLDivElement).style.backgroundColor =
-                            "var(--acp-bg-hover, #f0f0f0)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        (e.currentTarget as HTMLDivElement).style.backgroundColor = "transparent";
-                      }}
+                      className={`acp-message-action-bar__menu-item ${action.disabled ? "acp-message-action-bar__menu-item--disabled" : ""}`}
                     >
                       {action.icon && (
-                        <span data-acp-message-action-menu-item-icon>{action.icon}</span>
+                        <span data-acp-message-action-menu-item-icon className="acp-message-action-bar__menu-item-icon">{action.icon}</span>
                       )}
-                      <span data-acp-message-action-menu-item-label>{action.label}</span>
+                      <span data-acp-message-action-menu-item-label className="acp-message-action-bar__menu-item-label">{action.label}</span>
                     </Menu.Item>
                   ))}
                 </Menu.Popup>

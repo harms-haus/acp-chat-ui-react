@@ -34,19 +34,12 @@ export const MessagePlaceholder = memo(function MessagePlaceholder({
       data-acp-message-placeholder
       data-acp-message-id={item.id}
       data-acp-message-role={isUser ? "user" : "agent"}
-      style={{
-        padding: "12px 16px",
-        borderRadius: "8px",
-        backgroundColor: isUser ? "var(--acp-color-user-bg, #e3f2fd)" : "var(--acp-color-agent-bg, #f5f5f5)",
-        maxWidth: "80%",
-        alignSelf: isUser ? "flex-end" : "flex-start",
-        wordBreak: "break-word",
-      }}
+      className={`acp-message-placeholder ${isUser ? "acp-message-placeholder--user" : "acp-message-placeholder--agent"}`}
     >
-      <div style={{ fontSize: "12px", color: "var(--acp-color-muted, #666)", marginBottom: "4px" }}>
+      <div className="acp-message-placeholder__label">
         {label}
       </div>
-      <div style={{ fontSize: "14px", lineHeight: "1.5" }}>
+      <div className="acp-message-placeholder__content">
         {content.slice(0, 200)}
         {content.length > 200 ? "..." : ""}
       </div>

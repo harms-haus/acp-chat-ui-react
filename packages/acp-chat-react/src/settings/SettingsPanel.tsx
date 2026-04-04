@@ -70,18 +70,7 @@ function DefaultSettingsRow({
   return (
     <div
       data-acp-settings-row
-      className="acp-settings-row"
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        gap: "12px",
-        alignItems: "center",
-        padding: "8px 12px",
-        borderTop: "1px solid var(--acp-border, #ccc)",
-        backgroundColor: "var(--acp-bg, #fff)",
-        opacity: disabled ? 0.6 : 1,
-        pointerEvents: disabled ? "none" : "auto",
-      }}
+      className={`acp-settings-row ${disabled ? "acp-settings-row--disabled" : ""}`}
     >
       <SettingsSelect
         data-acp-id="mode"
@@ -92,7 +81,7 @@ function DefaultSettingsRow({
         disabled={disabled || modes.length === 0}
       />
 
-      <Separator orientation="vertical" style={{ height: "24px" }} />
+      <Separator orientation="vertical" className="acp-settings__separator" />
 
       <SettingsSelect
         data-acp-id="model"
@@ -103,7 +92,7 @@ function DefaultSettingsRow({
         disabled={disabled || models.length === 0}
       />
 
-      <Separator orientation="vertical" style={{ height: "24px" }} />
+      <Separator orientation="vertical" className="acp-settings__separator" />
 
       <SettingsSelect
         data-acp-id="session"
@@ -117,11 +106,7 @@ function DefaultSettingsRow({
       {selectedMode && (
         <span
           data-acp-settings-mode-value
-          style={{
-            fontSize: "12px",
-            color: "var(--acp-muted, #666)",
-            marginLeft: "auto",
-          }}
+          className="acp-settings__mode-value"
         >
           {selectedMode.name}
         </span>
@@ -193,9 +178,9 @@ function SettingsPanelInner({
       className={`acp-settings-panel ${className}`}
     >
       {state.error && (
-        <div data-acp-settings-error-banner className="acp-settings-error">
+        <div data-acp-settings-error-banner className="acp-settings__error">
           {state.error}
-          <button type="button" onClick={actions.clearError} aria-label="Dismiss error">
+          <button type="button" onClick={actions.clearError} aria-label="Dismiss error" className="acp-settings__error-dismiss">
             ×
           </button>
         </div>

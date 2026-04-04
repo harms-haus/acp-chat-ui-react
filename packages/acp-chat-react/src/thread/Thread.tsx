@@ -117,7 +117,7 @@ export function Thread({
 
   const defaultEmptyState = useMemo(
     () => (
-      <div style={{ textAlign: "center", color: "var(--acp-color-muted, #666)" }}>
+      <div className="acp-thread__empty-text">
         {isConnected ? "No messages yet - waiting for session updates..." : "Connect to a session to view messages"}
       </div>
     ),

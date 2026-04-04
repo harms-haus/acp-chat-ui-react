@@ -24,45 +24,15 @@ function SettingsCheckboxInner({
       data-acp-settings-checkbox={dataAcpId ?? id}
       data-acp-settings-checkbox-checked={checked}
       data-acp-settings-checkbox-disabled={disabled}
-      className={`acp-settings-checkbox ${className}`}
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: "8px",
-        opacity: disabled ? 0.6 : 1,
-        cursor: disabled ? "not-allowed" : "pointer",
-      }}
+      className={`acp-settings-checkbox ${disabled ? "acp-settings-checkbox--disabled" : ""} ${className}`}
     >
       <Checkbox.Root
         checked={checked}
         onCheckedChange={handleCheckedChange}
         disabled={disabled}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: "18px",
-          height: "18px",
-          borderRadius: "3px",
-          border: "1px solid var(--acp-border, #ccc)",
-          backgroundColor: checked
-            ? "var(--acp-accent, #0066cc)"
-            : "var(--acp-bg, #fff)",
-          color: "var(--acp-bg, #fff)",
-          cursor: disabled ? "not-allowed" : "pointer",
-          flexShrink: 0,
-          marginTop: "2px",
-        }}
+        className={`acp-settings-checkbox__root ${checked ? "acp-settings-checkbox__root--checked" : ""} ${disabled ? "acp-settings-checkbox__root--disabled" : ""}`}
       >
-        <Checkbox.Indicator
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "100%",
-            height: "100%",
-          }}
-        >
+        <Checkbox.Indicator className="acp-settings-checkbox__indicator">
           <svg
             viewBox="0 0 24 24"
             width="12"
@@ -76,31 +46,24 @@ function SettingsCheckboxInner({
           </svg>
         </Checkbox.Indicator>
       </Checkbox.Root>
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        {label && (
-          <label
-            htmlFor={id}
-            data-acp-settings-checkbox-label
-            style={{
-              fontSize: "14px",
-              color: "var(--acp-text, #000)",
-              cursor: disabled ? "not-allowed" : "pointer",
-            }}
-          >
-            {label}
-          </label>
-        )}
-        {description && (
-          <span
-            data-acp-settings-checkbox-description
-            style={{
-              fontSize: "12px",
-              color: "var(--acp-muted, #666)",
-            }}
-          >
-            {description}
-          </span>
-        )}
+      <div className="acp-settings-checkbox__label-container">
+      {label && (
+        <label
+          htmlFor={id}
+          data-acp-settings-checkbox-label
+          className={`acp-settings-checkbox__label ${disabled ? "acp-settings-checkbox__label--disabled" : ""}`}
+        >
+          {label}
+        </label>
+      )}
+      {description && (
+        <span
+          data-acp-settings-checkbox-description
+          className="acp-settings-checkbox__description"
+        >
+          {description}
+        </span>
+      )}
       </div>
     </div>
   );

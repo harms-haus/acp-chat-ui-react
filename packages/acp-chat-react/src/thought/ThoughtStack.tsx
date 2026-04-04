@@ -1,6 +1,8 @@
 import { memo, useState, useMemo, useCallback, useEffect } from "react";
 import type { ThoughtStackProps, ThoughtItem } from "./types.js";
 import type { NormalizedThought, NormalizedToolCall } from "@acp/chat-core";
+import type { Logger } from "../utils/logger.js";
+import { noOpLogger } from "../utils/logger.js";
 
 function isThoughtItem(item: ThoughtItem): item is { type: "thought"; id: string; data: NormalizedThought } {
   return item.type === "thought";
@@ -55,17 +57,7 @@ function DefaultClosedRenderer({
       type="button"
       data-acp-thought-trigger
       onClick={() => setIsOpen(!isOpen)}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "4px 8px",
-        background: "transparent",
-        border: "none",
-        cursor: "pointer",
-        fontSize: "14px",
-        color: "inherit",
-      }}
+      className="acp-thought-stack__trigger"
     >
       <span data-acp-thought-trigger-indicator><ChevronRight size={16} /></span>
       <span data-acp-thought-trigger-label>{triggerLabel}</span>
@@ -77,27 +69,17 @@ function ThoughtContent({ thought }: { thought: NormalizedThought }) {
   const [isExpanded, setIsExpanded] = useState(false);
   
   return (
-    <div data-acp-thought-content style={{ marginBottom: "4px" }}>
+    <div data-acp-thought-content className="acp-thought-stack__content">
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "4px",
-          padding: "2px 0",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "13px",
-          color: "inherit",
-        }}
+        className="acp-thought-stack__expand-btn"
       >
         <span>{isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
-        <span style={{ fontWeight: 600 }}>thinking</span>
+        <span className="acp-thought-stack__label">thinking</span>
       </button>
       {isExpanded && (
-        <div style={{ marginLeft: "16px", marginTop: "4px", fontSize: "12px", opacity: 0.8 }}>
+        <div className="acp-thought-stack__expanded-content">
           {thought.content}
         </div>
       )}
@@ -109,30 +91,20 @@ function ToolCallContent({ toolCall }: { toolCall: NormalizedToolCall }) {
   const [isExpanded, setIsExpanded] = useState(false);
   
   return (
-    <div data-acp-thought-item-tool-call style={{ marginBottom: "4px" }}>
+    <div data-acp-thought-item-tool-call className="acp-thought-stack__content">
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "4px",
-          padding: "2px 0",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "13px",
-          color: "inherit",
-        }}
+        className="acp-thought-stack__expand-btn"
       >
         <span>{isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}</span>
-        <span style={{ fontWeight: 600 }}>{toolCall.title || toolCall.kind}</span>
+        <span className="acp-thought-stack__label">{toolCall.title || toolCall.kind}</span>
         {toolCall.rawInput?.filePath && (
-          <span style={{ opacity: 0.7 }}>{toolCall.rawInput.filePath}</span>
+          <span className="acp-thought-stack__filepath">{toolCall.rawInput.filePath}</span>
         )}
       </button>
       {isExpanded && toolCall.rawOutput && (
-        <div style={{ marginLeft: "16px", marginTop: "4px", fontSize: "12px", opacity: 0.8 }}>
+        <div className="acp-thought-stack__expanded-content">
           {toolCall.rawOutput.output}
         </div>
       )}
@@ -155,18 +127,7 @@ function DefaultOpenRenderer({
         type="button"
         data-acp-thought-trigger
         onClick={() => setIsOpen(!isOpen)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "4px 8px",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "14px",
-          color: "inherit",
-          marginBottom: "8px",
-        }}
+        className="acp-thought-stack__trigger acp-thought-stack__trigger--open"
       >
         <span data-acp-thought-trigger-indicator><ChevronDown size={16} /></span>
         <span>Hide reasoning</span>
@@ -177,6 +138,7 @@ function DefaultOpenRenderer({
             key={item.id}
             data-acp-thought-item
             data-acp-thought-item-type={item.type}
+            className={`acp-thought-stack__item acp-thought-stack__item--${item.type === "thought" ? "thought" : "tool-call"}`}
           >
             {isThoughtItem(item) ? (
               <ThoughtContent thought={item.data} />
@@ -199,6 +161,7 @@ export const ThoughtStack = memo(function ThoughtStack({
   className = "",
   renderClosed,
   renderOpen,
+  logger = noOpLogger,
 }: ThoughtStackProps) {
   const [hasBeenActive, setHasBeenActive] = useState(() => isActive);
   const [wasActive, setWasActive] = useState(() => isActive);

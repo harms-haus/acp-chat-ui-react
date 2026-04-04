@@ -24,71 +24,36 @@ function SettingsSwitchInner({
       data-acp-settings-switch={dataAcpId ?? id}
       data-acp-settings-switch-checked={checked}
       data-acp-settings-switch-disabled={disabled}
-      className={`acp-settings-switch ${className}`}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "12px",
-        opacity: disabled ? 0.6 : 1,
-      }}
+      className={`acp-settings-switch ${disabled ? "acp-settings-switch--disabled" : ""} ${className}`}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        {label && (
-          <label
-            htmlFor={id}
-            data-acp-settings-switch-label
-            style={{
-              fontSize: "14px",
-              color: "var(--acp-text, #000)",
-              cursor: disabled ? "not-allowed" : "pointer",
-            }}
-          >
-            {label}
-          </label>
-        )}
-        {description && (
-          <span
-            data-acp-settings-switch-description
-            style={{
-              fontSize: "12px",
-              color: "var(--acp-muted, #666)",
-            }}
-          >
-            {description}
-          </span>
-        )}
+      <div className="acp-settings-switch__label-container">
+      {label && (
+        <label
+          htmlFor={id}
+          data-acp-settings-switch-label
+          className={`acp-settings-switch__label ${disabled ? "acp-settings-switch__label--disabled" : ""}`}
+        >
+          {label}
+        </label>
+      )}
+      {description && (
+        <span
+          data-acp-settings-switch-description
+          className="acp-settings-switch__description"
+        >
+          {description}
+        </span>
+      )}
       </div>
       <Switch.Root
         checked={checked}
         onCheckedChange={handleCheckedChange}
         disabled={disabled}
-        style={{
-          width: "44px",
-          height: "24px",
-          borderRadius: "12px",
-          border: "none",
-          backgroundColor: checked
-            ? "var(--acp-accent, #0066cc)"
-            : "var(--acp-border, #ccc)",
-          cursor: disabled ? "not-allowed" : "pointer",
-          position: "relative",
-          transition: "background-color 150ms ease",
-        }}
+        className={`acp-settings-switch__root ${checked ? "acp-settings-switch__root--checked" : ""} ${disabled ? "acp-settings-switch__root--disabled" : ""}`}
       >
         <Switch.Thumb
-          style={{
-            display: "block",
-            width: "18px",
-            height: "18px",
-            borderRadius: "50%",
-            backgroundColor: "var(--acp-bg, #fff)",
-            position: "absolute",
-            top: "3px",
-            left: checked ? "23px" : "3px",
-            transition: "left 150ms ease",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
-          }}
+          data-acp-settings-switch-thumb-position={checked ? "right" : "left"}
+          className={`acp-settings-switch__thumb ${checked ? "acp-settings-switch__thumb--checked" : ""}`}
         />
       </Switch.Root>
     </div>

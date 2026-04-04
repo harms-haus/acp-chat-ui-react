@@ -39,7 +39,6 @@ const SessionRow = memo(function SessionRow({
   isLoading,
   onLoad,
 }: SessionRowProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const formattedDate = session.updatedAt
     ? formatSessionDate(session.updatedAt)
     : null;
@@ -54,39 +53,16 @@ const SessionRow = memo(function SessionRow({
       onClick={onLoad}
       title={session.cwd}
       disabled={isLoading}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        width: "100%",
-        padding: "10px 12px",
-        border: "none",
-        background: isSelected 
-          ? "rgba(74, 158, 255, 0.1)" 
-          : isHovered 
-            ? "rgba(255, 255, 255, 0.05)"
-            : "transparent",
-        cursor: isLoading ? "default" : "pointer",
-        textAlign: "left",
-        borderRadius: "6px",
-        transition: "background-color 0.15s ease",
-        color: "inherit",
-        font: "inherit",
-        opacity: isLoading ? 0.7 : 1,
-      }}
+      className={`acp-session-list__row ${
+        isSelected ? "acp-session-list__row--selected" : ""
+      } ${isLoading ? "acp-session-list__row--loading" : ""}`}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-        <div style={{
-          fontSize: "13px",
-          fontWeight: 500,
-          lineHeight: 1.4,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}>
+      <div className="acp-session-list__content">
+        <div className="acp-session-list__title">
           {session.title || session.sessionId}
         </div>
         {formattedDate && (
-          <div style={{ fontSize: "11px", opacity: 0.7 }}>
+          <div className="acp-session-list__date">
             {formattedDate}
           </div>
         )}
@@ -104,7 +80,6 @@ function DefaultSessionItemRender({
   onLoad,
   onSelect: _onSelect,
 }: SessionItemRenderProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const formattedDate = session.updatedAt
     ? formatSessionDate(session.updatedAt)
     : null;
@@ -119,39 +94,16 @@ function DefaultSessionItemRender({
       onClick={onLoad}
       title={session.cwd}
       disabled={isLoading}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        width: "100%",
-        padding: "10px 12px",
-        border: "none",
-        background: isSelected 
-          ? "rgba(74, 158, 255, 0.1)" 
-          : isHovered 
-            ? "rgba(255, 255, 255, 0.05)"
-            : "transparent",
-        cursor: isLoading ? "default" : "pointer",
-        textAlign: "left",
-        borderRadius: "6px",
-        transition: "background-color 0.15s ease",
-        color: "inherit",
-        font: "inherit",
-        opacity: isLoading ? 0.7 : 1,
-      }}
+      className={`acp-session-list__row ${
+        isSelected ? "acp-session-list__row--selected" : ""
+      } ${isLoading ? "acp-session-list__row--loading" : ""}`}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-        <div style={{
-          fontSize: "13px",
-          fontWeight: 500,
-          lineHeight: 1.4,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}>
+      <div className="acp-session-list__content">
+        <div className="acp-session-list__title">
           {session.title || session.sessionId}
         </div>
         {formattedDate && (
-          <div style={{ fontSize: "11px", opacity: 0.7 }}>
+          <div className="acp-session-list__date">
             {formattedDate}
           </div>
         )}

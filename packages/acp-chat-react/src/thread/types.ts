@@ -34,6 +34,8 @@ export interface VirtualizedThreadProps {
   followScroll?: boolean | undefined;
   /** Distance from bottom (in px) to consider "at bottom" for follow-scroll */
   scrollThreshold?: number | undefined;
+  /** Default scroll animation behavior for scrollToBottom/scrollToItem */
+  scrollBehavior?: 'auto' | 'smooth' | undefined;
   /** Empty state content when no items */
   emptyState?: ReactNode | undefined;
   /** Ref to access imperative thread methods */
@@ -52,6 +54,12 @@ export interface VirtualizedThreadProps {
   onContainerResize?: ((width: number) => void) | undefined;
   /** Callback called when message content changes. Receives message ID that changed. */
   onContentChange?: ((messageId: string) => void) | undefined;
+  /** Callback called on scroll events with current scroll state */
+  onScroll?: ((scrollState: ScrollState) => void) | undefined;
+  /** Callback called when the user scrolls near the bottom of the thread */
+  onReachBottom?: (() => void) | undefined;
+  /** Callback called when items are rendered with the count of rendered items */
+  onItemsRendered?: ((renderedCount: number) => void) | undefined;
   /**
    * Viewport observer factory for tracking container resize events.
    *

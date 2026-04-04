@@ -49,14 +49,10 @@ const ThreadRow = memo(function ThreadRow({
       data-acp-thread-row
       data-acp-message-id={item.id}
       data-acp-item-type={item.type}
+      className="acp-thread__row"
       style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
         transform: `translateY(${virtualItem.start}px)`,
-        paddingBottom: DEFAULT_VIRTUALIZATION_CONFIG.gap,
-        boxSizing: "border-box",
+        paddingBottom: 'var(--acp-thread-row-gap, 8px)',
       }}
     >
       {renderItem(item, index)}
@@ -73,6 +69,7 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
       layout = "centered",
       followScroll = true,
       scrollThreshold = 100,
+      scrollBehavior = "smooth",
       emptyState,
       estimatedRowHeight = DEFAULT_VIRTUALIZATION_CONFIG.estimatedRowHeight,
       rowGap = DEFAULT_VIRTUALIZATION_CONFIG.gap,
@@ -81,6 +78,9 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
       onHeightRecalculated,
       onContainerResize,
       onContentChange,
+      onScroll,
+      onReachBottom,
+      onItemsRendered,
       viewportObserverFactory,
       scheduler,
     },
@@ -191,10 +191,11 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
       scrollRafRef.current = injectedScheduler.requestAnimationFrame(() => {
         scrollRafRef.current = null;
         checkScrollPosition();
+        onScroll?.(scrollStateRef.current);
       });
-    }, [checkScrollPosition, injectedScheduler]);
+    }, [checkScrollPosition, injectedScheduler, onScroll]);
 
-    const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+    const scrollToBottom = useCallback((behavior: ScrollBehavior = scrollBehavior) => {
       const viewport = viewportRef.current;
       if (!viewport) return;
 
@@ -202,16 +203,16 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
         top: viewport.scrollHeight,
         behavior,
       });
-    }, []);
+    }, [scrollBehavior]);
 
     const scrollToItem = useCallback(
-      (id: string, behavior: ScrollBehavior = "smooth") => {
+      (id: string, behavior: ScrollBehavior = scrollBehavior) => {
         const index = items.findIndex((item) => item.id === id);
         if (index === -1) return;
 
         virtualizer.scrollToIndex(index, { align: "start", behavior });
       },
-      [items, virtualizer]
+      [items, virtualizer, scrollBehavior]
     );
 
     const getViewport = useCallback(() => viewportRef.current, []);
@@ -265,6 +266,18 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
       previousItemCountRef.current = currentItemCount;
     }, [items.length, followScrollEnabled, scrollToBottom]);
 
+    const previousIsNearBottomRef = useRef(true);
+    useEffect(() => {
+      if (isNearBottomState && !previousIsNearBottomRef.current) {
+        onReachBottom?.();
+      }
+      previousIsNearBottomRef.current = isNearBottomState;
+    }, [isNearBottomState, onReachBottom]);
+
+    useEffect(() => {
+      onItemsRendered?.(virtualItems.length);
+    }, [virtualItems.length, onItemsRendered]);
+
     useEffect(() => {
       return () => {
         if (scrollRafRef.current !== null) {
@@ -283,9 +296,9 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
           className={`acp-thread ${layoutClass} ${className}`}
         >
           <div data-acp-thread-scroll-viewport className="acp-thread__viewport">
-            <div className="acp-thread__empty">
-              {emptyState ?? <span>No messages yet</span>}
-            </div>
+        <div className="acp-thread__empty">
+          {emptyState ?? <span className="acp-thread__empty-text">No messages yet</span>}
+        </div>
           </div>
         </div>
       );
@@ -297,26 +310,20 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
         data-acp-thread-populated
         className={`acp-thread ${layoutClass} ${className}`}
       >
-        <div
-          ref={viewportRef}
-          data-acp-thread-scroll-viewport
-          className="acp-thread__viewport"
-          onScroll={handleScroll}
-          style={{
-            overflow: "auto",
-            height: "100%",
-            position: "relative",
-          }}
-        >
-          <div
-            ref={parentRef}
-            data-acp-thread-scroll-content
-            style={{
-              height: `${totalSize}px`,
-              width: "100%",
-              position: "relative",
-            }}
-          >
+      <div
+        ref={viewportRef}
+        data-acp-thread-scroll-viewport
+        className="acp-thread__viewport"
+        onScroll={handleScroll}
+      >
+      <div
+        ref={parentRef}
+        data-acp-thread-scroll-content
+        className="acp-thread__content"
+        style={{
+          height: `${totalSize}px`,
+        }}
+      >
             {virtualItems.map((virtualItem) => {
               const item = items[virtualItem.index];
               if (!item) return null;
@@ -336,29 +343,30 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
         </div>
 
         {followScrollEnabled && !isNearBottomState && items.length > 0 && (
-          <button
-            type="button"
-            data-acp-thread-scroll-indicator
-            onClick={() => {
-              scrollStateRef.current.userScrolledAway = false;
-              scrollToBottom("smooth");
-            }}
-            aria-label="Scroll to newest messages"
-            className="acp-thread__scroll-indicator"
-          >
-            <span>New messages</span>
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path d="M12 5v14M5 12l7 7 7-7" />
-            </svg>
-          </button>
+      <button
+        type="button"
+        data-acp-thread-scroll-indicator
+        onClick={() => {
+          scrollStateRef.current.userScrolledAway = false;
+          scrollToBottom("smooth");
+        }}
+        aria-label="Scroll to newest messages"
+        className="acp-thread__scroll-indicator"
+      >
+        <span className="acp-thread__scroll-indicator-text">New messages</span>
+        <svg
+          className="acp-thread__scroll-indicator-icon"
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12l7 7 7-7" />
+        </svg>
+      </button>
         )}
       </div>
     );

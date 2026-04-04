@@ -115,10 +115,9 @@ export function createPretextEstimator(
       font,
       whiteSpace,
       preparedAt: Date.now(),
+      prepared,
     };
 
-    // Store prepared text in cache (we store the prepared object internally)
-    (entry as any).prepared = prepared;
     state.prepareCache.set(cacheKey, entry);
 
     return entry;
@@ -139,13 +138,12 @@ export function createPretextEstimator(
     width: number,
     lineHeight: number
   ): number {
-    const { prepared: preparedObj } = prepared as any;
+    const { prepared: preparedObj } = prepared;
     if (!preparedObj) {
-      // Fallback if prepared object not available
       return lineHeight;
     }
 
-    const { height } = layout(preparedObj, width, lineHeight);
+    const { height } = layout(preparedObj as Parameters<typeof layout>[0], width, lineHeight);
     return height;
   }
 

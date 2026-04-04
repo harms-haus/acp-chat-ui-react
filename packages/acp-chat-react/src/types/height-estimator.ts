@@ -145,6 +145,16 @@ export interface PreparedTextEntry {
 
   /** Timestamp when prepared (for cache eviction). Optional. */
   preparedAt?: number;
+
+  /**
+   * Internal pretext prepared object for layout calculation.
+   *
+   * This is the return value from @chenglou/pretext's `prepare()` function.
+   * Used by `layoutText()` to calculate height without re-preparing text.
+   *
+   * @internal
+   */
+  prepared?: unknown;
 }
 
 /**

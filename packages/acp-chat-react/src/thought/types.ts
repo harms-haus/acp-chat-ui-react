@@ -1,5 +1,6 @@
 import type { NormalizedThought, NormalizedToolCall } from "@acp/chat-core";
 import type { ReactNode } from "react";
+import type { Logger } from "../utils/logger.js";
 
 export interface ThoughtItem {
   type: "thought" | "tool_call";
@@ -35,6 +36,7 @@ export interface ThoughtStackProps {
   className?: string | undefined;
   renderClosed?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
   renderOpen?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
+  logger?: Logger;
 }
 
 export interface ThoughtItemProps {

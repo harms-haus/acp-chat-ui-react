@@ -32,7 +32,7 @@ export const UpdateList = memo(function UpdateList({
     <div
       data-acp-update-list
       className={`acp-update-list ${className}`}
-      style={{ display: "flex", flexDirection: "column", gap }}
+      style={{ "--acp-update-list-gap": `${gap}px` } as React.CSSProperties}
     >
       {updates.map((update, index) => (
         <div
