@@ -54,6 +54,16 @@ export function Thread({
     const result: ThreadItem[] = [];
     let currentThoughtGroup: ThoughtGroupWithState | null = null;
 
+    const pendingPermissionToolCallIds = new Set<string>();
+    for (const item of timelineItems) {
+      if (item.type === "permission_request") {
+        const req = item.data as NormalizedPermissionRequest;
+        if (req.status === "pending") {
+          pendingPermissionToolCallIds.add(req.toolCallId);
+        }
+      }
+    }
+
     for (const item of timelineItems) {
       if (item.type === "thought") {
         const thought = item.data as NormalizedThought;
@@ -76,6 +86,9 @@ export function Thread({
         }
       } else if (item.type === "tool_call") {
         const toolCall = item.data as NormalizedToolCall;
+        if (pendingPermissionToolCallIds.has(toolCall.toolCallId)) {
+          continue;
+        }
         if (!currentThoughtGroup) {
           currentThoughtGroup = {
             id: `thought-group-${result.length}`,

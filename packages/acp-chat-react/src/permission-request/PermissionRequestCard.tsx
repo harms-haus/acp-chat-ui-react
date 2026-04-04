@@ -182,29 +182,16 @@ export const PermissionRequestCard = memo(function PermissionRequestCard({
             )}
           </>
       ) : (
-        <>
-          <span
-            className="acp-permission-request__label"
-              style={{
-                color: "var(--acp-permission-request-header-color, var(--acp-text-muted, #666))",
-                fontSize: "var(--acp-font-size-sm, 12px)",
-              }}
-            >
-              Permission Request
-            </span>
-            <div
-              className="acp-permission-request__tool-call-id"
-              style={{
-                color: "var(--acp-text-muted, #666)",
-                fontSize: "var(--acp-font-size-xs, 11px)",
-                marginTop: "var(--acp-spacing-xs, 2px)",
-                fontFamily: "var(--acp-font-mono, monospace)",
-              }}
-            >
-              <span data-acp-permission-request-tool-call-id>{request.toolCallId}</span>
-            </div>
-          </>
-        )}
+        <span
+          className="acp-permission-request__label"
+          style={{
+            color: "var(--acp-permission-request-header-color, var(--acp-text-muted, #666))",
+            fontSize: "var(--acp-font-size-sm, 12px)",
+          }}
+        >
+          Permission Request
+        </span>
+      )}
       </div>
 
       <div

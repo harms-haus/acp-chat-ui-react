@@ -497,26 +497,39 @@ function createPermissionDemoController(
         });
 
         setTimeout(() => {
-          pendingPermissionRequest = { requestId, turnId };
-
           notifySessionUpdate({
             update: {
-              sessionUpdate: "permission_request",
+              sessionUpdate: "tool_call",
               turnId,
               role: "agent",
-              requestId,
               toolCallId,
-              toolName: "read",
+              kind: "read",
               title: "Read file: /home/user/secret-config.txt",
-              description: "The agent wants to read a configuration file that may contain sensitive information.",
-              options: [
-                { optionId: "allow", name: "Allow", kind: "allow_once" },
-                { optionId: "deny", name: "Deny", kind: "deny_once" },
-              ],
-              status: "pending",
+              status: "pending_permission",
+              rawInput: { filePath: "/home/user/secret-config.txt" },
               timestamp: Date.now(),
             },
           });
+
+          setTimeout(() => {
+            pendingPermissionRequest = { requestId, turnId };
+
+            notifySessionUpdate({
+              update: {
+                sessionUpdate: "permission_request",
+                turnId,
+                role: "agent",
+                requestId,
+                toolCallId,
+                options: [
+                  { optionId: "allow", name: "Allow", kind: "allow_once" },
+                  { optionId: "deny", name: "Deny", kind: "deny_once" },
+                ],
+                status: "pending",
+                timestamp: Date.now(),
+              },
+            });
+          }, 300);
         }, 500);
       }, 100);
     },
