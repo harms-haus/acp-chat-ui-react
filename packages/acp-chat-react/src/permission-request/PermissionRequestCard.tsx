@@ -155,18 +155,6 @@ export const PermissionRequestCard = memo(function PermissionRequestCard({
               <span data-acp-permission-request-kind-label>{kind && getKindLabel(kind)}</span>
           </div>
 
-          <div
-            className="acp-permission-request__title"
-              style={{
-                color: "var(--acp-text, #000)",
-                fontSize: "var(--acp-font-size-md, 14px)",
-                fontWeight: 500,
-                marginTop: "var(--acp-spacing-xs, 2px)",
-              }}
-            >
-              <span data-acp-permission-request-title>{title}</span>
-          </div>
-
           {details && (
             <div
               className="acp-permission-request__details"
