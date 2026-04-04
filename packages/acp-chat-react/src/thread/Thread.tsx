@@ -1,7 +1,7 @@
 import { useMemo, memo, useCallback } from "react";
 import { VirtualizedThread } from "./VirtualizedThread.js";
 import { ThreadItemRenderer } from "./ThreadItemRenderer.js";
-import { useTimelineItems, useIsConnected, useActiveStreamingMessage } from "../hooks/index.js";
+import { useTimelineItems, useIsConnected, useActiveStreamingMessage, useToolCalls } from "../hooks/index.js";
 import type { AcpStore } from "../store/index.js";
 import type { ThreadItem } from "./types.js";
 import type { ThoughtGroupWithState, ThoughtStackRenderContext } from "../thought/types.js";
@@ -45,6 +45,10 @@ export function Thread({
   const isConnected = useIsConnected(store);
   const streamingMessage = useActiveStreamingMessage(store);
   const isAgentTyping = !!streamingMessage;
+  const toolCallsArray = useToolCalls(store);
+  const toolCalls = useMemo(() => {
+    return new Map(toolCallsArray.map(call => [call.toolCallId, call]));
+  }, [toolCallsArray]);
 
   const threadItems: ThreadItem[] = useMemo(() => {
     const result: ThreadItem[] = [];
@@ -142,13 +146,14 @@ export function Thread({
       return (
         <MemoizedThreadItemRenderer
           item={item}
+          toolCalls={toolCalls}
           {...(messageActions ? { messageActions } : {})}
           {...(renderThoughtClosed ? { renderThoughtClosed } : {})}
           {...(renderThoughtOpen ? { renderThoughtOpen } : {})}
         />
       );
     },
-    [messageActions, renderThoughtClosed, renderThoughtOpen]
+    [messageActions, renderThoughtClosed, renderThoughtOpen, toolCalls]
   );
 
   const defaultEmptyState = useMemo(

@@ -510,8 +510,8 @@ function createPermissionDemoController(
               title: "Read file: /home/user/secret-config.txt",
               description: "The agent wants to read a configuration file that may contain sensitive information.",
               options: [
-                { id: "allow", label: "Allow", description: "Allow reading the file" },
-                { id: "deny", label: "Deny", description: "Deny reading the file" },
+                { optionId: "allow", name: "Allow", kind: "allow_once" },
+                { optionId: "deny", name: "Deny", kind: "deny_once" },
               ],
               status: "pending",
               timestamp: Date.now(),

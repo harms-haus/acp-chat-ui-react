@@ -4,7 +4,7 @@ import type { ThoughtGroupWithState, ThoughtStackRenderContext } from "../though
 import { MessageCard } from "../message/MessageCard.js";
 import { ThoughtStack } from "../thought/ThoughtStack.js";
 import { PermissionRequestCard } from "../permission-request/index.js";
-import type { NormalizedMessage, NormalizedPermissionRequest } from "@acp/chat-core";
+import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedToolCall } from "@acp/chat-core";
 import type { MessageAction } from "../actions/types.js";
 import type { ReactNode } from "react";
 
@@ -14,6 +14,7 @@ export interface ThreadItemRendererProps {
   renderThoughtClosed?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
   renderThoughtOpen?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
   onPermissionRespond?: (requestId: number, optionId: string) => void;
+  toolCalls?: Map<string, NormalizedToolCall> | undefined;
 }
 
 function isThoughtGroup(data: NormalizedMessage | ThoughtGroupWithState | NormalizedPermissionRequest): data is ThoughtGroupWithState {
@@ -26,6 +27,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
   renderThoughtClosed,
   renderThoughtOpen,
   onPermissionRespond,
+  toolCalls,
 }: ThreadItemRendererProps) {
   const rendered = useMemo(() => {
     switch (item.type) {
@@ -52,9 +54,11 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
       }
       case "permission_request": {
         const request = item.data as NormalizedPermissionRequest;
+        const toolCall = toolCalls?.get(request.toolCallId);
         return (
           <PermissionRequestCard
             request={request}
+            toolCall={toolCall}
             onRespond={(optionId) => {
               onPermissionRespond?.(request.requestId, optionId);
             }}
@@ -68,7 +72,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
           </div>
         );
     }
-  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond]);
+  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls]);
 
   return (
     <div

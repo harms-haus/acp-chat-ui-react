@@ -1,22 +1,101 @@
 import { memo, useCallback } from "react";
-import type { NormalizedPermissionRequest } from "@acp/chat-core";
+import type { NormalizedPermissionRequest, NormalizedToolCall, ToolCallKind } from "@acp/chat-core";
 
 export interface PermissionRequestCardProps {
   request: NormalizedPermissionRequest;
+  toolCall?: NormalizedToolCall | undefined;
   onRespond: (optionId: string) => void;
   onCancel?: () => void;
   className?: string;
 }
 
-function getButtonVariant(kind: string): "primary" | "secondary" {
-  if (kind.startsWith("allow_")) {
+function getButtonVariant(kind: string | undefined): "primary" | "secondary" {
+  if (kind?.startsWith("allow_")) {
     return "primary";
   }
   return "secondary";
 }
 
+function getKindIcon(kind: ToolCallKind): string {
+  switch (kind) {
+    case "read":
+      return "📖";
+    case "write":
+      return "✏️";
+    case "edit":
+      return "📝";
+    case "execute":
+      return "⚡";
+    case "search":
+      return "🔍";
+    case "glob":
+      return "🌐";
+    case "grep":
+      return "🔎";
+    default:
+      return "🔧";
+  }
+}
+
+function getKindLabel(kind: ToolCallKind): string {
+  switch (kind) {
+    case "read":
+      return "Read";
+    case "write":
+      return "Write";
+    case "edit":
+      return "Edit";
+    case "execute":
+      return "Execute";
+    case "search":
+      return "Search";
+    case "glob":
+      return "Glob";
+    case "grep":
+      return "Grep";
+    default:
+      return "Unknown";
+  }
+}
+
+function getToolCallDetails(toolCall: NormalizedToolCall): string | null {
+  const rawInput = toolCall.rawInput;
+  if (!rawInput) return null;
+
+  switch (toolCall.kind) {
+    case "read":
+    case "write":
+    case "edit":
+      if (rawInput.filePath) {
+        return rawInput.filePath;
+      }
+      break;
+    case "execute":
+      if (rawInput.command) {
+        return rawInput.command;
+      }
+      break;
+    case "grep":
+      if (rawInput.pattern) {
+        return `Pattern: ${rawInput.pattern}`;
+      }
+      break;
+    case "search":
+    case "glob":
+      if (rawInput.filePath) {
+        return rawInput.filePath;
+      }
+      break;
+    default:
+      break;
+  }
+
+  return null;
+}
+
 export const PermissionRequestCard = memo(function PermissionRequestCard({
   request,
+  toolCall,
   onRespond,
   onCancel,
   className = "",
@@ -31,6 +110,11 @@ export const PermissionRequestCard = memo(function PermissionRequestCard({
   const handleCancel = useCallback(() => {
     onCancel?.();
   }, [onCancel]);
+
+  const hasToolCall = toolCall !== undefined;
+  const kind = hasToolCall ? toolCall.kind : undefined;
+  const title = hasToolCall ? toolCall.title : undefined;
+  const details = hasToolCall ? getToolCallDetails(toolCall) : null;
 
   return (
     <div
@@ -51,25 +135,76 @@ export const PermissionRequestCard = memo(function PermissionRequestCard({
           marginBottom: "var(--acp-spacing-md, 8px)",
         }}
       >
-        <span
-          className="acp-permission-request__label"
-          style={{
-            color: "var(--acp-permission-request-header-color, var(--acp-text-muted, #666))",
-            fontSize: "var(--acp-font-size-sm, 12px)",
-          }}
-        >
-          Permission Request
-        </span>
-        <div
-          className="acp-permission-request__tool-call"
-          style={{
-            color: "var(--acp-text, #000)",
-            fontSize: "var(--acp-font-size-md, 13px)",
-            marginTop: "var(--acp-spacing-xs, 2px)",
-          }}
-        >
-          <span data-acp-permission-request-tool-call-id>{request.toolCallId}</span>
-        </div>
+      {hasToolCall ? (
+        <>
+          <div
+            className="acp-permission-request__kind-badge"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "var(--acp-spacing-xs, 2px)",
+                padding: "var(--acp-spacing-xs, 2px) var(--acp-spacing-sm, 4px)",
+                backgroundColor: "var(--acp-permission-request-badge-bg, var(--acp-surface, #f5f5f5))",
+                borderRadius: "var(--acp-radius-sm, 4px)",
+                fontSize: "var(--acp-font-size-xs, 11px)",
+                color: "var(--acp-permission-request-badge-color, var(--acp-text-muted, #666))",
+                marginBottom: "var(--acp-spacing-xs, 2px)",
+              }}
+            >
+              <span data-acp-permission-request-kind-icon>{kind && getKindIcon(kind)}</span>
+              <span data-acp-permission-request-kind-label>{kind && getKindLabel(kind)}</span>
+          </div>
+
+          <div
+            className="acp-permission-request__title"
+              style={{
+                color: "var(--acp-text, #000)",
+                fontSize: "var(--acp-font-size-md, 14px)",
+                fontWeight: 500,
+                marginTop: "var(--acp-spacing-xs, 2px)",
+              }}
+            >
+              <span data-acp-permission-request-title>{title}</span>
+          </div>
+
+          {details && (
+            <div
+              className="acp-permission-request__details"
+                style={{
+                  color: "var(--acp-text-muted, #666)",
+                  fontSize: "var(--acp-font-size-sm, 12px)",
+                  marginTop: "var(--acp-spacing-xs, 2px)",
+                  fontFamily: "var(--acp-font-mono, monospace)",
+                }}
+              >
+                <span data-acp-permission-request-details>{details}</span>
+              </div>
+            )}
+          </>
+      ) : (
+        <>
+          <span
+            className="acp-permission-request__label"
+              style={{
+                color: "var(--acp-permission-request-header-color, var(--acp-text-muted, #666))",
+                fontSize: "var(--acp-font-size-sm, 12px)",
+              }}
+            >
+              Permission Request
+            </span>
+            <div
+              className="acp-permission-request__tool-call-id"
+              style={{
+                color: "var(--acp-text-muted, #666)",
+                fontSize: "var(--acp-font-size-xs, 11px)",
+                marginTop: "var(--acp-spacing-xs, 2px)",
+                fontFamily: "var(--acp-font-mono, monospace)",
+              }}
+            >
+              <span data-acp-permission-request-tool-call-id>{request.toolCallId}</span>
+            </div>
+          </>
+        )}
       </div>
 
       <div
