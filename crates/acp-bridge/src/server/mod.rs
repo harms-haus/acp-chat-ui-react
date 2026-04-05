@@ -5,7 +5,7 @@ use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tokio::sync::broadcast;
 
-use crate::modes::{DynamicConfig, ProxyConfig, ReplayConfig, BridgeModeHandle};
+use crate::modes::{DynamicConfig, ProxyConfig, ReplayConfig, ReplayV2Config, BridgeModeHandle};
 
 pub struct ServerConfig {
     pub addr: SocketAddr,
@@ -16,6 +16,7 @@ pub enum BridgeMode {
     Dynamic(DynamicConfig),
     Proxy(ProxyConfig),
     Replay(ReplayConfig),
+    ReplayV2(ReplayV2Config),
 }
 
 pub async fn run_server(config: ServerConfig) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -56,6 +57,14 @@ pub async fn run_server(config: ServerConfig) -> Result<(), Box<dyn std::error::
             };
             BridgeModeHandle::Replay(cfg)
         }
+        BridgeMode::ReplayV2(r) => {
+            let cfg = ReplayV2Config {
+                demo_type: r.demo_type.clone(),
+                session_id: r.session_id.clone(),
+                file_path: r.file_path.clone(),
+            };
+            BridgeModeHandle::ReplayV2(cfg)
+        }
     };
 
     tokio::spawn(async move {
@@ -68,6 +77,9 @@ pub async fn run_server(config: ServerConfig) -> Result<(), Box<dyn std::error::
             }
             BridgeModeHandle::Replay(cfg) => {
                 crate::modes::run_replay_mode(cfg, ws_stream, shutdown_rx).await
+            }
+            BridgeModeHandle::ReplayV2(cfg) => {
+                crate::modes::run_replay_v2_mode(cfg, ws_stream, shutdown_rx).await
             }
         };
 

@@ -1,0 +1,25 @@
+{
+  "demoType": "permission-request",
+  "sessions": [
+    {
+      "demoType": "permission-request",
+      "sessionId": "perm-allow-session-001",
+      "modes": ["write", "execute", "network"],
+      "models": ["claude-sonnet-4", "gpt-4o", "gemini-2.5-pro"],
+      "capturedAt": 1712200000000,
+      "tokenCount": 1365,
+      "eventCount": 11,
+      "description": "Permission request allow flow: Agent requests write permission for README.md, user approves, agent completes the file write successfully."
+    },
+    {
+      "demoType": "permission-request",
+      "sessionId": "perm-deny-session-002",
+      "modes": ["write", "execute", "network"],
+      "models": ["claude-sonnet-4", "gpt-4o", "gemini-2.5-pro"],
+      "capturedAt": 1712300000000,
+      "tokenCount": 821,
+      "eventCount": 7,
+      "description": "Permission request deny flow: Agent requests network access for a health check HTTP request, user denies, agent gracefully handles denial with alternative suggestions."
+    }
+  ]
+}

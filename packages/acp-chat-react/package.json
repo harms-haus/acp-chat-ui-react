@@ -33,7 +33,9 @@
   },
   "dependencies": {
     "@acp/chat-core": "workspace:*",
-    "@chenglou/pretext": "^0.0.4"
+    "@chenglou/pretext": "^0.0.4",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
     "@base-ui-components/react": "^1.0.0-rc.0",

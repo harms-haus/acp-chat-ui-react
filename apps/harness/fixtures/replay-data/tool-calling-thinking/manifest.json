@@ -1,0 +1,11 @@
+{
+  "demoType": "tool-calling-thinking",
+  "sessions": [
+    {
+      "sessionId": "test-session-1",
+      "modes": ["default"],
+      "models": ["gpt-4"],
+      "description": "Test session for visual regression"
+    }
+  ]
+}

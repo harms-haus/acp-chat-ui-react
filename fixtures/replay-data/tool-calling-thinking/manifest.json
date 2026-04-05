@@ -1,0 +1,41 @@
+{
+  "demoType": "tool-calling-thinking",
+  "sessions": [
+    {
+      "demoType": "tool-calling-thinking",
+      "sessionId": "code-review-session-001",
+      "modes": [
+        "code-review",
+        "debug",
+        "explain"
+      ],
+      "models": [
+        "claude-sonnet-4",
+        "gpt-4o",
+        "gemini-2.5-pro"
+      ],
+      "capturedAt": 1709538000000,
+      "tokenCount": 2030,
+      "eventCount": 13,
+      "description": "Code review session: Agent reads authentication module source files, identifies 6 security issues (hardcoded secrets, unsigned decoding, session extension), and suggests fixes with code examples."
+    },
+    {
+      "demoType": "tool-calling-thinking",
+      "sessionId": "debug-session-001",
+      "modes": [
+        "code-review",
+        "debug",
+        "explain"
+      ],
+      "models": [
+        "claude-sonnet-4",
+        "gpt-4o",
+        "gemini-2.5-pro"
+      ],
+      "capturedAt": 1709624400000,
+      "tokenCount": 2379,
+      "eventCount": 16,
+      "description": "Debug session: Agent traces a TypeError crash by reading component, store, and API files, identifies incorrect API response destructuring after a migration, and provides a root cause analysis with fix."
+    }
+  ]
+}

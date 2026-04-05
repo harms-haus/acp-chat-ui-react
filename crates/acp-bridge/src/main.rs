@@ -5,7 +5,7 @@ use std::net::SocketAddr;
 use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
-use acp_bridge::{BridgeMode, DynamicConfig, ProxyConfig, ReplayConfig, ServerConfig, run_server};
+use acp_bridge::{BridgeMode, DynamicConfig, ProxyConfig, ReplayConfig, ReplayV2Config, ServerConfig, run_server};
 
 #[derive(Parser)]
 #[command(name = "acp-bridge")]
@@ -44,6 +44,17 @@ enum Commands {
         file: String,
         #[arg(short = 'd', long, default_value = "50")]
         delay_ms: u64,
+    },
+    /// Replay v2 mode: token-count based 65 TPS timing
+    ReplayV2 {
+        #[arg(short, long, default_value = "127.0.0.1:8765")]
+        addr: SocketAddr,
+        #[arg(short = 't', long)]
+        demo_type: Option<String>,
+        #[arg(short = 's', long)]
+        session_id: Option<String>,
+        #[arg(short = 'f', long)]
+        file: Option<String>,
     },
 }
 
@@ -85,6 +96,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 mode: BridgeMode::Replay(ReplayConfig {
                     file_path: file,
                     delay_ms: Some(delay_ms),
+                }),
+            }
+        }
+        Commands::ReplayV2 { addr, demo_type, session_id, file } => {
+            tracing::info!("Starting replay v2 mode: {}/{}", demo_type.as_deref().unwrap_or("<awaiting JSON-RPC>"), session_id.as_deref().unwrap_or("<awaiting JSON-RPC>"));
+            ServerConfig {
+                addr,
+                mode: BridgeMode::ReplayV2(ReplayV2Config {
+                    demo_type,
+                    session_id,
+                    file_path: file,
                 }),
             }
         }

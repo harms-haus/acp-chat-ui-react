@@ -32,8 +32,10 @@ export { TransportClient } from "./transport/index.js";
 export type { ConnectionStatus, TransportConfig, TransportEvents } from "./transport/index.js";
 
 // Session controller
-export { SessionController } from "./session/index.js";
+export { SessionController, DefaultSessionCaptureInterceptor, ReplayController } from "./session/index.js";
 export type { SessionControllerState, StartAgentConfig, PermissionRequestParams, PermissionOption } from "./session/index.js";
+export type { CapturedSession, CapturedEvent, SessionCaptureInterceptor } from "./session/index.js";
+export type { ReplayControllerOptions, ReplayControllerState, ReplayMode, ReplayModel } from "./session/index.js";
 
 // Normalization
 export {
@@ -74,6 +76,14 @@ export type {
 // Launch presets
 export { parseLaunchPreset, isPresetValid } from "./presets/index.js";
 export type { LaunchPreset } from "./presets/index.js";
+
+export { estimateTokenCount } from "./replay/types.js";
+export type {
+  ReplaySessionMetadata,
+  ReplaySessionData,
+  ReplayEvent,
+  ReplayManifest,
+} from "./replay/types.js";
 
 // Pure helpers (moved from Svelte package)
 export {

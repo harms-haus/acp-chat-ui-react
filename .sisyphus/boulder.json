@@ -1,20 +1,128 @@
 {
-  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/permission-request-implementation.md",
-  "started_at": "2026-04-04T16:27:39.050Z",
+  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/harness-preview-rebuild.md",
+  "started_at": "2026-04-04T23:34:11.972Z",
   "session_ids": [
-    "ses_2a6ceb1a8ffelEcwnef4HASBiq",
-    "ses_2a6ad3c93fferrU2wnOqayac00",
-    "ses_2a6abcb85ffeFUVKYPtBtYJrfk",
-    "ses_2a6a87ee6ffehKCNAXRj9D5gq3",
-    "ses_2a6a5b2ceffeQ1guKX20SpM3BD",
-    "ses_2a6a34bf5ffea9OjeyM4KsWFlI",
-    "ses_2a6993869ffeG15icWClsUXj0I",
-    "ses_2a68a2fd1ffesAEcrQ7dD8xkjz",
-    "ses_2a5dc872effexmRaeJ3TPSDuC5",
-    "ses_2a5d134b4ffeOckCG9GUGnKkSe",
-    "ses_2a5be6264ffejJFfr4yFbZI63k"
+    "ses_2a57a0915ffeR6noWZVutulVwO",
+    "ses_2a5267eedffeJnawsxLvIMf9BD",
+    "ses_2a524d093ffe7i2jslTwAIdDxr",
+    "ses_2a522de2bffepniAUe9hGWgkRz",
+    "ses_2a522dde9ffe3fVrJD3ZUn4RqD",
+    "ses_2a51fd79affehrnCF8Ahe257zz",
+    "ses_2a517640cffe7ew1k5MZE0qui0",
+    "ses_2a5177a06ffencGQIqsK3uuFX3",
+    "ses_2a5118a9bffevmm6j4SZBq5TtU",
+    "ses_2a5119c02ffeiNfyDaT0ic2qo5",
+    "ses_2a4e1f2f8ffeoLp4UsF4Fg2J5F",
+    "ses_2a4e21d28ffezrX2DDvLHQQNPX",
+    "ses_2a4e20889ffeA3piCN4sj45aXY",
+    "ses_2a4d28328ffe5mh7JD5sMKQ4Ui",
+    "ses_2a4b38a4bffeaTu12rSHicGddy",
+    "ses_2a4b36e76ffePgfhWUa0Jt2r7i",
+    "ses_2a489af96ffeIXKEACtvHUAJxV",
+    "ses_2a4899fbdffeDKvpniiI3lXQUV",
+    "ses_2a489c005ffeS6WcaV6aTrix3j",
+    "ses_2a46d91dcffe7RShIHNlQ21GPn",
+    "ses_2a45bdce6ffeCHE72oHP0poyDc",
+    "ses_2a452f864ffeCZtTaQe3xzpTT1",
+    "ses_2a44c9128ffexMZsa6xjInXSb1",
+    "ses_2a444331cfferkW4Ikci54huuj",
+    "ses_2a440e6d8ffeCHvr3KbhIIIe9B",
+    "ses_2a430a1e1ffeIkbsFgVt0XpaiT",
+    "ses_2a42c0a26ffeUYPyiy4tPLaSUG",
+    "ses_2a42c0a37ffepQVZ88Aonb5f4j"
   ],
-  "plan_name": "permission-request-implementation",
+  "plan_name": "harness-preview-rebuild",
   "agent": "atlas",
-  "task_sessions": {}
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Replay Data Schema + TypeScript Types",
+      "session_id": "ses_2a5267eedffeJnawsxLvIMf9BD",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-04-04T23:36:21.368Z"
+    },
+    "todo:2": {
+      "task_key": "todo:2",
+      "task_label": "2",
+      "task_title": "Replay Data Folder Structure + Sample Data Scaffolding",
+      "session_id": "ses_2a524d093ffe7i2jslTwAIdDxr",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-04-04T23:37:51.505Z"
+    },
+    "todo:3": {
+      "task_key": "todo:3",
+      "task_label": "3",
+      "task_title": "Vite Env Var Config + pnpm Debug Script Update",
+      "session_id": "ses_2a522de2bffepniAUe9hGWgkRz",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-04-04T23:39:39.095Z"
+    },
+    "todo:5": {
+      "task_key": "todo:5",
+      "task_label": "5",
+      "task_title": "Rust Bridge Replay v2 Mode with 65 TPS Token Timing",
+      "session_id": "ses_2a51fd79affehrnCF8Ahe257zz",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-04-04T23:50:02.895Z"
+    },
+    "todo:6": {
+      "task_key": "todo:6",
+      "task_label": "6",
+      "task_title": "Controller-Level Capture Interceptor Implementation",
+      "session_id": "ses_2a5177a06ffencGQIqsK3uuFX3",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-04-04T23:56:56.914Z"
+    },
+    "todo:8": {
+      "task_key": "todo:8",
+      "task_label": "8",
+      "task_title": "ReplayPanel Component with Demo Type + Session Selectors",
+      "session_id": "ses_2a5119c02ffeiNfyDaT0ic2qo5",
+      "agent": "Sisyphus-Junior",
+      "category": "visual-engineering",
+      "updated_at": "2026-04-05T00:17:01.012Z"
+    },
+    "todo:11": {
+      "task_key": "todo:11",
+      "task_label": "11",
+      "task_title": "Sample Replay Data — Tool Calling/Thinking (2 Sessions)",
+      "session_id": "ses_2a4e21d28ffezrX2DDvLHQQNPX",
+      "agent": "Sisyphus-Junior",
+      "category": "unspecified-high",
+      "updated_at": "2026-04-05T00:58:43.282Z"
+    },
+    "todo:14": {
+      "task_key": "todo:14",
+      "task_label": "14",
+      "task_title": "Integration Wiring — ReplayController ↔ Rust Bridge ↔ UI",
+      "session_id": "ses_2a4d28328ffe5mh7JD5sMKQ4Ui",
+      "agent": "Sisyphus-Junior",
+      "category": "deep",
+      "updated_at": "2026-04-05T01:35:26.381Z"
+    },
+    "todo:15": {
+      "task_key": "todo:15",
+      "task_label": "15",
+      "task_title": "Unit Tests — ReplayController, Capture Interceptor, Timing",
+      "session_id": "ses_2a4b38a4bffeaTu12rSHicGddy",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-04-05T01:48:27.848Z"
+    },
+    "final-wave:f1": {
+      "task_key": "final-wave:f1",
+      "task_label": "F1",
+      "task_title": "**Plan Compliance Audit** — `oracle`",
+      "session_id": "ses_2a42eb896ffe6vHIPoELeMAw02",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-04-05T04:06:44.520Z"
+    }
+  }
 }
