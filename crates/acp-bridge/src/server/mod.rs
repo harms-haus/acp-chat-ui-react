@@ -280,8 +280,9 @@ async fn handle_init_message(
             let script = init_msg.script.ok_or("invalid init payload: missing field 'script'")?;
             let session_id = init_msg.session_id.ok_or("invalid init payload: missing field 'sessionId'")?;
 
-            // Resolve path relative to current working directory (should be workspace root)
-            let script_path_buf = std::path::PathBuf::from("fixtures/replay-data").join(&script).join(&session_id);
+    // Resolve path relative to current working directory using config
+    let base_dir = config.replay_config.replay_data_dir.as_deref().unwrap_or("fixtures/replay-data");
+    let script_path_buf = std::path::PathBuf::from(base_dir).join(&script).join(&session_id);
             
             // Log the absolute path for debugging
             let abs_script_path = std::env::current_dir()
@@ -289,10 +290,10 @@ async fn handle_init_message(
                 .join(&script_path_buf);
             tracing::debug!("Looking for replay script at: {}", abs_script_path.display());
             
-            if !script_path_buf.exists() {
-                tracing::error!("Script not found at: {}", abs_script_path.display());
-                return Err(format!("script not found: fixtures/replay-data/{}/{}", script, session_id).into());
-            }
+    if !script_path_buf.exists() {
+      tracing::error!("Script not found at: {}", abs_script_path.display());
+      return Err(format!("script not found: {}/{}/{}", base_dir, script, session_id).into());
+    }
 
             let success_response = serde_json::json!({
                 "type": "init",
@@ -306,12 +307,13 @@ async fn handle_init_message(
 
             tracing::info!("Replay mode initialized: {}/{}", script, session_id);
             
-            // Create replay config for streaming - use relative path from workspace root
-            let replay_config = ReplayV2Config {
-                demo_type: Some(script.clone()),
-                session_id: Some(session_id.clone()),
-                file_path: Some(format!("fixtures/replay-data/{}/{}", script, session_id)),
-            };
+    // Create replay config for streaming - use relative path from workspace root
+    let replay_config = ReplayV2Config {
+      demo_type: Some(script.clone()),
+      session_id: Some(session_id.clone()),
+      file_path: Some(format!("{}/{}/{}", base_dir, script, session_id)),
+      replay_data_dir: Some(base_dir.to_string()),
+    };
             
             Ok(SessionState::ReplayLoaded { config: replay_config })
         }

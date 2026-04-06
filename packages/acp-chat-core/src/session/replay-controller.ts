@@ -224,8 +224,11 @@ export class ReplayController {
 
   /** Close the WebSocket and reject all pending requests. */
   async disconnect(): Promise<void> {
-    await this.transport.disconnect();
-    this.rejectAllPending(new Error("Disconnected"));
+    try {
+      await this.transport.disconnect();
+    } finally {
+      this.rejectAllPending(new Error("Disconnected"));
+    }
   }
 
   // ---------------------------------------------------------------------------

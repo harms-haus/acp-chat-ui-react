@@ -7,7 +7,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$ROOT_DIR"
 
 RESULTS_FILE=$(mktemp)
-trap "rm -f $RESULTS_FILE; pkill -9 -f 'acp-bridge' 2>/dev/null || true" EXIT
+trap 'rm -f "$RESULTS_FILE"; kill "$server_pid" 2>/dev/null || true' EXIT
 
 SCENARIOS=(
     "tool-calling-thinking/session-1"
@@ -31,20 +31,26 @@ for scenario in "${SCENARIOS[@]}"; do
     echo "Scenario: $demo_type/$session_id"
     echo "----------------------------------------"
     
-    data_path="$ROOT_DIR/fixtures/replay-data/$demo_type/$session_id"
-    if [ ! -d "$data_path" ]; then
-        echo "ERROR: Replay data not found"
-        continue
-    fi
-    
-    event_count=$(wc -l < "$data_path/replay-events.jsonl")
-    echo "Event count: $event_count"
-    
-    port=$((8765 + RANDOM % 100))
-    echo "Starting server on port $port..."
-    
-    RUST_LOG=error cargo run --manifest-path crates/acp-bridge/Cargo.toml --bin acp-bridge -- replay-v2 --addr "127.0.0.1:$port" --demo-type "$demo_type" --session-id "$session_id" > /dev/null 2>&1 &
-    server_pid=$!
+  data_path="$ROOT_DIR/fixtures/replay-data/$demo_type/$session_id"
+  if [ ! -d "$data_path" ]; then
+    echo "ERROR: Replay data not found"
+    continue
+  fi
+
+  events_file="$data_path/replay-events.jsonl"
+  if [ ! -f "$events_file" ]; then
+    echo "ERROR: replay-events.jsonl not found at $events_file"
+    continue
+  fi
+
+  event_count=$(wc -l < "$events_file")
+  echo "Event count: $event_count"
+
+  port=$((8765 + RANDOM % 100))
+  echo "Starting server on port $port..."
+
+  RUST_LOG=error cargo run --manifest-path crates/acp-bridge/Cargo.toml --bin acp-bridge -- replay-v2 --addr "127.0.0.1:$port" --demo-type "$demo_type" --session-id "$session_id" > /dev/null 2>&1 &
+  server_pid=$!
     
     sleep 3
     

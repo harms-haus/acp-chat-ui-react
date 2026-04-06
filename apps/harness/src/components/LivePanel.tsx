@@ -10,7 +10,7 @@ interface LivePanelProps {
     args: string;
     cwd: string;
   }) => void;
-  onDisconnect: () => void;
+  onDisconnect: () => void | Promise<void>;
   onCapture?: (session: CapturedSession) => void;
   onInitLive?: (config: {
     command: string;
@@ -148,10 +148,10 @@ export function LivePanel({
       const userFriendlyError = getUserFriendlyLiveError(errorMessage);
       setInitError(userFriendlyError);
       showToast(userFriendlyError, "error");
-      onDisconnect();
+      await onDisconnect();
     } finally {
-        setIsInitializing(false);
-      }
+      setIsInitializing(false);
+    }
     }
     
     setIsConnecting(false);

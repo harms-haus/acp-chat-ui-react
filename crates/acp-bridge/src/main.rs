@@ -28,9 +28,13 @@ struct Cli {
     #[arg(short = 's', long)]
     session_id: Option<String>,
 
-    /// File path for replay mode (used when not in live mode)
-    #[arg(short = 'f', long)]
-    file: Option<String>,
+  /// File path for replay mode (used when not in live mode)
+  #[arg(short = 'f', long)]
+  file: Option<String>,
+
+  /// Base directory for replay data files (default: fixtures/replay-data)
+  #[arg(long, default_value = "fixtures/replay-data")]
+  replay_data_dir: String,
 }
 
 #[tokio::main]
@@ -41,15 +45,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let cli = Cli::parse();
 
-    let server_config = ServerConfig {
-        addr: cli.addr,
-        live_enabled: cli.live,
-        replay_config: ReplayV2Config {
-            demo_type: cli.demo_type,
-            session_id: cli.session_id,
-            file_path: cli.file,
-        },
-    };
+let server_config = ServerConfig {
+    addr: cli.addr,
+    live_enabled: cli.live,
+    replay_config: ReplayV2Config {
+      demo_type: cli.demo_type,
+      session_id: cli.session_id,
+      file_path: cli.file,
+      replay_data_dir: Some(cli.replay_data_dir),
+    },
+  };
 
     if cli.live {
         tracing::info!("Starting unified server with live mode enabled");

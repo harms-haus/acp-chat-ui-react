@@ -183,54 +183,82 @@ export class TransportClient {
         this.setStatus("connected");
     }
 
-    private handleMessage(event: MessageEvent): void {
-        console.log('[TransportClient] handleMessage called, data:', event.data);
-        // First, check if this is an init response (not wrapped in BridgeEnvelope)
-        const data = JSON.parse(event.data as string);
-        console.log('[TransportClient] Parsed data:', data);
-        
-        // Handle init responses (success or error)
-        if (data.type === "init" && data.initId && this.pendingInitResolves.has(data.initId)) {
-            console.log('[TransportClient] This is an init response, resolving...');
-            const resolve = this.pendingInitResolves.get(data.initId)!;
-            this.pendingInitResolves.delete(data.initId);
-            resolve(data);
-            return;
-        }
-        
-        // Handle error responses from server (e.g., "script not found", "live mode not enabled")
-        if (data.error) {
-            console.log('[TransportClient] Server error response:', data.error);
-            this.emitError(new Error(data.error));
-            return;
-        }
-        
-        console.log('[TransportClient] Parsing as BridgeEnvelope...');
-        // For all other messages, parse as BridgeEnvelope
-        const result = parseEnvelopeSafe(event.data as string);
+  private handleMessage(event: MessageEvent): void {
+    try {
+      console.log('[TransportClient] handleMessage called, data:', event.data);
+      // First, check if this is an init response (not wrapped in BridgeEnvelope)
+      const data = JSON.parse(event.data as string);
+      console.log('[TransportClient] Parsed data:', data);
 
-        if (result instanceof BridgeVersionError) {
-            this.emitError(result);
-            return;
-        }
+      // Handle init responses (success or error)
+      if (data.type === "init" && data.initId && this.pendingInitResolves.has(data.initId)) {
+        console.log('[TransportClient] This is an init response, resolving...');
+        const resolve = this.pendingInitResolves.get(data.initId)!;
+        this.pendingInitResolves.delete(data.initId);
+        resolve(data);
+        return;
+      }
 
-        this.emitEnvelope(result);
+    // Handle error responses from server (e.g., "script not found", "live mode not enabled")
+    if (data.error) {
+      console.log('[TransportClient] Server error response:', data.error);
+      
+      // Clean up any pending init promise if this error includes an initId
+      if (data.initId) {
+        const resolve = this.pendingInitResolves.get(data.initId);
+        if (resolve) {
+          this.pendingInitResolves.delete(data.initId);
+          resolve({ status: "error", message: data.error });
+        }
+      }
+      
+      this.emitError(new Error(data.error));
+      return;
     }
 
-    private handleError(): void {
-        this.emitError(new Error("WebSocket error"));
+      console.log('[TransportClient] Parsing as BridgeEnvelope...');
+      // For all other messages, parse as BridgeEnvelope
+      const result = parseEnvelopeSafe(event.data as string);
+
+      if (result instanceof BridgeVersionError) {
+        this.emitError(result);
+        return;
+      }
+
+      this.emitEnvelope(result);
+    } catch (error) {
+      console.error('[TransportClient] Failed to parse message:', error);
+      this.emitError(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  private handleError(): void {
+    if (this.pendingInitResolves.size > 0) {
+      for (const [, resolve] of this.pendingInitResolves) {
+        resolve({ status: "error", message: "WebSocket error" });
+      }
+      this.pendingInitResolves.clear();
+    }
+    this.emitError(new Error("WebSocket error"));
+  }
+
+  private handleClose(): void {
+    this.ws = null;
+
+    if (this.pendingInitResolves.size > 0) {
+      for (const [, resolve] of this.pendingInitResolves) {
+        resolve({ status: "error", message: "WebSocket connection closed" });
+      }
+      this.pendingInitResolves.clear();
     }
 
-    private handleClose(): void {
-        this.ws = null;
-
-        if (this.config.reconnect && this.reconnectAttempts < (this.config.maxReconnectAttempts ?? 10)) {
-            this.setStatus("reconnecting");
-            this.scheduleReconnect();
-        } else {
-            this.setStatus("disconnected");
-        }
+    if (this.config.reconnect && this.reconnectAttempts < (this.config.maxReconnectAttempts ?? 10)) {
+      this.setStatus("reconnecting");
+      this.scheduleReconnect();
+    } else {
+      this.setStatus("disconnected");
     }
+  }
 
     private scheduleReconnect(): void {
         this.reconnectAttempts++;

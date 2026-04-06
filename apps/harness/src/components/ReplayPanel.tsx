@@ -44,7 +44,7 @@ function getUserFriendlyReplayError(rawMessage: string, scriptName: string, sess
   if (rawMessage.includes("Script not found") || rawMessage.includes("No such file")) {
     return `Script not found: ${scriptName}. Check that the script exists in fixtures/replay-data/`;
   }
-  if (rawMessage.includes("Session not found") || rawMessage.includes("session")) {
+  if (rawMessage.match(/\bsession not found\b/i)) {
     return `Session not found: ${sessionId}`;
   }
   if (rawMessage.includes("Failed to initialize")) {

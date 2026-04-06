@@ -2,7 +2,15 @@ import WebSocket from 'ws';
 
 const [,, port, demoType, sessionId, expectedEvents] = process.argv;
 const wsPort = port || '8080';
-const totalEvents = parseInt(expectedEvents, 10) || 0;
+
+const parsedEvents = parseInt(expectedEvents, 10);
+if (isNaN(parsedEvents) || parsedEvents <= 0) {
+  console.error('Usage: node benchmark-client.js <port> <demoType> <sessionId> <totalEvents>');
+  console.error('Error: totalEvents must be specified and greater than 0');
+  process.exit(1);
+}
+
+const totalEvents = parsedEvents > 0 ? parsedEvents : Number.POSITIVE_INFINITY;
 const demoTypeStr = demoType || 'tool-calling-thinking';
 const sessionIdStr = sessionId || 'session-1';
 
@@ -31,9 +39,16 @@ ws.on('open', () => {
 });
 
 ws.on('message', (data) => {
-    const message = JSON.parse(data.toString());
-    
-    if (message.jsonrpc === '2.0' && message.id !== undefined) {
+  let message;
+  try {
+    message = JSON.parse(data.toString());
+  } catch (error) {
+    console.error('Failed to parse message as JSON:', error);
+    console.error('Raw data:', data.toString().slice(0, 200));
+    return;
+  }
+
+  if (message.jsonrpc === '2.0' && message.id !== undefined) {
         if (message.result) {
             if (!initialized && message.result.protocolVersion) {
                 initialized = true;

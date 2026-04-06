@@ -77,12 +77,14 @@ impl From<PermissionResponseMessage> for PermissionResponse {
 /// Configuration for the v2 replay mode.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReplayV2Config {
-    /// Demo type subdirectory under fixtures/replay-data/.
-    pub demo_type: Option<String>,
-    /// Session subdirectory (e.g. "session-1").
-    pub session_id: Option<String>,
-    /// Optional override for the replay data base path.
-    pub file_path: Option<String>,
+  /// Demo type subdirectory under fixtures/replay-data/.
+  pub demo_type: Option<String>,
+  /// Session subdirectory (e.g. "session-1").
+  pub session_id: Option<String>,
+  /// Optional override for the replay data base path.
+  pub file_path: Option<String>,
+  /// Base directory for replay data.
+  pub replay_data_dir: Option<String>,
 }
 
 /// A replay event as stored in replay-events.jsonl.
@@ -508,17 +510,17 @@ pub async fn run_replay_v2_mode(
                         tracing::info!("Client disconnected");
                         break;
                     }
-                    Some(Ok(Message::Ping(data))) => {
-                        let _ = ws_tx.send(Message::Pong(data)).await;
-                    }
-                    _ => {}
+                Some(Ok(Message::Ping(data))) => {
+                    let _ = ws_tx.send(Message::Pong(data)).await;
                 }
-            }
-            _ = shutdown_rx.recv() => {
-                tracing::info!("Shutdown signal received");
-                break;
+                _ => {}
             }
         }
+        _ = shutdown_rx.recv() => {
+            tracing::info!("Shutdown signal received");
+            break;
+        }
+}
     }
 
     Ok(())
@@ -756,11 +758,12 @@ mod tests {
 
     #[test]
     fn test_resolve_base_dir_default() {
-        let config = ReplayV2Config {
-            demo_type: Some("tool-calling-thinking".into()),
-            session_id: Some("session-1".into()),
-            file_path: None,
-        };
+    let config = ReplayV2Config {
+        demo_type: Some("tool-calling-thinking".into()),
+        session_id: Some("session-1".into()),
+        file_path: None,
+        replay_data_dir: None,
+    };
         let path = resolve_base_dir(
             config.demo_type.as_ref().unwrap(),
             config.session_id.as_ref().unwrap(),
@@ -774,11 +777,12 @@ mod tests {
 
     #[test]
     fn test_resolve_base_dir_override() {
-        let config = ReplayV2Config {
-            demo_type: Some("demo".into()),
-            session_id: Some("session-1".into()),
-            file_path: Some("/custom/path".into()),
-        };
+    let config = ReplayV2Config {
+        demo_type: Some("demo".into()),
+        session_id: Some("session-1".into()),
+        file_path: Some("/custom/path".into()),
+        replay_data_dir: None,
+    };
         let path = resolve_base_dir(
             config.demo_type.as_ref().unwrap(),
             config.session_id.as_ref().unwrap(),

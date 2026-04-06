@@ -356,31 +356,28 @@ function applyAgentThoughtChunk(state: NormalizedState, update: AgentMessageChun
     if (existingEntry) {
       const [existingId, existingThought] = existingEntry;
       const isNewContent = text.length > existingThought.content.length;
-      if (!isNewContent) {
-        return existingThought;
-      }
-      console.log(`[store] Updating thought ${existingId} (turnId: ${turnId}), old length: ${existingThought.content.length}, new length: ${text.length}`);
-      const updatedThought: NormalizedThought = {
-        ...existingThought,
-        content: text,
-        ...(timestamp && { updatedAt: timestamp }),
-      };
-      state.thoughts.set(existingId, updatedThought);
-      console.log(`[store] Thought count: ${state.thoughts.size}, Timeline length: ${state.timelineOrder.length}`);
-      return updatedThought;
-    }
+  if (!isNewContent) {
+    return existingThought;
+  }
+  const updatedThought: NormalizedThought = {
+    ...existingThought,
+    content: text,
+    ...(timestamp !== undefined && { updatedAt: timestamp }),
+  };
+  state.thoughts.set(existingId, updatedThought);
+  return updatedThought;
+}
   }
 
   const id = generateThoughtId();
   const thought: NormalizedThought = { id, content: text, ...(turnId && { turnId }) };
-  if (timestamp) {
+  if (timestamp !== undefined) {
     thought.createdAt = timestamp;
     thought.updatedAt = timestamp;
   }
 
   state.thoughts.set(id, thought);
   state.timelineOrder.push({ type: "thought", id });
-  console.log(`[store] Created thought ${id} (turnId: ${turnId}), total thoughts: ${state.thoughts.size}, timeline: ${state.timelineOrder.length}`);
   return thought;
 }
 

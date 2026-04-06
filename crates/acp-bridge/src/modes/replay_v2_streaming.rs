@@ -1,6 +1,8 @@
 use std::time::Duration;
 use futures_util::{SinkExt, StreamExt};
 use serde_json::Value;
+use tokio::sync::broadcast;
+use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message;
 use crate::modes::replay_v2::{ReplayEvent, delay_for_tokens, BURST_THRESHOLD, CHUNK_TOKENS, to_text};
 
@@ -36,7 +38,7 @@ pub async fn stream_events_with_text_streaming(
                             Some(Ok(Message::Close(_))) | None => {
                                 return Ok(());
                             }
-                            _ => continue,
+                            _ => {},
                         }
                     }
                     _ = shutdown_rx.recv() => {
@@ -58,7 +60,7 @@ pub async fn stream_events_with_text_streaming(
                         Some(Ok(Message::Close(_))) | None => {
                             return Ok(());
                         }
-                        _ => continue,
+                        _ => {},
                     }
                 }
                 _ = shutdown_rx.recv() => {
@@ -100,7 +102,7 @@ fn extract_text_content(envelope: &Value) -> Option<String> {
     if texts.is_empty() {
         None
     } else {
-        Some(texts.join(" "))
+        Some(texts.join(""))
     }
 }
 
@@ -120,7 +122,7 @@ async fn stream_text_chunk(
     }
     
     let total_delay_ms = delay_for_tokens(token_count);
-    let delay_per_char = Duration::from_millis(total_delay_ms / total_chars as u64);
+    let delay_per_char = Duration::from_millis((total_delay_ms / total_chars as u64).max(1));
     
     for i in 0..total_chars {
         let partial_text: String = chars[0..=i].iter().collect();
@@ -150,19 +152,19 @@ async fn stream_text_chunk(
 }
 
 fn update_envelope_text(envelope: &mut Value, new_text: &str) {
-    if let Some(payload) = envelope.get_mut("payload").and_then(|p| p.as_object_mut()) {
-        if let Some(params) = payload.get_mut("params").and_then(|p| p.as_object_mut()) {
-            if let Some(update) = params.get_mut("update").and_then(|p| p.as_object_mut()) {
-                if let Some(content) = update.get_mut("content").and_then(|c| c.as_array_mut()) {
-                    for item in content.iter_mut() {
-                        if let Some(obj) = item.as_object_mut() {
-                            if obj.get("type").and_then(|t| t.as_str()) == Some("text") {
-                                obj.insert("text".to_string(), Value::String(new_text.to_string()));
-                            }
-                        }
+  if let Some(payload) = envelope.get_mut("payload").and_then(|p| p.as_object_mut()) {
+    if let Some(params) = payload.get_mut("params").and_then(|p| p.as_object_mut()) {
+      if let Some(update) = params.get_mut("update").and_then(|p| p.as_object_mut()) {
+        if let Some(content) = update.get_mut("content").and_then(|c| c.as_array_mut()) {
+            for item in content.iter_mut() {
+                if let Some(obj) = item.as_object_mut() {
+                    if obj.get("type").and_then(|t| t.as_str()) == Some("text") {
+                        obj.insert("text".to_string(), Value::String(new_text.to_string()));
                     }
                 }
             }
         }
+      }
     }
+  }
 }
