@@ -11,17 +11,18 @@
     "perf:test": "node --experimental-strip-types scripts/perf-runner.ts",
     "bundle:check": "node --experimental-strip-types scripts/bundle-check.ts",
     "dev:harness": "pnpm --filter @acp/harness dev",
-    "dev:bridge-replay": "cargo run --manifest-path crates/acp-bridge/Cargo.toml -- replay-v2 --addr 127.0.0.1:8765",
-    "dev:bridge-live": "cargo run --manifest-path crates/acp-bridge/Cargo.toml -- dynamic --addr 127.0.0.1:8766",
-    "debug": "fuser -k 4173/tcp 8765/tcp 8766/tcp 2>/dev/null || true; rm -rf apps/harness/node_modules/.vite node_modules/.vite 2>/dev/null; concurrently \"VITE_ENABLE_LIVE_MODE=true pnpm dev:harness\" \"pnpm dev:bridge-replay\" \"pnpm dev:bridge-live\"",
-    "kill": "fuser -k 4173/tcp 8765/tcp 8766/tcp 2>/dev/null || true"
+    "dev:bridge": "cargo run --manifest-path crates/acp-bridge/Cargo.toml --bin acp-bridge -- --addr 127.0.0.1:8765",
+    "debug": "concurrently 'VITE_ENABLE_LIVE_MODE=true pnpm dev:harness' 'cargo run --manifest-path crates/acp-bridge/Cargo.toml --bin acp-bridge -- --live --addr 127.0.0.1:8765'",
+    "kill": "fuser -k 4173/tcp 8765/tcp 2>/dev/null || true"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
     "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
     "concurrently": "^9.2.1",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.0"
+    "vitest": "^2.1.0",
+    "ws": "^8.20.0"
   },
   "packageManager": "pnpm@10.33.0",
   "engines": {

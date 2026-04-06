@@ -3,13 +3,13 @@
 use std::os::unix::process::ExitStatusExt;
 use std::process::Stdio;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use futures_util::{SinkExt, StreamExt};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::{broadcast, mpsc};
-use tokio::time::interval;
+
 use tokio_tungstenite::{WebSocketStream, tungstenite::Message};
 
 use crate::contract::{BridgeEnvelope, BridgeMessage, BridgeStatus};

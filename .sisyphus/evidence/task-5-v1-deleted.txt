@@ -1,0 +1,49 @@
+TASK 5: V1 REPLAY MODULE DELETION - EVIDENCE
+========================================================
+
+Date: 2026-04-05
+Status: COMPLETED
+
+FILES DELETED:
+--------------
+✓ crates/acp-bridge/src/modes/replay.rs (114 lines)
+
+FILES MODIFIED:
+--------------
+1. crates/acp-bridge/src/modes/mod.rs
+   - Removed: pub mod replay; (line 5)
+   - Removed: pub use replay::{ReplayConfig, run_replay_mode}; (line 10)
+   - Removed: Replay(ReplayConfig) variant from BridgeModeHandle (line 16)
+   - Updated doc comment to remove v1 mention (line 1)
+
+2. crates/acp-bridge/src/main.rs
+   - Removed: ReplayConfig from import (line 8)
+   - Removed: Replay { ... } CLI variant (lines 39-47)
+   - Removed: Commands::Replay match arm (lines 92-101)
+
+3. crates/acp-bridge/src/server/mod.rs
+   - Removed: ReplayConfig from import (line 8)
+   - Removed: Replay(ReplayConfig) variant from BridgeMode (line 18)
+   - Removed: BridgeMode::Replay config clone match arm (lines 53-59)
+   - Removed: BridgeModeHandle::Replay dispatch match arm (lines 78-80)
+
+4. crates/acp-bridge/src/lib.rs
+   - Removed: ReplayConfig from pub use re-export (line 14)
+
+VERIFICATION:
+------------
+✓ grep -r "modes::replay[^_]" crates/ --include="*.rs" returned 0 results
+✓ grep -r "ReplayConfig" crates/ --include="*.rs" returned 0 results
+✓ cargo build --release --bin acp-bridge succeeded (2.30s)
+
+SHARED CODE (PRESERVED):
+-----------------------
+✓ ReplayMetadata in contract/message.rs (used by both v1 and v2)
+✓ replay_v2.rs module (separate implementation)
+✓ All TypeScript types in packages/ (shared with frontend)
+
+OUTCOME:
+---------
+All v1 replay references successfully deleted from the Rust backend.
+Zero v1-specific code remains in the codebase.
+Build compiles successfully.

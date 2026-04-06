@@ -21,8 +21,8 @@ use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use futures_util::{SinkExt, StreamExt};
-use serde::{Deserialize, Serialize};
-use tokio::sync::broadcast;
+use serde::Deserialize;
+use tokio::sync::{broadcast, mpsc};
 use tokio_tungstenite::{WebSocketStream, tungstenite::Message};
 
 use crate::contract::{BridgeEnvelope, BridgeMessage, BridgeStatus};
@@ -42,7 +42,40 @@ const BURST_THRESHOLD: usize = 100;
 /// Bridge package version used for client version validation.
 const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
+/// Permission response from client
+#[derive(Debug, Clone, Deserialize)]
+pub struct PermissionResponse {
+    #[serde(rename = "requestId")]
+    pub request_id: u32,
+    pub action: String, // "approve" or "deny"
+    #[serde(rename = "optionId", default)]
+    pub option_id: Option<String>,
+}
+
+/// Permission response message from client (includes type field)
+#[derive(Debug, Deserialize)]
+pub struct PermissionResponseMessage {
+    #[serde(rename = "type")]
+    pub msg_type: String,
+    #[serde(rename = "requestId")]
+    pub request_id: u32,
+    pub action: String, // "approve" or "deny"
+    #[serde(rename = "optionId", default)]
+    pub option_id: Option<String>,
+}
+
+impl From<PermissionResponseMessage> for PermissionResponse {
+    fn from(msg: PermissionResponseMessage) -> Self {
+        Self {
+            request_id: msg.request_id,
+            action: msg.action,
+            option_id: msg.option_id,
+        }
+    }
+}
+
 /// Configuration for the v2 replay mode.
+#[derive(Debug, Clone, PartialEq)]
 pub struct ReplayV2Config {
     /// Demo type subdirectory under fixtures/replay-data/.
     pub demo_type: Option<String>,
@@ -82,6 +115,7 @@ impl ReplayEvent {
 
 /// JSON-RPC request structure for parsing client messages.
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct JsonRpcRequest {
     jsonrpc: String,
     id: Option<u64>,
@@ -196,65 +230,133 @@ async fn stream_events(
         WebSocketStream<tokio::net::TcpStream>,
         Message,
     >,
-    ws_rx: &mut futures_util::stream::SplitStream<WebSocketStream<tokio::net::TcpStream>>,
     events: &[ReplayEvent],
     shutdown_rx: &mut broadcast::Receiver<()>,
+    permission_response_rx: &mut mpsc::Receiver<PermissionResponse>,
+    client_disconnect_rx: &mut broadcast::Receiver<()>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     for event in events {
         let token_count = event.token_count.unwrap_or(0);
         let envelope_value = event.extract_envelope()?;
 
-        if token_count > BURST_THRESHOLD {
-            let num_chunks = (token_count + CHUNK_TOKENS - 1) / CHUNK_TOKENS;
-            let chunk_delay = Duration::from_millis(delay_for_tokens(CHUNK_TOKENS));
-
-            for chunk_idx in 0..num_chunks {
-                tokio::select! {
-                    msg = ws_rx.next() => {
-                        match msg {
-                            Some(Ok(Message::Close(_))) | None => {
-                                tracing::info!("Client disconnected during replay burst");
-                                return Ok(());
+        // Check if this is a permission_request with status: "pending"
+        if let Some(payload) = envelope_value.get("payload") {
+            if let Some(params) = payload.get("params") {
+                if let Some(update) = params.get("update") {
+                    if let Some(session_update) = update.get("sessionUpdate") {
+                        if session_update.as_str() == Some("permission_request") {
+                            if let Some(status) = update.get("status") {
+                                if status.as_str() == Some("pending") {
+                                    // Pause and wait for permission response
+                                    tracing::info!("Permission request encountered, waiting for response...");
+                                    
+                                    // Send the permission request to client
+                                    let envelope_str = serde_json::to_string(&envelope_value)?;
+                                    ws_tx.send(to_text(envelope_str)).await?;
+                                    
+                                    // Wait for permission response
+                                    tokio::select! {
+                                        response = permission_response_rx.recv() => {
+                                            match response {
+                                                Some(resp) => {
+                                                    if resp.action == "approve" {
+                                                        tracing::info!("Permission approved, continuing replay");
+                                                        // Continue to next event (skip the pending permission event from replay)
+                                                        continue;
+                                                    } else if resp.action == "deny" {
+                                                        tracing::info!("Permission denied, stopping replay");
+                                                        return Ok(());
+                                                    }
+                                                }
+                                                None => {
+                                                    tracing::warn!("Permission response channel closed");
+                                                    return Ok(());
+                                                }
+                                            }
+                                        }
+                                        _ = client_disconnect_rx.recv() => {
+                                            tracing::info!("Client disconnected during permission wait");
+                                            return Ok(());
+                                        }
+                                        _ = shutdown_rx.recv() => {
+                                            tracing::info!("Shutdown signal received");
+                                            return Ok(());
+                                        }
+                                    }
+                                }
                             }
-                            _ => continue,
                         }
                     }
-                    _ = shutdown_rx.recv() => {
-                        tracing::info!("Shutdown signal received");
-                        return Ok(());
-                    }
-                    _ = tokio::time::sleep(chunk_delay) => {
-                        if chunk_idx == 0 {
-                            let envelope_str = serde_json::to_string(&envelope_value)?;
-                            ws_tx.send(to_text(envelope_str)).await?;
-                        }
-                    }
-                }
-            }
-        } else {
-            let delay = Duration::from_millis(delay_for_tokens(token_count));
-
-            tokio::select! {
-                msg = ws_rx.next() => {
-                    match msg {
-                        Some(Ok(Message::Close(_))) | None => {
-                            tracing::info!("Client disconnected during replay");
-                            return Ok(());
-                        }
-                        _ => continue,
-                    }
-                }
-                _ = shutdown_rx.recv() => {
-                    tracing::info!("Shutdown signal received");
-                    return Ok(());
-                }
-                _ = tokio::time::sleep(delay) => {
-                    let envelope_str = serde_json::to_string(&envelope_value)?;
-                    ws_tx.send(to_text(envelope_str)).await?;
                 }
             }
         }
+
+        if token_count > BURST_THRESHOLD {
+    let num_chunks = (token_count + CHUNK_TOKENS - 1) / CHUNK_TOKENS;
+
+    let burst_deadline = tokio::time::Instant::now();
+    for chunk_idx in 0..num_chunks {
+      let chunk_deadline = burst_deadline + Duration::from_millis(delay_for_tokens(CHUNK_TOKENS) * chunk_idx as u64);
+
+      loop {
+        let remaining = chunk_deadline.saturating_duration_since(tokio::time::Instant::now());
+        if remaining.is_zero() {
+          if chunk_idx == 0 {
+            let envelope_str = serde_json::to_string(&envelope_value)?;
+            ws_tx.send(to_text(envelope_str)).await?;
+          }
+          break;
+        }
+
+        tokio::select! {
+          _ = client_disconnect_rx.recv() => {
+            tracing::info!("Client disconnected during replay burst");
+            return Ok(());
+          }
+          _ = shutdown_rx.recv() => {
+            tracing::info!("Shutdown signal received");
+            return Ok(());
+          }
+          _ = tokio::time::sleep(remaining) => {
+            if chunk_idx == 0 {
+              let envelope_str = serde_json::to_string(&envelope_value)?;
+              ws_tx.send(to_text(envelope_str)).await?;
+            }
+            break;
+          }
+        }
+      }
     }
+  } else {
+    let delay_ms = delay_for_tokens(token_count);
+    let deadline = tokio::time::Instant::now() + Duration::from_millis(delay_ms);
+
+    loop {
+      let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
+      if remaining.is_zero() {
+        let envelope_str = serde_json::to_string(&envelope_value)?;
+        ws_tx.send(to_text(envelope_str)).await?;
+        break;
+      }
+
+      tokio::select! {
+        _ = client_disconnect_rx.recv() => {
+          tracing::info!("Client disconnected during replay");
+          return Ok(());
+        }
+        _ = shutdown_rx.recv() => {
+          tracing::info!("Shutdown signal received");
+          return Ok(());
+        }
+        _ = tokio::time::sleep(remaining) => {
+          let envelope_str = serde_json::to_string(&envelope_value)?;
+          ws_tx.send(to_text(envelope_str)).await?;
+          break;
+        }
+      }
+    }
+  }
+}
 
     tracing::info!("Replay v2 streaming complete ({} events)", events.len());
     Ok(())
@@ -270,6 +372,67 @@ async fn send_envelope(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let envelope = BridgeEnvelope::new(message, now_ms());
     ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
+    Ok(())
+}
+
+/// Stream replay events at 65 TPS after init protocol initialization.
+///
+/// This function is called by the unified server after successful init,
+/// bypassing the JSON-RPC layer and streaming events directly.
+pub async fn stream_replay_after_init(
+    config: ReplayV2Config,
+    mut ws_tx: futures_util::stream::SplitSink<
+        WebSocketStream<tokio::net::TcpStream>,
+        Message,
+    >,
+    mut shutdown_rx: broadcast::Receiver<()>,
+    mut permission_response_rx: mpsc::Receiver<PermissionResponse>,
+    mut client_disconnect_rx: broadcast::Receiver<()>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    
+    // Send initial bridge status: starting
+    send_envelope(&mut ws_tx, BridgeMessage::bridge_status(BridgeStatus::Starting)).await?;
+    
+    // Resolve base directory
+    let demo_type = config.demo_type.ok_or("missing demo_type")?;
+    let session_id = config.session_id.ok_or("missing session_id")?;
+    let base_dir = resolve_base_dir(&demo_type, &session_id, config.file_path.as_ref());
+    
+    tracing::info!("Streaming replay: {}/{}", demo_type, session_id);
+    
+    // Send session state if available
+    send_session_state(&mut ws_tx, &base_dir).await?;
+    
+    // Load replay events
+    let events = load_replay_events(&base_dir)?;
+    
+    // Send replay metadata
+    let total = events.len() as u64;
+    let first_ts = events
+        .first()
+        .and_then(|e| e.raw.get("timestamp_ms"))
+        .and_then(|v| v.as_u64())
+        .unwrap_or(0);
+    
+    send_envelope(
+        &mut ws_tx,
+        BridgeMessage::replay_metadata(
+            first_ts,
+            total,
+            Some(format!("{} / {}", demo_type, session_id)),
+        ),
+    ).await?;
+
+    // Send bridge status connected
+    send_envelope(&mut ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
+
+    // Stream events at 65 TPS
+    stream_events(&mut ws_tx, &events, &mut shutdown_rx, &mut permission_response_rx, &mut client_disconnect_rx).await?;
+
+    // Send bridge status disconnected when replay is complete
+    send_envelope(&mut ws_tx, BridgeMessage::bridge_status(BridgeStatus::Disconnected)).await?;
+    tracing::info!("Replay v2 streaming complete ({} events)", events.len());
+    
     Ok(())
 }
 
@@ -368,14 +531,14 @@ async fn handle_json_rpc_request(
         WebSocketStream<tokio::net::TcpStream>,
         Message,
     >,
-    ws_rx: &mut futures_util::stream::SplitStream<WebSocketStream<tokio::net::TcpStream>>,
+    _ws_rx: &mut futures_util::stream::SplitStream<WebSocketStream<tokio::net::TcpStream>>,
     shutdown_rx: &mut broadcast::Receiver<()>,
     request: JsonRpcRequest,
     active_demo_type: &mut Option<String>,
     active_session_id: &mut Option<String>,
     active_file_path: &mut Option<String>,
     is_initialized: &mut bool,
-    config: &ReplayV2Config,
+    _config: &ReplayV2Config,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     match request.method.as_str() {
         "initialize" => {
@@ -501,8 +664,13 @@ async fn handle_json_rpc_request(
 
                     tracing::info!("Starting replay stream: {}/{} ({} events)", dt, sid, events.len());
 
+                    // Create a dummy permission response channel for JSON-RPC flow
+                    let (_dummy_tx, mut dummy_rx) = tokio::sync::mpsc::channel::<PermissionResponse>(1);
+                    // Create a dummy disconnect channel for JSON-RPC flow
+                    let (_dummy_disconnect_tx, mut dummy_disconnect_rx) = broadcast::channel::<()>(1);
+
                     // Stream events at 65 TPS
-                    stream_events(ws_tx, ws_rx, &events, shutdown_rx).await?;
+                    stream_events(ws_tx, &events, shutdown_rx, &mut dummy_rx, &mut dummy_disconnect_rx).await?;
 
                     // Send bridge status disconnected when replay is complete
                     send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Disconnected)).await?;

@@ -11,8 +11,8 @@ pub use contract::{
     BridgeEnvelope, BridgeMessage, BridgeStatus, UnsupportedVersionError, ENVELOPE_VERSION,
     SUPPORTED_VERSIONS,
 };
-pub use modes::{BridgeModeHandle, DynamicConfig, ProxyConfig, ReplayConfig, ReplayV2Config};
-pub use server::{BridgeMode, ServerConfig, run_server};
+pub use modes::{BridgeModeHandle, ReplayV2Config};
+pub use server::{ServerConfig, run_server};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

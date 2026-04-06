@@ -21,6 +21,20 @@ type StatusHandler = (status: ConnectionStatus) => void;
 type EnvelopeHandler = (envelope: BridgeEnvelope) => void;
 type ErrorHandler = (error: Error) => void;
 
+export interface InitSuccess {
+    status: "success";
+    mode: "replay" | "live";
+}
+
+export interface InitError {
+    status: "error";
+    message: string;
+}
+
+export interface DisconnectSuccess {
+    status: "success";
+}
+
 export class TransportClient {
     private ws: WebSocket | null = null;
     private status: ConnectionStatus = "disconnected";
@@ -29,6 +43,7 @@ export class TransportClient {
     private statusHandlers = new Set<StatusHandler>();
     private envelopeHandlers = new Set<EnvelopeHandler>();
     private errorHandlers = new Set<ErrorHandler>();
+    private pendingInitResolves = new Map<string, (value: InitSuccess | InitError) => void>();
 
     constructor(private config: TransportConfig) {}
 
@@ -87,13 +102,16 @@ export class TransportClient {
         }
     }
 
-    disconnect(): void {
-        this.clearReconnectTimeout();
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
-        }
-        this.setStatus("disconnected");
+    async disconnect(): Promise<DisconnectSuccess> {
+        return new Promise((resolve) => {
+            this.clearReconnectTimeout();
+            if (this.ws) {
+                this.ws.close();
+                this.ws = null;
+            }
+            this.setStatus("disconnected");
+            resolve({status: "success"});
+        });
     }
 
     send(data: string): void {
@@ -104,6 +122,53 @@ export class TransportClient {
 
     getStatus(): ConnectionStatus {
         return this.status;
+    }
+
+    async initReplay(script: string, sessionId: string): Promise<InitSuccess> {
+        return new Promise((resolve, reject) => {
+            const initId = crypto.randomUUID();
+            const payload = {
+                type: "init",
+                mode: "replay" as const,
+                script,
+                sessionId,
+                initId
+            };
+
+            this.pendingInitResolves.set(initId, (response) => {
+                if (response.status === "success") {
+                    resolve(response);
+                } else {
+                    reject(new Error(response.message));
+                }
+            });
+
+            this.send(JSON.stringify(payload));
+        });
+    }
+
+    async initLive(command: string, args: string[], cwd: string): Promise<InitSuccess> {
+        return new Promise((resolve, reject) => {
+            const initId = crypto.randomUUID();
+            const payload = {
+                type: "init",
+                mode: "live" as const,
+                command,
+                args,
+                cwd,
+                initId
+            };
+
+            this.pendingInitResolves.set(initId, (response) => {
+                if (response.status === "success") {
+                    resolve(response);
+                } else {
+                    reject(new Error(response.message));
+                }
+            });
+
+            this.send(JSON.stringify(payload));
+        });
     }
 
     private setStatus(status: ConnectionStatus): void {
@@ -119,13 +184,36 @@ export class TransportClient {
     }
 
     private handleMessage(event: MessageEvent): void {
-        const result = parseEnvelopeSafe(event.data as string);
+        console.log('[TransportClient] handleMessage called, data:', event.data);
+        // First, check if this is an init response (not wrapped in BridgeEnvelope)
+        const data = JSON.parse(event.data as string);
+        console.log('[TransportClient] Parsed data:', data);
         
+        // Handle init responses (success or error)
+        if (data.type === "init" && data.initId && this.pendingInitResolves.has(data.initId)) {
+            console.log('[TransportClient] This is an init response, resolving...');
+            const resolve = this.pendingInitResolves.get(data.initId)!;
+            this.pendingInitResolves.delete(data.initId);
+            resolve(data);
+            return;
+        }
+        
+        // Handle error responses from server (e.g., "script not found", "live mode not enabled")
+        if (data.error) {
+            console.log('[TransportClient] Server error response:', data.error);
+            this.emitError(new Error(data.error));
+            return;
+        }
+        
+        console.log('[TransportClient] Parsing as BridgeEnvelope...');
+        // For all other messages, parse as BridgeEnvelope
+        const result = parseEnvelopeSafe(event.data as string);
+
         if (result instanceof BridgeVersionError) {
             this.emitError(result);
             return;
         }
-        
+
         this.emitEnvelope(result);
     }
 

@@ -29,7 +29,7 @@ export {
 
 // Transport client
 export { TransportClient } from "./transport/index.js";
-export type { ConnectionStatus, TransportConfig, TransportEvents } from "./transport/index.js";
+export type { ConnectionStatus, TransportConfig, TransportEvents, InitSuccess } from "./transport/index.js";
 
 // Session controller
 export { SessionController, DefaultSessionCaptureInterceptor, ReplayController } from "./session/index.js";

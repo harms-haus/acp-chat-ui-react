@@ -2,11 +2,18 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@base-ui-components/react/button";
 import { SettingsSelect } from "@acp/chat-react";
 import { ReplayController } from "@acp/chat-core";
-import type { ReplayControllerState } from "@acp/chat-core";
+import type { ReplayControllerState, PermissionOption } from "@acp/chat-core";
 
 type DemoType = "tool-calling-thinking" | "long-context" | "permission-request";
 
 type ConnectionStatus = "disconnected" | "connecting" | "replaying" | "complete" | "error";
+
+interface PermissionRequest {
+  requestId: number;
+  sessionId: string;
+  toolCallId: string;
+  options: PermissionOption[];
+}
 
 interface ReplayPanelProps {
   onControllerChange?: (controller: ReplayController | null) => void;
@@ -33,11 +40,25 @@ const DEMO_TYPES: { id: DemoType; name: string; description: string }[] = [
 
 const DEFAULT_BRIDGE_URL = "ws://127.0.0.1:8765";
 
+function getUserFriendlyReplayError(rawMessage: string, scriptName: string, sessionId: string): string {
+  if (rawMessage.includes("Script not found") || rawMessage.includes("No such file")) {
+    return `Script not found: ${scriptName}. Check that the script exists in fixtures/replay-data/`;
+  }
+  if (rawMessage.includes("Session not found") || rawMessage.includes("session")) {
+    return `Session not found: ${sessionId}`;
+  }
+  if (rawMessage.includes("Failed to initialize")) {
+    return `Failed to initialize: ${rawMessage}`;
+  }
+  return rawMessage;
+}
+
 export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelProps) {
   const [selectedDemoType, setSelectedDemoType] = useState<DemoType | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
   const [controller, setController] = useState<ReplayController | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [pendingPermission, setPendingPermission] = useState<PermissionRequest | null>(null);
 
   useEffect(() => {
     onStatusChange?.(connectionStatus);
@@ -47,6 +68,8 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
     onControllerChange?.(controller);
   }, [controller, onControllerChange]);
 
+  const SESSION_ID = "session-1";
+
   const handleStartReplay = useCallback(async () => {
     if (!selectedDemoType) {
       setErrorMessage("Please select a demo type");
@@ -54,7 +77,7 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
     }
 
     if (controller) {
-      controller.disconnect();
+      await controller.disconnect();
       setController(null);
     }
 
@@ -85,6 +108,16 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
         setConnectionStatus("error");
       });
 
+      newController.on("permissionRequest", (params: any) => {
+        console.log("Permission request received:", params);
+        setPendingPermission({
+          requestId: params.requestId,
+          sessionId: params.sessionId,
+          toolCallId: params.toolCall.toolCallId,
+          options: params.options,
+        });
+      });
+
       newController.connect();
 
       await new Promise<void>((resolve, reject) => {
@@ -102,36 +135,37 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
         checkConnection();
       });
 
-      await newController.initialize({
-        name: "acp-chat-harness",
-        version: "0.0.1",
-      });
-
-      await newController.createSession(
-        "/",
-        [],
-        selectedDemoType,
-        "session-1",
-      );
+      // Initialize replay mode with script and session ID
+      await newController.initReplay(selectedDemoType, SESSION_ID);
 
       setController(newController);
       setConnectionStatus("replaying");
     } catch (err) {
       console.error("Failed to start replay:", err);
-      setErrorMessage(err instanceof Error ? err.message : "Failed to start replay");
+      const rawMessage = err instanceof Error ? err.message : "Failed to start replay";
+      const userFriendlyMessage = getUserFriendlyReplayError(rawMessage, selectedDemoType, SESSION_ID);
+      setErrorMessage(userFriendlyMessage);
       setConnectionStatus("error");
       setController(null);
     }
   }, [selectedDemoType, controller]);
 
-  const handleDisconnect = useCallback(() => {
+  const handleDisconnect = useCallback(async () => {
     if (controller) {
-      controller.disconnect();
+      await controller.disconnect();
       setController(null);
     }
     setConnectionStatus("disconnected");
     setErrorMessage(null);
+    setPendingPermission(null);
   }, [controller]);
+
+  const handlePermissionResponse = useCallback((optionId: string) => {
+    if (controller && pendingPermission) {
+      controller.respondToPermission(pendingPermission.requestId, optionId);
+      setPendingPermission(null);
+    }
+  }, [controller, pendingPermission]);
 
   const statusDisplay = useMemo(() => {
     switch (connectionStatus) {
@@ -240,6 +274,51 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
           }}
         >
           {errorMessage}
+        </div>
+      )}
+
+      {pendingPermission && (
+        <div
+          data-acp-permission-dialog
+          style={{
+            padding: "16px",
+            backgroundColor: "rgba(59, 130, 246, 0.1)",
+            borderRadius: "4px",
+            border: "1px solid var(--harness-accent)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <div style={{ color: "var(--harness-foreground)", fontSize: "13px", fontWeight: 500 }}>
+            Permission Request
+          </div>
+          <div style={{ color: "var(--harness-muted)", fontSize: "11px" }}>
+            Tool Call ID: {pendingPermission.toolCallId}
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            {pendingPermission.options.map((option) => (
+              <Button
+                key={option.optionId}
+                onClick={() => handlePermissionResponse(option.optionId)}
+                style={{
+                  padding: "8px 12px",
+                  backgroundColor: option.kind === "deny" || option.kind === "deny_always" 
+                    ? "rgba(239, 68, 68, 0.1)" 
+                    : "rgba(34, 197, 94, 0.1)",
+                  border: `1px solid ${option.kind === "deny" || option.kind === "deny_always" ? "var(--harness-error)" : "#22c55e"}`,
+                  borderRadius: "4px",
+                  color: option.kind === "deny" || option.kind === "deny_always" 
+                    ? "var(--harness-error)" 
+                    : "#22c55e",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                }}
+              >
+                {option.name}
+              </Button>
+            ))}
+          </div>
         </div>
       )}
     </div>

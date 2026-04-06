@@ -23,6 +23,7 @@ export interface ThreadProps {
   messageActions?: MessageAction[] | undefined;
   renderThoughtClosed?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
   renderThoughtOpen?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
+  onPermissionRespond?: (requestId: number, optionId: string) => void;
 }
 
 const MemoizedThreadItemRenderer = memo(ThreadItemRenderer);
@@ -40,6 +41,7 @@ export function Thread({
   messageActions,
   renderThoughtClosed,
   renderThoughtOpen,
+  onPermissionRespond,
 }: ThreadProps) {
   const timelineItems = useTimelineItems(store);
   const isConnected = useIsConnected(store);
@@ -107,6 +109,11 @@ export function Thread({
           currentThoughtGroup.endTime = toolCall.createdAt;
         }
       } else if (item.type === "permission_request") {
+        const req = item.data as NormalizedPermissionRequest;
+        // Only show permission requests that are still pending
+        if (req.status !== "pending") {
+          continue;
+        }
         if (currentThoughtGroup) {
           const isActive = isThoughtGroupActive([currentThoughtGroup], isAgentTyping);
           currentThoughtGroup.isActive = isActive;
@@ -163,10 +170,11 @@ export function Thread({
           {...(messageActions ? { messageActions } : {})}
           {...(renderThoughtClosed ? { renderThoughtClosed } : {})}
           {...(renderThoughtOpen ? { renderThoughtOpen } : {})}
+          {...(onPermissionRespond ? { onPermissionRespond } : {})}
         />
       );
     },
-    [messageActions, renderThoughtClosed, renderThoughtOpen, toolCalls]
+    [messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls]
   );
 
   const defaultEmptyState = useMemo(

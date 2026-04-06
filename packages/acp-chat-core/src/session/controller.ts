@@ -1,6 +1,6 @@
 import type { BridgeEnvelope } from "../generated/index.js";
 import { TransportClient } from "../transport/client.js";
-import type { ConnectionStatus } from "../transport/client.js";
+import type { ConnectionStatus, InitSuccess } from "../transport/client.js";
 
 export interface StartAgentConfig {
   command: string;
@@ -225,6 +225,10 @@ export class SessionController {
     const json = JSON.stringify(envelope);
     this.transport.send(json);
     this.emitTraffic("out", envelope);
+  }
+
+  async initLive(command: string, args: string[], cwd: string): Promise<InitSuccess> {
+    return this.transport.initLive(command, args, cwd);
   }
 
   private sendNotification(method: string, params: unknown): void {

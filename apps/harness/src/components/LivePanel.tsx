@@ -12,6 +12,11 @@ interface LivePanelProps {
   }) => void;
   onDisconnect: () => void;
   onCapture?: (session: CapturedSession) => void;
+  onInitLive?: (config: {
+    command: string;
+    args: string[];
+    cwd: string;
+  }) => Promise<{ status: "success"; mode: "replay" | "live" }>;
   isConnected: boolean;
   isCapturing: boolean;
   captureInterceptor?: {
@@ -27,10 +32,22 @@ interface ToastState {
   type: "success" | "error";
 }
 
+function getUserFriendlyLiveError(rawMessage: string): string {
+  const lowerMessage = rawMessage.toLowerCase();
+  if (lowerMessage.includes("live mode not enabled") || lowerMessage.includes("not enabled")) {
+    return "Live mode not enabled on server. Start server with --live flag.";
+  }
+  if (lowerMessage.includes("failed to initialize")) {
+    return `Failed to initialize: ${rawMessage}`;
+  }
+  return rawMessage;
+}
+
 export function LivePanel({
   onConnect,
   onDisconnect,
   onCapture,
+  onInitLive,
   isConnected,
   isCapturing,
   captureInterceptor,
@@ -80,6 +97,8 @@ export function LivePanel({
     return "";
   });
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>({
     message: "",
     visible: false,
@@ -103,15 +122,49 @@ export function LivePanel({
     setToast((prev) => ({ ...prev, visible: false }));
   }, []);
 
-  const handleConnect = useCallback(() => {
+  const handleConnect = useCallback(async () => {
     if (!command) return;
     setIsConnecting(true);
+    setInitError(null);
+    
     onConnect({ bridgeUrl, command, args, cwd });
-    setTimeout(() => setIsConnecting(false), 1000);
-  }, [onConnect, bridgeUrl, command, args, cwd]);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (onInitLive) {
+      setIsInitializing(true);
+      try {
+        const argsArray = args.trim() ? args.trim().split(/\s+/) : [];
+        const result = await onInitLive({
+          command,
+          args: argsArray,
+          cwd: cwd.trim() || ".",
+        });
+        
+        if (result.status === "success") {
+          showToast(`Live mode initialized (${result.mode})`, "success");
+        }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const userFriendlyError = getUserFriendlyLiveError(errorMessage);
+      setInitError(userFriendlyError);
+      showToast(userFriendlyError, "error");
+      onDisconnect();
+    } finally {
+        setIsInitializing(false);
+      }
+    }
+    
+    setIsConnecting(false);
+  }, [onConnect, onInitLive, onDisconnect, bridgeUrl, command, args, cwd, showToast]);
 
-  const handleDisconnect = useCallback(() => {
-    onDisconnect();
+  const handleDisconnect = useCallback(async () => {
+    setIsConnecting(true);
+    try {
+      await onDisconnect();
+    } finally {
+      setIsConnecting(false);
+      setInitError(null);
+    }
   }, [onDisconnect]);
 
   const handleCapture = useCallback(() => {
@@ -213,7 +266,7 @@ export function LivePanel({
     return null;
   }
 
-  const isFormDisabled = isConnected || isConnecting;
+  const isFormDisabled = isConnected || isConnecting || isInitializing;
 
   return (
     <div
@@ -388,11 +441,13 @@ export function LivePanel({
             color: "var(--harness-text)",
           }}
         >
-          {isConnected
-            ? "Disconnect"
-            : isConnecting
-              ? "Connecting..."
-              : "Connect Live"}
+      {isConnected
+        ? "Disconnect"
+        : isInitializing
+        ? "Initializing..."
+        : isConnecting
+        ? "Connecting..."
+        : "Connect Live"}
         </Button>
 
         <Button
@@ -432,16 +487,32 @@ export function LivePanel({
         </Button>
       </div>
 
-      <p
-        style={{
-          color: "var(--harness-muted)",
-          fontSize: "11px",
-          marginTop: "4px",
-        }}
-      >
-        Start bridge with: cargo run --manifest-path crates/acp-bridge/Cargo.toml
-        -- dynamic
-      </p>
+  {initError && (
+    <div
+      style={{
+        padding: "8px 12px",
+        backgroundColor: "var(--harness-error-bg, rgba(220, 38, 38, 0.1))",
+        border: "1px solid var(--harness-error)",
+        borderRadius: "4px",
+        color: "var(--harness-error)",
+        fontSize: "13px",
+        marginTop: "8px",
+      }}
+    >
+      {initError}
+    </div>
+  )}
+
+  <p
+    style={{
+      color: "var(--harness-muted)",
+      fontSize: "11px",
+      marginTop: "4px",
+    }}
+  >
+    Start bridge with: cargo run --manifest-path crates/acp-bridge/Cargo.toml
+    -- dynamic
+  </p>
 
       {toast.visible && (
         <button

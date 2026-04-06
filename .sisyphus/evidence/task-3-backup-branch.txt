@@ -1,0 +1,40 @@
+TASK 3: Backup Branch Creation
+================================
+
+Date: 2025-04-05
+
+PURPOSE:
+--------
+Create a safety backup of v1 replay code before deletion in Task 5.
+This ensures the v1 replay implementation can be recovered if needed.
+
+BACKUP BRANCH DETAILS:
+----------------------
+Branch Name: backup/replay-v1-before-deletion
+Remote: origin/backup/replay-v1-before-deletion
+Source Commit: d3897567743381a4b7966ed62e10afa745e47f4a
+Base Branch: main (at time of backup)
+
+VERIFICATION:
+-------------
+✓ Branch created locally: backup/replay-v1-before-deletion
+✓ Branch pushed to remote: origin/backup/replay-v1-before-deletion
+✓ Remote branch verified: d3897567743381a4b7966ed62e10afa745e47f4a
+
+BACKUP COMMITS:
+---------------
+d389756 Refactored replay/live modes
+3e083d9 Remove duplication
+1919e08 chore: make pnpm debug kill old servers and clear Vite cache
+
+RECOVERY INSTRUCTIONS:
+----------------------
+If v1 replay code needs to be restored:
+1. git checkout backup/replay-v1-before-deletion
+2. Review the code in that branch
+3. Cherry-pick or merge as needed
+
+SAFETY NOTE:
+-------------
+This backup branch should NOT be deleted until the v2 replay implementation
+is fully verified and stable.

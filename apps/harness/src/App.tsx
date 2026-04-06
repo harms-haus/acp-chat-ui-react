@@ -19,6 +19,7 @@ import {
   type StartAgentConfig,
   ReplayController,
   type SessionCaptureInterceptor,
+  type InitSuccess,
 } from "@acp/chat-core";
 import { SettingsRow } from "./SettingsRow.js";
 import { ReplayPanel } from "./components/ReplayPanel.js";
@@ -151,6 +152,12 @@ function ThreadPanel({
   controller: SessionController | ReplayController;
   renderSettingsRow?: (props: SettingsRowRenderProps) => React.ReactNode;
 }) {
+  const handlePermissionRespond = useCallback((requestId: number, optionId: string) => {
+    if (controller && 'respondToPermission' in controller) {
+      controller.respondToPermission(requestId, optionId);
+    }
+  }, [controller]);
+
   return (
     <div
       data-acp-thread-panel
@@ -165,7 +172,7 @@ function ThreadPanel({
       }}
     >
       <div style={{ flex: "1 1 0", minHeight: 0, overflow: "hidden" }}>
-        <Thread store={store} layout="centered" followScroll={true} />
+        <Thread store={store} layout="centered" followScroll={true} onPermissionRespond={handlePermissionRespond} />
       </div>
       <div
         data-acp-composer-panel
@@ -401,7 +408,7 @@ export default function App() {
     replayControllerRef.current = controller;
 
     if (controller) {
-      const store = new AcpStore(controller as unknown as SessionController);
+      const store = new AcpStore(controller as unknown as SessionController, { enableBatching: false });
       storeRef.current = store;
       setActiveStore(store);
 
@@ -458,6 +465,13 @@ export default function App() {
 
     connectToBridge(config.bridgeUrl, true, agentConfig);
   }, [connectToBridge]);
+
+  const handleInitLive = useCallback(async (config: { command: string; args: string[]; cwd: string }) => {
+    if (!controllerRef.current) {
+      throw new Error("Controller not available");
+    }
+    return controllerRef.current.initLive(config.command, config.args, config.cwd);
+  }, []);
 
   const handleDisconnectLive = useCallback(() => {
     disconnect();
@@ -555,17 +569,18 @@ export default function App() {
           />
         )}
 
-        {isLiveModeEnabled && activeTab === "live" && (
-          <LivePanel
-            onConnect={handleConnectLive}
-            onDisconnect={handleDisconnectLive}
-            onCapture={handleCaptureSession}
-            isConnected={connectionStatus === "connected"}
-            isCapturing={isCapturing}
-            captureInterceptor={null}
-            store={activeStore}
-          />
-        )}
+{isLiveModeEnabled && activeTab === "live" && (
+  <LivePanel
+    onConnect={handleConnectLive}
+    onDisconnect={handleDisconnectLive}
+    onCapture={handleCaptureSession}
+    onInitLive={handleInitLive}
+    isConnected={connectionStatus === "connected"}
+    isCapturing={isCapturing}
+    captureInterceptor={null}
+    store={activeStore}
+  />
+)}
 
         <Separator orientation="horizontal" style={{ margin: "16px 0" }} />
 

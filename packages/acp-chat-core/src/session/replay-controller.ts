@@ -4,6 +4,7 @@ import type { ConnectionStatus } from "../transport/client.js";
 import type {
   SessionControllerState,
   PermissionRequestParams,
+  PermissionOption,
 } from "./controller.js";
 
 // ---------------------------------------------------------------------------
@@ -213,9 +214,17 @@ export class ReplayController {
     this.transport.connect();
   }
 
+  /**
+   * Initialize replay mode with script and session ID.
+   * Must be called after connect() and before creating sessions.
+   */
+  async initReplay(script: string, sessionId: string): Promise<{ status: "success"; mode: "replay" | "live" }> {
+    return this.transport.initReplay(script, sessionId);
+  }
+
   /** Close the WebSocket and reject all pending requests. */
-  disconnect(): void {
-    this.transport.disconnect();
+  async disconnect(): Promise<void> {
+    await this.transport.disconnect();
     this.rejectAllPending(new Error("Disconnected"));
   }
 
@@ -342,14 +351,31 @@ export class ReplayController {
     requestId: number,
     optionId: string,
   ): Promise<void> {
-    this.sendResponse(requestId, {
-      outcome: { outcome: "selected", optionId },
-    });
+    console.log('[ReplayController] respondToPermission called', { requestId, optionId });
+    // Send permission_response message to server
+    const response = {
+      type: "permission_response",
+      requestId,
+      action: "approve",
+      optionId,
+    };
+    console.log('[ReplayController] Sending permission response:', response);
+    const json = JSON.stringify(response);
+    this.transport.send(json);
+    console.log('[ReplayController] Message sent via transport.send()');
   }
 
-  /** Cancel a pending permission request. */
+  /** Cancel a pending permission request (send deny response). */
   async cancelPermission(requestId: number): Promise<void> {
-    this.sendResponse(requestId, { outcome: { outcome: "cancelled" } });
+    console.log('[ReplayController] cancelPermission called', { requestId });
+    const response = {
+      type: "permission_response",
+      requestId,
+      action: "deny",
+    };
+    const json = JSON.stringify(response);
+    this.transport.send(json);
+    console.log('[ReplayController] cancelPermission sent via transport.send()');
   }
 
   // ---------------------------------------------------------------------------
@@ -559,6 +585,27 @@ export class ReplayController {
       const requestId = obj.id as number | undefined;
       if (params && typeof requestId === "number") {
         this.emitPermissionRequest(params, requestId);
+      }
+      return;
+    }
+    
+    // --- Permission request from replay stream (session/update with permission_request) ---
+    if ("method" in obj && obj.method === "session/update") {
+      const params = obj.params as Record<string, unknown> | undefined;
+      if (params && typeof params.update === "object" && params.update !== null) {
+        const update = params.update as Record<string, unknown>;
+        if (update.sessionUpdate === "permission_request" && update.status === "pending") {
+          // Extract permission request data and emit as permissionRequest event
+          const permissionRequest = {
+            sessionId: update.sessionId as string,
+            toolCall: {
+              toolCallId: update.toolCallId as string,
+            },
+            options: update.options as PermissionOption[],
+            requestId: update.requestId as number,
+          };
+          this.emitPermissionRequest(permissionRequest, update.requestId as number);
+        }
       }
       return;
     }
