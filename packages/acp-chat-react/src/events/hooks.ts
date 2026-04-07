@@ -189,7 +189,7 @@ class ThoughtEventSubscription {
       const updateType = update.update?.type ?? update.update?.sessionUpdate;
 
       // Only track thought-related events
-      if (updateType === "agent_thought_chunk") {
+      if (updateType === "agent_thought_chunk" || updateType === "thought_update") {
         const thoughtUpdate = update.update as { thoughtId?: string };
         const id = thoughtUpdate.thoughtId ?? thoughtId;
 
