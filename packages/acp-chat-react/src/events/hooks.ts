@@ -1,5 +1,8 @@
-import { useSyncExternalStore, useRef } from "react";
+import { useSyncExternalStore, useRef, useMemo, useCallback } from "react";
 import type { SessionController } from "@acp/chat-core";
+
+// Stable empty snapshot for server-side rendering to prevent hydration mismatches
+const EMPTY_SERVER_SNAPSHOT: { activeThoughts: string[]; activeToolCalls: string[] } = { activeThoughts: [], activeToolCalls: [] };
 
 /**
  * Event types emitted by SessionController
@@ -106,7 +109,7 @@ class ChatEventSubscription {
     };
 
     // Type-safe subscription using switch to match SessionController overloads
-    let unsubscribe: () => void;
+    let unsubscribe: () => void = () => {};
     const event = eventType ?? "sessionUpdate";
     switch (event) {
       case "statusChange":
@@ -127,6 +130,8 @@ class ChatEventSubscription {
       case "permissionRequest":
         unsubscribe = this.sessionController.on("permissionRequest", handler as any);
         break;
+      default:
+        throw new Error(`Unexpected event type: ${event satisfies never}`);
     }
 
     return unsubscribe;
@@ -280,6 +285,7 @@ class ActiveItemsSubscription {
   private activeThoughts = new Set<string>();
   private activeToolCalls = new Set<string>();
   private sessionController: SessionController;
+  private _cachedSnapshot: { activeThoughts: string[]; activeToolCalls: string[] } | null = null;
 
   constructor(sessionController: SessionController) {
     this.sessionController = sessionController;
@@ -289,13 +295,19 @@ class ActiveItemsSubscription {
     const unsubscribeSessionUpdate = this.sessionController.on("sessionUpdate", (params: unknown) => {
       const update = params as { sessionId?: string; update?: Record<string, unknown> };
       const updateType = update.update?.type ?? update.update?.sessionUpdate;
+      let changed = false;
 
       // Track thought lifecycle
       if (updateType === "agent_thought_chunk") {
         const thoughtUpdate = update.update as { thoughtId?: string; status?: string };
         if (thoughtUpdate.thoughtId) {
-          this.activeThoughts.add(thoughtUpdate.thoughtId);
-          onStoreChange();
+          if (thoughtUpdate.status === "completed" || thoughtUpdate.status === "done") {
+            this.activeThoughts.delete(thoughtUpdate.thoughtId);
+            changed = true;
+          } else {
+            this.activeThoughts.add(thoughtUpdate.thoughtId);
+            changed = true;
+          }
         }
       }
 
@@ -303,13 +315,20 @@ class ActiveItemsSubscription {
       if (updateType === "tool_call" || updateType === "tool_call_update") {
         const toolCallUpdate = update.update as { toolCallId?: string; status?: string };
         if (toolCallUpdate.toolCallId) {
-          if (toolCallUpdate.status === "completed") {
+          if (toolCallUpdate.status === "completed" || toolCallUpdate.status === "done") {
             this.activeToolCalls.delete(toolCallUpdate.toolCallId);
+            changed = true;
           } else {
             this.activeToolCalls.add(toolCallUpdate.toolCallId);
+            changed = true;
           }
-          onStoreChange();
         }
+      }
+
+      // Invalidate cache when data changes
+      if (changed) {
+        this._cachedSnapshot = null;
+        onStoreChange();
       }
     });
 
@@ -317,6 +336,7 @@ class ActiveItemsSubscription {
     const unsubscribeClearing = this.sessionController.on("sessionClearing", () => {
       this.activeThoughts.clear();
       this.activeToolCalls.clear();
+      this._cachedSnapshot = null;
       onStoreChange();
     });
 
@@ -330,10 +350,13 @@ class ActiveItemsSubscription {
     activeThoughts: string[];
     activeToolCalls: string[];
   } {
-    return {
-      activeThoughts: Array.from(this.activeThoughts),
-      activeToolCalls: Array.from(this.activeToolCalls),
-    };
+    if (!this._cachedSnapshot) {
+      this._cachedSnapshot = {
+        activeThoughts: Array.from(this.activeThoughts),
+        activeToolCalls: Array.from(this.activeToolCalls),
+      };
+    }
+    return this._cachedSnapshot;
   }
 
   getServerSnapshot(): { activeThoughts: string[]; activeToolCalls: string[] } {
@@ -341,38 +364,38 @@ class ActiveItemsSubscription {
   }
 }
 
-// Global subscription managers (lazy initialized)
-let chatEventSubscription: ChatEventSubscription | undefined;
-let thoughtEventSubscription: ThoughtEventSubscription | undefined;
-let toolCallEventSubscription: ToolCallEventSubscription | undefined;
-let activeItemsSubscription: ActiveItemsSubscription | undefined;
+// WeakMap-based subscription managers keyed by SessionController
+const chatEventSubscriptions = new WeakMap<SessionController, ChatEventSubscription>();
+const thoughtEventSubscriptions = new WeakMap<SessionController, ThoughtEventSubscription>();
+const toolCallEventSubscriptions = new WeakMap<SessionController, ToolCallEventSubscription>();
+const activeItemsSubscriptions = new WeakMap<SessionController, ActiveItemsSubscription>();
 
 function getChatEventSubscription(controller: SessionController): ChatEventSubscription {
-  if (!chatEventSubscription) {
-    chatEventSubscription = new ChatEventSubscription(controller);
+  if (!chatEventSubscriptions.has(controller)) {
+    chatEventSubscriptions.set(controller, new ChatEventSubscription(controller));
   }
-  return chatEventSubscription;
+  return chatEventSubscriptions.get(controller)!;
 }
 
 function getThoughtEventSubscription(controller: SessionController): ThoughtEventSubscription {
-  if (!thoughtEventSubscription) {
-    thoughtEventSubscription = new ThoughtEventSubscription(controller);
+  if (!thoughtEventSubscriptions.has(controller)) {
+    thoughtEventSubscriptions.set(controller, new ThoughtEventSubscription(controller));
   }
-  return thoughtEventSubscription;
+  return thoughtEventSubscriptions.get(controller)!;
 }
 
 function getToolCallEventSubscription(controller: SessionController): ToolCallEventSubscription {
-  if (!toolCallEventSubscription) {
-    toolCallEventSubscription = new ToolCallEventSubscription(controller);
+  if (!toolCallEventSubscriptions.has(controller)) {
+    toolCallEventSubscriptions.set(controller, new ToolCallEventSubscription(controller));
   }
-  return toolCallEventSubscription;
+  return toolCallEventSubscriptions.get(controller)!;
 }
 
 function getActiveItemsSubscription(controller: SessionController): ActiveItemsSubscription {
-  if (!activeItemsSubscription) {
-    activeItemsSubscription = new ActiveItemsSubscription(controller);
+  if (!activeItemsSubscriptions.has(controller)) {
+    activeItemsSubscriptions.set(controller, new ActiveItemsSubscription(controller));
   }
-  return activeItemsSubscription;
+  return activeItemsSubscriptions.get(controller)!;
 }
 
 /**
@@ -387,7 +410,7 @@ export function useChatEvent<T extends ChatEventType>(
   eventType: T
 ): ChatEvent<T, ChatEventPayloads[T]>[] {
   const subscription = getChatEventSubscription(controller);
-  const eventsRef = useRef<ChatEvent<T, ChatEventPayloads[T]>[]>([]);
+  const lastSnapshotRef = useRef<{ snapshot: ChatEvent<T, ChatEventPayloads[T]>[]; version: number }>({ snapshot: [], version: 0 });
 
   const subscribe = (onStoreChange: () => void) => {
     return subscription.subscribe(onStoreChange, eventType);
@@ -395,12 +418,19 @@ export function useChatEvent<T extends ChatEventType>(
 
   const getSnapshot = (): ChatEvent<T, ChatEventPayloads[T]>[] => {
     const events = subscription.getEvents(eventType) as ChatEvent<T, ChatEventPayloads[T]>[];
-    eventsRef.current = events;
-    return events;
+    // Only create new snapshot array if events actually changed
+    const lastSnapshot = lastSnapshotRef.current.snapshot;
+    const lastTimestamp = lastSnapshot.length > 0 ? lastSnapshot[lastSnapshot.length - 1]?.timestamp : undefined;
+    const currentTimestamp = events.length > 0 ? events[events.length - 1]?.timestamp : undefined;
+    
+    if (events.length !== lastSnapshot.length || currentTimestamp !== lastTimestamp) {
+      lastSnapshotRef.current = { snapshot: [...events], version: lastSnapshotRef.current.version + 1 };
+    }
+    return lastSnapshotRef.current.snapshot;
   };
 
   const getServerSnapshot = (): ChatEvent<T, ChatEventPayloads[T]>[] => {
-    return subscription.getServerSnapshot() as ChatEvent<T, ChatEventPayloads[T]>[];
+    return [];
   };
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
@@ -414,27 +444,46 @@ export function useChatEvent<T extends ChatEventType>(
  * @returns Array of events for the specified thought
  */
 export function useThoughtEvents(
-  controller: SessionController,
+  controller: SessionController | undefined,
   thoughtId: string
 ): ChatEvent<"sessionUpdate", unknown>[] {
-  const subscription = getThoughtEventSubscription(controller);
-  const eventsRef = useRef<ChatEvent<"sessionUpdate", unknown>[]>([]);
-
-  const subscribe = (onStoreChange: () => void) => {
-    return subscription.subscribe(onStoreChange, thoughtId);
-  };
-
-  const getSnapshot = () => {
+  const emptyRef = useRef<ChatEvent<"sessionUpdate", unknown>[]>([]);
+  const lastSnapshotRef = useRef<{ snapshot: ChatEvent<"sessionUpdate", unknown>[]; version: number }>({ snapshot: [], version: 0 });
+  
+  // Always call hooks unconditionally
+  const subscribeFn = useMemo(() => {
+    if (!controller) {
+      return (_onStoreChange: () => void) => () => {};
+    }
+    const subscription = getThoughtEventSubscription(controller);
+    return (onStoreChange: () => void) => subscription.subscribe(onStoreChange, thoughtId);
+  }, [controller, thoughtId]);
+  
+  const getSnapshotFn = useCallback(() => {
+    if (!controller) {
+      return emptyRef.current;
+    }
+    const subscription = getThoughtEventSubscription(controller);
     const events = subscription.getEvents(thoughtId);
-    eventsRef.current = events;
-    return events;
-  };
+    // Only create new snapshot array if events actually changed
+    const lastSnapshot = lastSnapshotRef.current.snapshot;
+    const lastTimestamp = lastSnapshot.length > 0 ? lastSnapshot[lastSnapshot.length - 1]?.timestamp : undefined;
+    const currentTimestamp = events.length > 0 ? events[events.length - 1]?.timestamp : undefined;
+    
+    if (events.length !== lastSnapshot.length || currentTimestamp !== lastTimestamp) {
+      lastSnapshotRef.current = { snapshot: [...events], version: lastSnapshotRef.current.version + 1 };
+    }
+    return lastSnapshotRef.current.snapshot;
+  }, [controller, thoughtId]);
+  
+  const getServerSnapshotFn = useCallback(() => {
+    if (!controller) {
+      return [] as ChatEvent<"sessionUpdate", unknown>[];
+    }
+    return getThoughtEventSubscription(controller).getServerSnapshot();
+  }, [controller]);
 
-  const getServerSnapshot = () => {
-    return subscription.getServerSnapshot();
-  };
-
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useSyncExternalStore(subscribeFn, getSnapshotFn, getServerSnapshotFn);
 }
 
 /**
@@ -445,27 +494,45 @@ export function useThoughtEvents(
  * @returns Array of events for the specified tool call
  */
 export function useToolCallEvents(
-  controller: SessionController,
+  controller: SessionController | undefined,
   toolCallId: string
 ): ChatEvent<"sessionUpdate", unknown>[] {
-  const subscription = getToolCallEventSubscription(controller);
-  const eventsRef = useRef<ChatEvent<"sessionUpdate", unknown>[]>([]);
-
-  const subscribe = (onStoreChange: () => void) => {
-    return subscription.subscribe(onStoreChange, toolCallId);
-  };
-
-  const getSnapshot = () => {
+  const emptyRef = useRef<ChatEvent<"sessionUpdate", unknown>[]>([]);
+  const lastSnapshotRef = useRef<{ snapshot: ChatEvent<"sessionUpdate", unknown>[]; version: number }>({ snapshot: [], version: 0 });
+  
+  const subscribeFn = useMemo(() => {
+    if (!controller) {
+      return (_onStoreChange: () => void) => () => {};
+    }
+    const subscription = getToolCallEventSubscription(controller);
+    return (onStoreChange: () => void) => subscription.subscribe(onStoreChange, toolCallId);
+  }, [controller, toolCallId]);
+  
+  const getSnapshotFn = useCallback(() => {
+    if (!controller) {
+      return emptyRef.current;
+    }
+    const subscription = getToolCallEventSubscription(controller);
     const events = subscription.getEvents(toolCallId);
-    eventsRef.current = events;
-    return events;
-  };
+    // Only create new snapshot array if events actually changed
+    const lastSnapshot = lastSnapshotRef.current.snapshot;
+    const lastTimestamp = lastSnapshot.length > 0 ? lastSnapshot[lastSnapshot.length - 1]?.timestamp : undefined;
+    const currentTimestamp = events.length > 0 ? events[events.length - 1]?.timestamp : undefined;
+    
+    if (events.length !== lastSnapshot.length || currentTimestamp !== lastTimestamp) {
+      lastSnapshotRef.current = { snapshot: [...events], version: lastSnapshotRef.current.version + 1 };
+    }
+    return lastSnapshotRef.current.snapshot;
+  }, [controller, toolCallId]);
+  
+  const getServerSnapshotFn = useCallback(() => {
+    if (!controller) {
+      return [] as ChatEvent<"sessionUpdate", unknown>[];
+    }
+    return getToolCallEventSubscription(controller).getServerSnapshot();
+  }, [controller]);
 
-  const getServerSnapshot = () => {
-    return subscription.getServerSnapshot();
-  };
-
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useSyncExternalStore(subscribeFn, getSnapshotFn, getServerSnapshotFn);
 }
 
 /**
@@ -475,30 +542,31 @@ export function useToolCallEvents(
  * @returns Object containing arrays of active thought IDs and tool call IDs
  */
 export function useActiveItems(
-  controller: SessionController
+  controller: SessionController | undefined
 ): {
   activeThoughts: string[];
   activeToolCalls: string[];
 } {
-  const subscription = getActiveItemsSubscription(controller);
-  const itemsRef = useRef<{ activeThoughts: string[]; activeToolCalls: string[] }>({
-    activeThoughts: [],
-    activeToolCalls: [],
-  });
+  const emptyRef = useRef<{ activeThoughts: string[]; activeToolCalls: string[] }>({ activeThoughts: [], activeToolCalls: [] });
+  
+  const subscribeFn = useMemo(() => {
+    if (!controller) {
+      return (_onStoreChange: () => void) => () => {};
+    }
+    const subscription = getActiveItemsSubscription(controller);
+    return subscription.subscribe.bind(subscription);
+  }, [controller]);
+  
+  const getSnapshotFn = useCallback(() => {
+    if (!controller) {
+      return emptyRef.current;
+    }
+    return getActiveItemsSubscription(controller).getActiveItems();
+  }, [controller]);
+  
+  const getServerSnapshotFn = useCallback(() => {
+    return EMPTY_SERVER_SNAPSHOT;
+  }, []);
 
-  const subscribe = (onStoreChange: () => void) => {
-    return subscription.subscribe(onStoreChange);
-  };
-
-  const getSnapshot = () => {
-    const items = subscription.getActiveItems();
-    itemsRef.current = items;
-    return items;
-  };
-
-  const getServerSnapshot = () => {
-    return subscription.getServerSnapshot();
-  };
-
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useSyncExternalStore(subscribeFn, getSnapshotFn, getServerSnapshotFn);
 }
