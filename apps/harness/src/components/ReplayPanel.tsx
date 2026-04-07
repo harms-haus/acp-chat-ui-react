@@ -3,6 +3,9 @@ import { Button } from "@base-ui-components/react/button";
 import { SettingsSelect } from "@acp/chat-react";
 import { ReplayController } from "@acp/chat-core";
 import type { ReplayControllerState, PermissionOption } from "@acp/chat-core";
+import { SpeedSlider } from "./SpeedSlider";
+
+const DEFAULT_REPLAY_SPEED = 65;
 
 type DemoType = "tool-calling-thinking" | "long-context" | "permission-request";
 
@@ -59,6 +62,10 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
   const [controller, setController] = useState<ReplayController | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pendingPermission, setPendingPermission] = useState<PermissionRequest | null>(null);
+  const [replaySpeed, setReplaySpeed] = useState<number>(() => {
+    const saved = localStorage.getItem("replay-speed");
+    return saved ? parseInt(saved, 10) : DEFAULT_REPLAY_SPEED;
+  });
 
   useEffect(() => {
     onStatusChange?.(connectionStatus);
@@ -135,8 +142,8 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
         checkConnection();
       });
 
-      // Initialize replay mode with script and session ID
-      await newController.initReplay(selectedDemoType, SESSION_ID);
+      // Initialize replay mode with script, session ID, and speed
+      await newController.initReplay(selectedDemoType, SESSION_ID, replaySpeed);
 
       setController(newController);
       setConnectionStatus("replaying");
@@ -148,7 +155,7 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
       setConnectionStatus("error");
       setController(null);
     }
-  }, [selectedDemoType, controller]);
+  }, [selectedDemoType, controller, replaySpeed]);
 
   const handleDisconnect = useCallback(async () => {
     if (controller) {
@@ -166,6 +173,12 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
       setPendingPermission(null);
     }
   }, [controller, pendingPermission]);
+
+  const handleSpeedChange = useCallback((speed: number) => {
+    setReplaySpeed(speed);
+    localStorage.setItem("replay-speed", String(speed));
+    controller?.setReplaySpeed(speed);
+  }, [controller]);
 
   const statusDisplay = useMemo(() => {
     switch (connectionStatus) {
@@ -260,6 +273,8 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
           </span>
         </div>
       </div>
+
+      <SpeedSlider value={replaySpeed} onChange={handleSpeedChange} />
 
       {errorMessage && (
         <div

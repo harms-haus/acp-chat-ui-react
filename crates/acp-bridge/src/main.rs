@@ -53,6 +53,7 @@ let server_config = ServerConfig {
       session_id: cli.session_id,
       file_path: cli.file,
       replay_data_dir: Some(cli.replay_data_dir),
+      tps: 65.0,
     },
   };
 

@@ -35,6 +35,8 @@ pub struct InitMessage {
     pub args: Option<Vec<String>>,
     #[serde(default)]
     pub cwd: Option<String>,
+    #[serde(default, rename = "replaySpeed")]
+    pub replay_speed: Option<f64>,
 }
 
 /// Disconnect message structure from client
@@ -112,14 +114,13 @@ async fn run_client_session(
                 use tokio_tungstenite::tungstenite::Message;
                 use crate::modes::replay_v2::PermissionResponseMessage;
                 use crate::modes::replay_v2::PermissionResponse;
+                use std::sync::atomic::{AtomicU64, Ordering};
 
-                // Create channel for permission responses
                 let (perm_tx, perm_rx) = mpsc::channel::<PermissionResponse>(1);
-
-                // Create channel for client disconnect notifications
                 let (disconnect_tx, disconnect_rx) = broadcast::channel::<()>(1);
 
-                // Reunite the stream for replay_v2 mode
+                let tps = std::sync::Arc::new(AtomicU64::new((replay_config.tps * 100.0) as u64));
+
                 let reunited_stream = match ws_tx.reunite(ws_rx) {
                     Ok(stream) => stream,
                     Err(_) => {
@@ -128,11 +129,10 @@ async fn run_client_session(
                     }
                 };
 
-                // Split stream for message reading
                 let (stream_tx, mut stream_rx) = reunited_stream.split();
 
-                // Spawn background task to read WebSocket messages and forward permission responses
                 let disconnect_tx_clone = disconnect_tx.clone();
+                let tps_clone = tps.clone();
                 let msg_reader_handle = tokio::spawn(async move {
                     use futures_util::StreamExt;
                     tracing::info!("Message reader task started");
@@ -153,12 +153,20 @@ async fn run_client_session(
                                             Err(e) => tracing::error!("Failed to forward permission response: {}", e),
                                         }
                                     }
-                                } else {
-                                    tracing::debug!("Message is not a permission_response: {}", text);
+                                } else if let Ok(val) = serde_json::from_str::<serde_json::Value>(&text) {
+                                    if val.get("method").and_then(|v| v.as_str()) == Some("set_replay_speed") {
+                                        if let Some(speed) = val.get("params").and_then(|p| p.get("replaySpeed")).and_then(|v| v.as_f64()) {
+                                            if speed > 0.0 {
+                                                tps_clone.store((speed * 100.0) as u64, Ordering::Relaxed);
+                                                tracing::info!("Mid-replay speed changed to {} TPS", speed);
+                                            }
+                                        }
+                                    } else {
+                                        tracing::debug!("Message is not a permission_response or set_replay_speed: {}", text);
+                                    }
                                 }
                             }
                             Ok(Message::Close(_)) | Err(_) => {
-                                // Notify that client disconnected
                                 tracing::info!("Client disconnected in message reader");
                                 let _ = disconnect_tx_clone.send(());
                                 break;
@@ -169,17 +177,13 @@ async fn run_client_session(
                     tracing::info!("Message reader task ended");
                 });
 
-                // Stream replay events directly (bypasses JSON-RPC layer)
                 let replay_shutdown = shutdown_tx.subscribe();
-                let result = stream_replay_after_init(replay_config, stream_tx, replay_shutdown, perm_rx, disconnect_rx).await;
+                let result = stream_replay_after_init(replay_config, stream_tx, replay_shutdown, perm_rx, disconnect_rx, tps).await;
 
-                // Clean up message reader
                 msg_reader_handle.abort();
 
-                // Return result
                 result?;
 
-                // After replay completes, connection is kept alive but no more events
                 break;
             }
             _ => {
@@ -307,12 +311,12 @@ async fn handle_init_message(
 
             tracing::info!("Replay mode initialized: {}/{}", script, session_id);
             
-    // Create replay config for streaming - use relative path from workspace root
     let replay_config = ReplayV2Config {
       demo_type: Some(script.clone()),
       session_id: Some(session_id.clone()),
       file_path: Some(format!("{}/{}/{}", base_dir, script, session_id)),
       replay_data_dir: Some(base_dir.to_string()),
+      tps: init_msg.replay_speed.unwrap_or(65.0),
     };
             
             Ok(SessionState::ReplayLoaded { config: replay_config })

@@ -1,4 +1,4 @@
-{"version":1,"seq":0,"timestamp_ms":1701000000000,"type":"replay_metadata","captured_at_ms":1701000000000,"total_envelopes":10,"description":"Session 2","tokenCount":4,"timestamp":1701000000000,"direction":"in"}
+{"version":1,"seq":0,"timestamp_ms":1701000000000,"type":"replay_metadata","captured_at_ms":1701000000000,"total_envelopes":4,"description":"Session 2","tokenCount":4,"timestamp":1701000000000,"direction":"in"}
 {"version":1,"seq":1,"timestamp_ms":1701000000100,"type":"bridge_status","status":"starting","tokenCount":4,"timestamp":1701000000100,"direction":"in"}
 {"version":1,"seq":2,"timestamp_ms":1701000000200,"type":"bridge_status","status":"connected","tokenCount":4,"timestamp":1701000000200,"direction":"in"}
 {"version":1,"seq":3,"timestamp_ms":1701000000300,"type":"bridge_status","status":"disconnected","tokenCount":4,"timestamp":1701000000300,"direction":"in"}

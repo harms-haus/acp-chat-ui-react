@@ -124,16 +124,20 @@ export class TransportClient {
         return this.status;
     }
 
-    async initReplay(script: string, sessionId: string): Promise<InitSuccess> {
+    async initReplay(script: string, sessionId: string, replaySpeed?: number): Promise<InitSuccess> {
         return new Promise((resolve, reject) => {
             const initId = crypto.randomUUID();
-            const payload = {
+            const payload: Record<string, unknown> = {
                 type: "init",
                 mode: "replay" as const,
                 script,
                 sessionId,
                 initId
             };
+
+            if (replaySpeed !== undefined) {
+                payload.replaySpeed = replaySpeed;
+            }
 
             this.pendingInitResolves.set(initId, (response) => {
                 if (response.status === "success") {
@@ -169,6 +173,19 @@ export class TransportClient {
 
             this.send(JSON.stringify(payload));
         });
+    }
+
+    setReplaySpeed(speed: number): void {
+        const payload = {
+            jsonrpc: "2.0",
+            id: 0,
+            method: "set_replay_speed",
+            params: {
+                replaySpeed: speed
+            }
+        };
+
+        this.send(JSON.stringify(payload));
     }
 
     private setStatus(status: ConnectionStatus): void {

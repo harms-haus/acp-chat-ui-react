@@ -18,6 +18,8 @@
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use futures_util::{SinkExt, StreamExt};
@@ -26,9 +28,6 @@ use tokio::sync::{broadcast, mpsc};
 use tokio_tungstenite::{WebSocketStream, tungstenite::Message};
 
 use crate::contract::{BridgeEnvelope, BridgeMessage, BridgeStatus};
-
-/// Tokens per second target for replay streaming.
-const TPS: f64 = 65.0;
 
 /// Sub-chunk size when splitting large bursts.
 const CHUNK_TOKENS: usize = 10;
@@ -85,6 +84,8 @@ pub struct ReplayV2Config {
   pub file_path: Option<String>,
   /// Base directory for replay data.
   pub replay_data_dir: Option<String>,
+  /// Tokens per second for replay timing. Defaults to 65.0.
+  pub tps: f64,
 }
 
 /// A replay event as stored in replay-events.jsonl.
@@ -158,12 +159,11 @@ fn to_text(s: String) -> Message {
     Message::Text(s.into())
 }
 
-/// Compute the delay in milliseconds for a given token count at 65 TPS.
-fn delay_for_tokens(token_count: usize) -> u64 {
+fn delay_for_tokens(token_count: usize, tps: f64) -> u64 {
     if token_count == 0 {
         return ZERO_TOKEN_DELAY_MS;
     }
-    ((token_count as f64 / TPS) * 1000.0) as u64
+    ((token_count as f64 / tps) * 1000.0) as u64
 }
 
 /// Resolve the base directory for replay data.
@@ -226,7 +226,7 @@ fn load_replay_events(base_dir: &PathBuf) -> Result<Vec<ReplayEvent>, Box<dyn st
     Ok(events)
 }
 
-/// Stream replay events at 65 TPS.
+/// Stream replay events at the configured TPS.
 async fn stream_events(
     ws_tx: &mut futures_util::stream::SplitSink<
         WebSocketStream<tokio::net::TcpStream>,
@@ -236,6 +236,7 @@ async fn stream_events(
     shutdown_rx: &mut broadcast::Receiver<()>,
     permission_response_rx: &mut mpsc::Receiver<PermissionResponse>,
     client_disconnect_rx: &mut broadcast::Receiver<()>,
+    tps: Arc<AtomicU64>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     for event in events {
         let token_count = event.token_count.unwrap_or(0);
@@ -249,21 +250,17 @@ async fn stream_events(
                         if session_update.as_str() == Some("permission_request") {
                             if let Some(status) = update.get("status") {
                                 if status.as_str() == Some("pending") {
-                                    // Pause and wait for permission response
                                     tracing::info!("Permission request encountered, waiting for response...");
                                     
-                                    // Send the permission request to client
                                     let envelope_str = serde_json::to_string(&envelope_value)?;
                                     ws_tx.send(to_text(envelope_str)).await?;
                                     
-                                    // Wait for permission response
                                     tokio::select! {
                                         response = permission_response_rx.recv() => {
                                             match response {
                                                 Some(resp) => {
                                                     if resp.action == "approve" {
                                                         tracing::info!("Permission approved, continuing replay");
-                                                        // Continue to next event (skip the pending permission event from replay)
                                                         continue;
                                                     } else if resp.action == "deny" {
                                                         tracing::info!("Permission denied, stopping replay");
@@ -293,12 +290,113 @@ async fn stream_events(
             }
         }
 
+        // Auto-split: events without tokenCount that have multi-word text content
+        if token_count == 0 {
+            let event_type = envelope_value
+                .get("payload").and_then(|p| p.get("params"))
+                .and_then(|p| p.get("update"))
+                .and_then(|u| u.get("type"))
+                .and_then(|t| t.as_str());
+
+            let is_chunk_type = matches!(
+                event_type,
+                Some("agent_message_chunk") | Some("agent_thought_chunk")
+            );
+
+            let text_content = envelope_value
+                .get("payload").and_then(|p| p.get("params"))
+                .and_then(|p| p.get("update"))
+                .and_then(|u| u.get("content"))
+                .and_then(|c| c.as_array())
+                .and_then(|arr| arr.first())
+                .and_then(|item| item.get("text"))
+                .and_then(|t| t.as_str())
+                .map(|s| s.to_string());
+
+            if is_chunk_type {
+                if let Some(ref text) = text_content {
+                    let words: Vec<&str> = text.split_whitespace().collect();
+                    if words.len() > 1 {
+                        let original_status = envelope_value
+                            .get("payload").and_then(|p| p.get("params"))
+                            .and_then(|p| p.get("update"))
+                            .and_then(|u| u.get("status"))
+                            .and_then(|s| s.as_str())
+                            .map(|s| s.to_string());
+
+                        for (i, word) in words.iter().enumerate() {
+        let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
+        let _ = current_tps; // read once to establish baseline; each section reads fresh
+                            let word_delay = ((1.0 / current_tps) * 1000.0) as u64;
+
+                            let mut word_envelope = envelope_value.clone();
+
+                            if let Some(content_arr) = word_envelope
+                                .get_mut("payload").and_then(|p| p.get_mut("params"))
+                                .and_then(|p| p.get_mut("update"))
+                                .and_then(|u| u.get_mut("content"))
+                                .and_then(|c| c.as_array_mut())
+                            {
+                                if let Some(first) = content_arr.first_mut() {
+                                    first["text"] = serde_json::Value::String(word.to_string());
+                                }
+                            }
+
+                            if i < words.len() - 1 {
+                                if let Some(update) = word_envelope
+                                    .get_mut("payload").and_then(|p| p.get_mut("params"))
+                                    .and_then(|p| p.get_mut("update"))
+                                {
+                                    update["status"] = serde_json::Value::String("in_progress".to_string());
+                                }
+                            } else if let Some(ref orig_status) = original_status {
+                                if let Some(update) = word_envelope
+                                    .get_mut("payload").and_then(|p| p.get_mut("params"))
+                                    .and_then(|p| p.get_mut("update"))
+                                {
+                                    update["status"] = serde_json::Value::String(orig_status.clone());
+                                }
+                            }
+
+                            let deadline = tokio::time::Instant::now() + Duration::from_millis(word_delay);
+                            loop {
+                                let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
+                                if remaining.is_zero() {
+                                    let envelope_str = serde_json::to_string(&word_envelope)?;
+                                    ws_tx.send(to_text(envelope_str)).await?;
+                                    break;
+                                }
+
+                                tokio::select! {
+                                    _ = client_disconnect_rx.recv() => {
+                                        tracing::info!("Client disconnected during replay word split");
+                                        return Ok(());
+                                    }
+                                    _ = shutdown_rx.recv() => {
+                                        tracing::info!("Shutdown signal received");
+                                        return Ok(());
+                                    }
+                                    _ = tokio::time::sleep(remaining) => {
+                                        let envelope_str = serde_json::to_string(&word_envelope)?;
+                                        ws_tx.send(to_text(envelope_str)).await?;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                }
+            }
+        }
+
         if token_count > BURST_THRESHOLD {
     let num_chunks = (token_count + CHUNK_TOKENS - 1) / CHUNK_TOKENS;
 
     let burst_deadline = tokio::time::Instant::now();
     for chunk_idx in 0..num_chunks {
-      let chunk_deadline = burst_deadline + Duration::from_millis(delay_for_tokens(CHUNK_TOKENS) * chunk_idx as u64);
+      let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
+      let chunk_deadline = burst_deadline + Duration::from_millis(delay_for_tokens(CHUNK_TOKENS, current_tps) * chunk_idx as u64);
 
       loop {
         let remaining = chunk_deadline.saturating_duration_since(tokio::time::Instant::now());
@@ -330,7 +428,8 @@ async fn stream_events(
       }
     }
   } else {
-    let delay_ms = delay_for_tokens(token_count);
+    let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
+    let delay_ms = delay_for_tokens(token_count, current_tps);
     let deadline = tokio::time::Instant::now() + Duration::from_millis(delay_ms);
 
     loop {
@@ -377,10 +476,11 @@ async fn send_envelope(
     Ok(())
 }
 
-/// Stream replay events at 65 TPS after init protocol initialization.
+/// Stream replay events after init protocol initialization.
 ///
 /// This function is called by the unified server after successful init,
 /// bypassing the JSON-RPC layer and streaming events directly.
+/// Mid-replay speed changes are supported via the shared AtomicU64.
 pub async fn stream_replay_after_init(
     config: ReplayV2Config,
     mut ws_tx: futures_util::stream::SplitSink<
@@ -390,25 +490,21 @@ pub async fn stream_replay_after_init(
     mut shutdown_rx: broadcast::Receiver<()>,
     mut permission_response_rx: mpsc::Receiver<PermissionResponse>,
     mut client_disconnect_rx: broadcast::Receiver<()>,
+    tps: Arc<AtomicU64>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     
-    // Send initial bridge status: starting
     send_envelope(&mut ws_tx, BridgeMessage::bridge_status(BridgeStatus::Starting)).await?;
     
-    // Resolve base directory
     let demo_type = config.demo_type.ok_or("missing demo_type")?;
     let session_id = config.session_id.ok_or("missing session_id")?;
     let base_dir = resolve_base_dir(&demo_type, &session_id, config.file_path.as_ref());
     
     tracing::info!("Streaming replay: {}/{}", demo_type, session_id);
     
-    // Send session state if available
     send_session_state(&mut ws_tx, &base_dir).await?;
     
-    // Load replay events
     let events = load_replay_events(&base_dir)?;
     
-    // Send replay metadata
     let total = events.len() as u64;
     let first_ts = events
         .first()
@@ -425,13 +521,10 @@ pub async fn stream_replay_after_init(
         ),
     ).await?;
 
-    // Send bridge status connected
     send_envelope(&mut ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
 
-    // Stream events at 65 TPS
-    stream_events(&mut ws_tx, &events, &mut shutdown_rx, &mut permission_response_rx, &mut client_disconnect_rx).await?;
+    stream_events(&mut ws_tx, &events, &mut shutdown_rx, &mut permission_response_rx, &mut client_disconnect_rx, tps).await?;
 
-    // Send bridge status disconnected when replay is complete
     send_envelope(&mut ws_tx, BridgeMessage::bridge_status(BridgeStatus::Disconnected)).await?;
     tracing::info!("Replay v2 streaming complete ({} events)", events.len());
     
@@ -452,17 +545,15 @@ pub async fn run_replay_v2_mode(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let (mut ws_tx, mut ws_rx) = ws_stream.split();
 
-    // Send initial bridge status: starting
     send_envelope(&mut ws_tx, BridgeMessage::bridge_status(BridgeStatus::Starting)).await?;
     tracing::info!("Replay v2 mode ready, waiting for JSON-RPC commands");
 
-    // Active session state
     let mut active_demo_type: Option<String> = config.demo_type.clone();
     let mut active_session_id: Option<String> = config.session_id.clone();
     let mut active_file_path: Option<String> = config.file_path.clone();
     let mut is_initialized = false;
+    let tps = Arc::new(AtomicU64::new((config.tps * 100.0) as u64));
 
-    // Main JSON-RPC message loop
     loop {
         tokio::select! {
             msg = ws_rx.next() => {
@@ -470,7 +561,6 @@ pub async fn run_replay_v2_mode(
                     Some(Ok(Message::Text(text))) => {
                         let text_str = text.as_ref();
 
-                        // Try to parse as JSON-RPC request
                         match serde_json::from_str::<JsonRpcRequest>(text_str) {
                             Ok(request) => {
                                 if let Err(e) = handle_json_rpc_request(
@@ -482,14 +572,12 @@ pub async fn run_replay_v2_mode(
                                     &mut active_session_id,
                                     &mut active_file_path,
                                     &mut is_initialized,
-                                    &config,
+                                    &tps,
                                 ).await {
                                     tracing::error!("Error handling JSON-RPC request: {}", e);
                                 }
                             }
                             Err(_) => {
-                                // Not valid JSON-RPC — could be a version handshake or other message
-                                // Check for version field (compatibility with older clients)
                                 if let Ok(obj) = serde_json::from_str::<serde_json::Value>(text_str) {
                                     if let Some(client_ver) = obj.get("version").and_then(|v| v.as_str()) {
                                         if client_ver != PACKAGE_VERSION {
@@ -540,7 +628,7 @@ async fn handle_json_rpc_request(
     active_session_id: &mut Option<String>,
     active_file_path: &mut Option<String>,
     is_initialized: &mut bool,
-    _config: &ReplayV2Config,
+    tps: &Arc<AtomicU64>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     match request.method.as_str() {
         "initialize" => {
@@ -666,13 +754,10 @@ async fn handle_json_rpc_request(
 
                     tracing::info!("Starting replay stream: {}/{} ({} events)", dt, sid, events.len());
 
-                    // Create a dummy permission response channel for JSON-RPC flow
                     let (_dummy_tx, mut dummy_rx) = tokio::sync::mpsc::channel::<PermissionResponse>(1);
-                    // Create a dummy disconnect channel for JSON-RPC flow
                     let (_dummy_disconnect_tx, mut dummy_disconnect_rx) = broadcast::channel::<()>(1);
 
-                    // Stream events at 65 TPS
-                    stream_events(ws_tx, &events, shutdown_rx, &mut dummy_rx, &mut dummy_disconnect_rx).await?;
+                    stream_events(ws_tx, &events, shutdown_rx, &mut dummy_rx, &mut dummy_disconnect_rx, tps.clone()).await?;
 
                     // Send bridge status disconnected when replay is complete
                     send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Disconnected)).await?;
@@ -687,7 +772,6 @@ async fn handle_json_rpc_request(
         "session/list" => {
             let request_id = request.id.unwrap_or(0);
 
-            // For replay mode, return a placeholder session list
             let response = json_rpc_response(request_id, serde_json::json!({
                 "sessions": [],
                 "nextCursor": null
@@ -697,6 +781,41 @@ async fn handle_json_rpc_request(
                 now_ms(),
             );
             ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
+        }
+
+        "set_replay_speed" => {
+            let request_id = request.id.unwrap_or(0);
+
+            let new_speed = request.params.get("replaySpeed")
+                .and_then(|v| v.as_f64());
+
+            match new_speed {
+                Some(speed) if speed > 0.0 => {
+                    tps.store((speed * 100.0) as u64, Ordering::Relaxed);
+                    tracing::info!("Replay speed updated to {} TPS", speed);
+
+                    let response = json_rpc_response(request_id, serde_json::json!({
+                        "replaySpeed": speed
+                    }));
+                    let envelope = BridgeEnvelope::new(
+                        BridgeMessage::acp_payload(response),
+                        now_ms(),
+                    );
+                    ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
+                }
+                _ => {
+                    let error = json_rpc_error(
+                        request_id,
+                        -32602,
+                        "Missing or invalid replaySpeed parameter (must be positive number)",
+                    );
+                    let envelope = BridgeEnvelope::new(
+                        BridgeMessage::acp_payload(error),
+                        now_ms(),
+                    );
+                    ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
+                }
+            }
         }
 
         _ => {
@@ -725,34 +844,30 @@ mod tests {
 
     #[test]
     fn test_delay_for_zero_tokens() {
-        assert_eq!(delay_for_tokens(0), ZERO_TOKEN_DELAY_MS);
+        assert_eq!(delay_for_tokens(0, 65.0), ZERO_TOKEN_DELAY_MS);
     }
 
     #[test]
     fn test_delay_for_single_token() {
-        // 1/65 * 1000 ≈ 15.38ms
-        let d = delay_for_tokens(1);
+        let d = delay_for_tokens(1, 65.0);
         assert_eq!(d, 15);
     }
 
     #[test]
     fn test_delay_for_ten_tokens() {
-        // 10/65 * 1000 ≈ 153.8ms
-        let d = delay_for_tokens(10);
+        let d = delay_for_tokens(10, 65.0);
         assert_eq!(d, 153);
     }
 
     #[test]
     fn test_delay_for_sixty_five_tokens() {
-        // 65/65 * 1000 = 1000ms
-        let d = delay_for_tokens(65);
+        let d = delay_for_tokens(65, 65.0);
         assert_eq!(d, 1000);
     }
 
     #[test]
     fn test_delay_for_large_burst() {
-        // 150/65 * 1000 ≈ 2307ms (total burst delay)
-        let d = delay_for_tokens(150);
+        let d = delay_for_tokens(150, 65.0);
         assert_eq!(d, 2307);
     }
 
@@ -763,6 +878,7 @@ mod tests {
         session_id: Some("session-1".into()),
         file_path: None,
         replay_data_dir: None,
+        tps: 65.0,
     };
         let path = resolve_base_dir(
             config.demo_type.as_ref().unwrap(),
@@ -782,6 +898,7 @@ mod tests {
         session_id: Some("session-1".into()),
         file_path: Some("/custom/path".into()),
         replay_data_dir: None,
+        tps: 65.0,
     };
         let path = resolve_base_dir(
             config.demo_type.as_ref().unwrap(),

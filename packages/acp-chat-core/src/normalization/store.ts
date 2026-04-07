@@ -347,7 +347,7 @@ function applyUserMessage(state: NormalizedState, update: UserMessage): Normaliz
 }
 
 function applyAgentThoughtChunk(state: NormalizedState, update: AgentMessageChunk): NormalizedThought {
-  const text = extractText(update.content);
+  const extractedContent = extractText(update.content);
   const timestamp = getTimestamp(update);
   const turnId = update.turnId;
 
@@ -355,22 +355,18 @@ function applyAgentThoughtChunk(state: NormalizedState, update: AgentMessageChun
     const existingEntry = Array.from(state.thoughts.entries()).find(([_, t]) => t.turnId === turnId);
     if (existingEntry) {
       const [existingId, existingThought] = existingEntry;
-      const isNewContent = text.length > existingThought.content.length;
-  if (!isNewContent) {
-    return existingThought;
-  }
-  const updatedThought: NormalizedThought = {
-    ...existingThought,
-    content: text,
-    ...(timestamp !== undefined && { updatedAt: timestamp }),
-  };
-  state.thoughts.set(existingId, updatedThought);
-  return updatedThought;
-}
+      const updatedThought: NormalizedThought = {
+        ...existingThought,
+        content: existingThought.content + extractedContent,
+        ...(timestamp !== undefined && { updatedAt: timestamp }),
+      };
+      state.thoughts.set(existingId, updatedThought);
+      return updatedThought;
+    }
   }
 
   const id = generateThoughtId();
-  const thought: NormalizedThought = { id, content: text, ...(turnId && { turnId }) };
+  const thought: NormalizedThought = { id, content: extractedContent, ...(turnId && { turnId }) };
   if (timestamp !== undefined) {
     thought.createdAt = timestamp;
     thought.updatedAt = timestamp;
