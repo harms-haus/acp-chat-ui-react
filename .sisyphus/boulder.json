@@ -1,144 +1,30 @@
 {
-  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/replay-refactor.md",
-  "started_at": "2026-04-06T03:03:10.992Z",
+  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/event-stream-follow-plan.md",
+  "started_at": "2026-04-07T19:29:19.750Z",
   "session_ids": [
-    "ses_29f417ecdffeh602ZxMHOMxwxL",
-    "ses_29f3e79aeffeLC69y2lTakmteH",
-    "ses_29f3312e5ffeRRd4wV6lXnJXYf",
-    "ses_29f3312e6ffeehPCyNvy00yANU",
-    "ses_29f3312e4ffeorV36eKt7tyY5t",
-    "ses_29f1f477effeG3XQHCXHqoDZMI",
-    "ses_29f1ba2d2ffeHpwVDum1K6Brcg",
-    "ses_29f05f93fffeOaLJaTVQqf3KlI",
-    "ses_29ef31a39ffevNn4ew55epQjGt",
-    "ses_29eeb6384ffe8UX7V5TpQYe7Ac",
-    "ses_29ecee737ffejaDQruNEGkNXAX",
-    "ses_29ecdb239ffeF3JdPwzhUzpYm5",
-    "ses_29ec98a3dffeX0fIYeMEZg2w6O",
-    "ses_29ec98a36ffeTjDMaGvDkijrIo",
-    "ses_29ebbf7d3ffe6IN783TqBwerl1",
-    "ses_29ebbf7d3ffckZTpNrRJ8Qa16l",
-    "ses_29eba6b9bffem7FNCZ7P8FjIYZ",
-    "ses_29ebab886ffe8gYkyOevOTovWq",
-    "ses_29ebab884ffenrcIOAHs3NvAVk",
-    "ses_29ea78d9fffeJsrIDN0vypRXVB",
-    "ses_29ea78da0ffe5UPupJ9XIqhhJS",
-    "ses_29ea78d9cffcHdJPJ0eekBY1KO",
-    "ses_29ea78d9cffepKyMXkEfaQKrRN",
-    "ses_29e976866ffeQTPi6iRx04Jkmi",
-    "ses_29b7a5ffbffeIFfmnP4ev7euZV",
-    "ses_29b72c063ffeXFD75qfy5vU4m7"
+    "ses_296944af0ffeKDoD8wJcz66yVq",
+    "ses_296939912ffeXMPsu2e0MGcxrE",
+    "ses_296939923ffemPD11OsrCNvnYG",
+    "ses_29691eb34ffeitbnO9JxSyUmuT",
+    "ses_29691eb35ffe1fHaIdd7kWW63X",
+    "ses_2968538e5ffe93bzyF5mdUvBzq",
+    "ses_2967fb344ffe4DAEDFQnsFFSp3",
+    "ses_2967a4384ffeAtcF8m5AKf8ypf",
+    "ses_296773189ffeHcqlioKZx6eYg2",
+    "ses_29677318affekQK4MagNStIsIa",
+    "ses_296699ad6ffeKsxApqym0nfoRo"
   ],
-  "plan_name": "replay-refactor",
+  "plan_name": "event-stream-follow-plan",
   "agent": "atlas",
   "task_sessions": {
-    "todo:1": {
-      "task_key": "todo:1",
-      "task_label": "1",
-      "task_title": "Validate v2 replay feature parity with v1",
-      "session_id": "ses_29f3e79aeffeLC69y2lTakmteH",
-      "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "updated_at": "2026-04-06T03:17:43.673Z"
-    },
-    "todo:2": {
-      "task_key": "todo:2",
-      "task_label": "2",
-      "task_title": "Audit all v1 replay code references",
-      "session_id": "ses_29f3312e6ffeehPCyNvy00yANU",
-      "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "updated_at": "2026-04-06T03:23:17.634Z"
-    },
-    "todo:5": {
-      "task_key": "todo:5",
-      "task_label": "5",
-      "task_title": "Delete v1 replay module and references",
-      "session_id": "ses_29f1f477effeG3XQHCXHqoDZMI",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-04-06T03:44:05.806Z"
-    },
-    "todo:6": {
-      "task_key": "todo:6",
-      "task_label": "6",
-      "task_title": "Refactor server to unified mode with --live flag",
-      "session_id": "ses_29f1ba2d2ffeHpwVDum1K6Brcg",
-      "agent": "Sisyphus-Junior",
-      "category": "unspecified-high",
-      "updated_at": "2026-04-06T03:48:08.571Z"
-    },
-    "todo:7": {
-      "task_key": "todo:7",
-      "task_label": "7",
-      "task_title": "Implement WebSocket initialization protocol",
-      "session_id": "ses_29ef31a39ffevNn4ew55epQjGt",
-      "agent": "Sisyphus-Junior",
-      "category": "unspecified-high",
-      "updated_at": "2026-04-06T04:37:01.352Z"
-    },
-    "todo:8": {
-      "task_key": "todo:8",
-      "task_label": "8",
-      "task_title": "Implement WebSocket disconnect protocol",
-      "session_id": "ses_29eeb6384ffe8UX7V5TpQYe7Ac",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-04-06T04:37:42.343Z"
-    },
-    "todo:9": {
-      "task_key": "todo:9",
-      "task_label": "9",
-      "task_title": "Update Cargo.toml and module exports",
-      "session_id": "ses_29eeac0dcffe4xQuc79drjEv1E",
-      "agent": "Sisyphus-Junior",
-      "category": "unspecified-high",
-      "updated_at": "2026-04-06T05:07:56.396Z"
-    },
-    "todo:11": {
-      "task_key": "todo:11",
-      "task_label": "11",
-      "task_title": "Update TypeScript WebSocket client for init protocol",
-      "session_id": "ses_29ecee737ffejaDQruNEGkNXAX",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-04-06T05:09:17.205Z"
-    },
-    "todo:12": {
-      "task_key": "todo:12",
-      "task_label": "12",
-      "task_title": "Update ReplayPanel for new protocol",
-      "session_id": "ses_29ecdb239ffeF3JdPwzhUzpYm5",
-      "agent": "Sisyphus-Junior",
-      "category": "visual-engineering",
-      "updated_at": "2026-04-06T05:13:49.491Z"
-    },
-    "todo:13": {
-      "task_key": "todo:13",
-      "task_label": "13",
-      "task_title": "Update LivePanel for new protocol",
-      "session_id": "ses_29ec98a36ffeTjDMaGvDkijrIo",
-      "agent": "Sisyphus-Junior",
-      "category": "visual-engineering",
-      "updated_at": "2026-04-06T05:28:26.511Z"
-    },
-    "todo:15": {
-      "task_key": "todo:15",
-      "task_label": "15",
-      "task_title": "Update package.json scripts for unified server",
-      "session_id": "ses_29ebab886ffe8gYkyOevOTovWq",
-      "agent": "Sisyphus-Junior",
-      "category": "unspecified-high",
-      "updated_at": "2026-04-06T05:44:09.611Z"
-    },
     "final-wave:f1": {
       "task_key": "final-wave:f1",
       "task_label": "F1",
-      "task_title": "**v1 Reference Check** — `oracle`",
-      "session_id": "ses_29e976866ffeQTPi6iRx04Jkmi",
+      "task_title": "Plan Compliance Audit (oracle)",
+      "session_id": "ses_29677318affekQK4MagNStIsIa",
       "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "updated_at": "2026-04-06T06:15:43.438Z"
+      "category": "unspecified-high",
+      "updated_at": "2026-04-07T20:06:01.187Z"
     }
   }
 }
