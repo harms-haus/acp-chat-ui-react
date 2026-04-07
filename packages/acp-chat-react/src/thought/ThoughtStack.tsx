@@ -88,14 +88,26 @@ function ThoughtContent({
   follow?: boolean;
   controller?: SessionController;
 }) {
+  const wasCompleted = useRef(false);
   const userHasInteracted = useRef(false);
   const autoExpanded = useRef(false);
   const hasEmittedCreated = useRef(false);
   const [internalExpanded, setInternalExpanded] = useState(false);
-  
+
   // Use event hook to track thought lifecycle
-  const events = useThoughtEvents(controller!, thought.id);
+  const events = useThoughtEvents(controller, thought.id);
   const hasEvent = events.length > 0;
+
+  // Check completion status from events
+  const isCompleted = events.some(event => {
+    const update = event.params as { sessionId?: string; update?: Record<string, unknown> };
+    const updateType = update.update?.type ?? update.update?.sessionUpdate;
+    if (updateType === "thought_update") {
+      const thoughtUpdate = update.update as { status?: string };
+      return thoughtUpdate.status === "completed" || thoughtUpdate.status === "done";
+    }
+    return false;
+  });
   
   // Use internal state if no parent handler is provided
   const effectiveIsExpanded = onExpandChange ? isExpanded : internalExpanded;
@@ -129,12 +141,22 @@ function ThoughtContent({
   }, [follow, hasEvent, events.length, handleExpand, onCreated, thought.id]);
 
   useEffect(() => {
-    // Notify parent of completion (for tracking purposes, not for collapse)
-    if (!userHasInteracted.current && autoExpanded.current && onCompleted) {
-      console.log('[ThoughtContent] Notifying parent of completion');
+    if (!wasCompleted.current && isCompleted && onCompleted) {
+      wasCompleted.current = true;
+      console.log('[ThoughtContent] Thought completed (event-based):', {
+        thoughtId: thought.id,
+        autoExpanded: autoExpanded.current,
+        userInteracted: userHasInteracted.current,
+        isExpanded: effectiveIsExpanded
+      });
+      // Only auto-collapse if we auto-expanded and user never interacted
+      if (!userHasInteracted.current && autoExpanded.current && effectiveIsExpanded) {
+        console.log('[ThoughtContent] Auto-collapsing thought');
+        handleExpand(false);
+      }
       onCompleted();
     }
-  }, [onCompleted]);
+  }, [isCompleted, onCompleted, handleExpand, effectiveIsExpanded, thought.id]);
 
   const handleClick = useCallback(() => {
     userHasInteracted.current = true;
@@ -184,7 +206,7 @@ function ToolCallContent({
   const [internalExpanded, setInternalExpanded] = useState(false);
   
   // Use event hook to track tool call lifecycle
-  const events = useToolCallEvents(controller!, toolCall.toolCallId);
+  const events = useToolCallEvents(controller, toolCall.toolCallId);
   const hasEvent = events.length > 0;
   
   // Check completion status from events
@@ -296,7 +318,7 @@ function DefaultOpenRenderer({
   onToolCreated?: ((toolId: string, groupId: string) => void) | undefined;
   onToolCompleted?: ((toolId: string, groupId: string) => void) | undefined;
   follow?: boolean;
-  controller?: SessionController;
+  controller?: SessionController | undefined;
 }) {
   console.log('[DefaultOpenRenderer] Rendering with:', { 
     groupId: group.id, 
@@ -355,15 +377,7 @@ function DefaultOpenRenderer({
               <ThoughtContent
                 thought={item.data}
                 isExpanded={isThoughtExpanded(item, expandedItems)}
-                onExpandChange={(() => {
-                  const handler = thoughtExpandHandler ? ((expanded: boolean) => handleThoughtExpand(item.id, expanded)) : undefined;
-                  console.log('[ThoughtStack] Passing to ThoughtContent:', {
-                    thoughtId: item.id,
-                    hasOnExpandChange: !!handler,
-                    follow: follow ?? false
-                  });
-                  return handler;
-                })()}
+                onExpandChange={thoughtExpandHandler ? ((expanded: boolean) => handleThoughtExpand(item.id, expanded)) : undefined}
                 onCreated={() => {
                   console.log('[ThoughtStack] Thought onCreated called for:', item.id);
                   onThoughtCreated?.(item.id, group.id);
@@ -426,7 +440,7 @@ export const ThoughtStack = memo(function ThoughtStack({
   follow = false,
   controller,
 }: ThoughtStackProps & { controller?: SessionController }) {
-  const allActiveItems = useActiveItems(controller!);
+  const allActiveItems = useActiveItems(controller);
   const activeThoughts = controller ? allActiveItems.activeThoughts : [];
   const activeToolCalls = controller ? allActiveItems.activeToolCalls : [];
 
@@ -450,6 +464,7 @@ export const ThoughtStack = memo(function ThoughtStack({
 
   const seenItemsRef = useRef<Set<string>>(new Set());
   const completedItemsRef = useRef<Set<string>>(new Set());
+  const lastGroupIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isActive && !hasBeenActive) {
@@ -483,6 +498,13 @@ export const ThoughtStack = memo(function ThoughtStack({
   // Detect item creation and completion
   useEffect(() => {
     const currentItems = group.items;
+    
+    // Clear refs when group changes
+    if (lastGroupIdRef.current !== group.id) {
+      seenItemsRef.current.clear();
+      completedItemsRef.current.clear();
+      lastGroupIdRef.current = group.id;
+    }
     
     // Check for new items (creation)
     for (const item of currentItems) {
@@ -568,6 +590,7 @@ export const ThoughtStack = memo(function ThoughtStack({
               onToolCreated={onToolCreated}
               onToolCompleted={onToolCompleted}
               follow={follow}
+              controller={controller}
             />
           )
         : renderClosed?.(context) ?? <DefaultClosedRenderer isOpen={isOpen} setIsOpen={setIsOpen} group={group} />}
