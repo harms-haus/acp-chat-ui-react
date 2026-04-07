@@ -83,30 +83,51 @@ class ChatEventSubscription {
     onStoreChange: () => void,
     eventType?: ChatEventType
   ): () => void {
-    const unsubscribe = this.sessionController.on(
-      eventType ?? "sessionUpdate",
-      (params: unknown) => {
-        const event: ChatEvent<ChatEventType, unknown> = {
-          type: (eventType ?? "sessionUpdate") as ChatEventType,
-          params,
-          timestamp: Date.now(),
-        };
+    const handler = (params: unknown) => {
+      const event: ChatEvent<ChatEventType, unknown> = {
+        type: (eventType ?? "sessionUpdate") as ChatEventType,
+        params,
+        timestamp: Date.now(),
+      };
 
-        // Store the event
-        const events = this.latestEvents.get(event.type) ?? [];
-        events.push(event);
+      // Store the event
+      const events = this.latestEvents.get(event.type) ?? [];
+      events.push(event);
 
-        // Limit stored events
-        if (events.length > this.maxEventsPerType) {
-          events.shift();
-        }
-
-        this.latestEvents.set(event.type, events);
-
-        // Notify subscribers
-        onStoreChange();
+      // Limit stored events
+      if (events.length > this.maxEventsPerType) {
+        events.shift();
       }
-    );
+
+      this.latestEvents.set(event.type, events);
+
+      // Notify subscribers
+      onStoreChange();
+    };
+
+    // Type-safe subscription using switch to match SessionController overloads
+    let unsubscribe: () => void;
+    const event = eventType ?? "sessionUpdate";
+    switch (event) {
+      case "statusChange":
+        unsubscribe = this.sessionController.on("statusChange", handler as any);
+        break;
+      case "sessionUpdate":
+        unsubscribe = this.sessionController.on("sessionUpdate", handler as any);
+        break;
+      case "traffic":
+        unsubscribe = this.sessionController.on("traffic", handler as any);
+        break;
+      case "error":
+        unsubscribe = this.sessionController.on("error", handler as any);
+        break;
+      case "sessionClearing":
+        unsubscribe = this.sessionController.on("sessionClearing", handler as any);
+        break;
+      case "permissionRequest":
+        unsubscribe = this.sessionController.on("permissionRequest", handler as any);
+        break;
+    }
 
     return unsubscribe;
   }
