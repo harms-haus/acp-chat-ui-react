@@ -29,7 +29,6 @@ export interface ThoughtStackRenderContext {
 
 export interface ThoughtStackProps {
   group: ThoughtGroup;
-  isActive?: boolean;
   controller?: SessionController;
   defaultOpen?: boolean;
   defaultOpenWhenActive?: boolean;

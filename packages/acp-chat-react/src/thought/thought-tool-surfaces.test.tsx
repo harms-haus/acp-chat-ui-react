@@ -85,23 +85,23 @@ describe("ThoughtStack", () => {
     });
   });
 
-  it("should show active state", () => {
+  it("should show inactive state without controller", () => {
     const thought = createMockThought("thought-1", "Thinking...");
     const group = createMockThoughtGroup([{ type: "thought", id: thought.id, data: thought }]);
 
-    const { container } = render(<ThoughtStack group={group} isActive={true} />);
+    const { container } = render(<ThoughtStack group={group} />);
 
     const root = container.querySelector("[data-acp-thought-root]");
-    expect(root?.getAttribute("data-acp-thought-active")).toBe("true");
+    expect(root?.getAttribute("data-acp-thought-active")).toBe("false");
   });
 
-  it("should auto-expand when active", () => {
+  it("should not auto-expand when inactive without controller", () => {
     const thought = createMockThought("thought-1", "Thinking...");
     const group = createMockThoughtGroup([{ type: "thought", id: thought.id, data: thought }]);
 
-    render(<ThoughtStack group={group} isActive={true} defaultOpenWhenActive={true} />);
+    render(<ThoughtStack group={group} defaultOpenWhenActive={true} />);
 
-    expect(screen.getByText("Thinking...")).toBeInTheDocument();
+    expect(screen.queryByText("Thinking...")).not.toBeInTheDocument();
   });
 
   it("should have stable selectors", () => {

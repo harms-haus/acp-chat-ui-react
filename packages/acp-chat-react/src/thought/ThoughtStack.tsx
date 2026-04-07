@@ -409,7 +409,6 @@ function DefaultOpenRenderer({
 
 export const ThoughtStack = memo(function ThoughtStack({
   group,
-  isActive: isActiveFromProps,
   defaultOpen = false,
   defaultOpenWhenActive = true,
   defaultOpenWhenIdle = false,
@@ -430,11 +429,8 @@ export const ThoughtStack = memo(function ThoughtStack({
   const allActiveItems = useActiveItems(controller!);
   const activeThoughts = controller ? allActiveItems.activeThoughts : [];
   const activeToolCalls = controller ? allActiveItems.activeToolCalls : [];
-  
+
   const isActive = useMemo(() => {
-    if (isActiveFromProps !== undefined) {
-      return isActiveFromProps;
-    }
     return group.items.some(item => {
       if (item.type === "thought") {
         return activeThoughts.includes(item.id);
@@ -443,7 +439,7 @@ export const ThoughtStack = memo(function ThoughtStack({
       }
       return false;
     });
-  }, [group.items, activeThoughts, activeToolCalls, isActiveFromProps]);
+  }, [group.items, activeThoughts, activeToolCalls]);
   
   const [hasBeenActive, setHasBeenActive] = useState(() => isActive);
   const userHasToggled = useRef(false);
