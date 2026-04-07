@@ -102,7 +102,7 @@ function ThoughtContent({
   const isCompleted = events.some(event => {
     const update = event.params as { sessionId?: string; update?: Record<string, unknown> };
     const updateType = update.update?.type ?? update.update?.sessionUpdate;
-    if (updateType === "thought_update") {
+    if (updateType === "thought_update" || updateType === "agent_thought_chunk") {
       const thoughtUpdate = update.update as { status?: string };
       return thoughtUpdate.status === "completed" || thoughtUpdate.status === "done";
     }
