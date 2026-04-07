@@ -66,6 +66,7 @@ export interface ThoughtContentProps {
   onCreated?: () => void;
   onCompleted?: () => void;
   follow?: boolean | undefined;
+  controller?: SessionController | undefined;
 }
 
 export interface ToolCallContentProps {
@@ -75,4 +76,5 @@ export interface ToolCallContentProps {
   onCreated?: () => void;
   onCompleted?: () => void;
   follow?: boolean | undefined;
+  controller?: SessionController | undefined;
 }

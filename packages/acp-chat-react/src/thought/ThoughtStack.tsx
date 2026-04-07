@@ -3,7 +3,7 @@ import type { ThoughtStackProps, ThoughtItem } from "./types.js";
 import type { NormalizedThought, NormalizedToolCall, SessionController } from "@acp/chat-core";
 import type { Logger } from "../utils/logger.js";
 import { noOpLogger } from "../utils/logger.js";
-import { useActiveItems } from "../events/hooks.js";
+import { useActiveItems, useThoughtEvents, useToolCallEvents } from "../events/hooks.js";
 
 function isThoughtItem(item: ThoughtItem): item is { type: "thought"; id: string; data: NormalizedThought } {
   return item.type === "thought";
@@ -78,6 +78,7 @@ function ThoughtContent({
   onCreated,
   onCompleted,
   follow = false,
+  controller,
 }: {
   thought: NormalizedThought;
   isExpanded: boolean;
@@ -85,46 +86,47 @@ function ThoughtContent({
   onCreated?: () => void;
   onCompleted?: () => void;
   follow?: boolean;
+  controller?: SessionController;
 }) {
   const userHasInteracted = useRef(false);
   const autoExpanded = useRef(false);
+  const hasEmittedCreated = useRef(false);
   const [internalExpanded, setInternalExpanded] = useState(false);
-  const [hasEmittedCreated, setHasEmittedCreated] = useState(false);
+  
+  // Use event hook to track thought lifecycle
+  const events = useThoughtEvents(controller!, thought.id);
+  const hasEvent = events.length > 0;
   
   // Use internal state if no parent handler is provided
   const effectiveIsExpanded = onExpandChange ? isExpanded : internalExpanded;
   const handleExpand = useCallback((expanded: boolean) => {
-    console.log('[ThoughtContent.handleExpand] Called:', { expanded, hasOnExpandChange: !!onExpandChange });
     if (onExpandChange) {
-      console.log('[ThoughtContent.handleExpand] Calling parent onExpandChange');
       onExpandChange(expanded);
     } else {
-      console.log('[ThoughtContent.handleExpand] Using internal setInternalExpanded');
       setInternalExpanded(expanded);
     }
   }, [onExpandChange]);
 
   useEffect(() => {
-    // Auto-expand when follow is true and we haven't emitted created yet
-    if (follow && !hasEmittedCreated) {
-      setHasEmittedCreated(true);
-      console.log('[ThoughtContent] Created (deferred):', { 
+    // Auto-expand when follow is true and we have events (thought created)
+    if (follow && hasEvent && !hasEmittedCreated.current) {
+      hasEmittedCreated.current = true;
+      console.log('[ThoughtContent] Created (event-based):', { 
         thoughtId: thought.id, 
         follow, 
-        effectiveIsExpanded,
+        eventCount: events.length,
         userHasInteracted: userHasInteracted.current,
         willAutoExpand: !userHasInteracted.current
       });
       onCreated?.();
       // Auto-expand on creation if follow is enabled and user hasn't interacted
       if (!userHasInteracted.current) {
-        console.log('[ThoughtContent] Auto-expanding thought (deferred) - calling handleExpand(true)');
+        console.log('[ThoughtContent] Auto-expanding thought (event-based)');
         handleExpand(true);
         autoExpanded.current = true;
-        console.log('[ThoughtContent] After auto-expand, autoExpanded.current =', autoExpanded.current);
       }
     }
-  }, [follow, handleExpand, onCreated, thought.id, effectiveIsExpanded, hasEmittedCreated]);
+  }, [follow, hasEvent, events.length, handleExpand, onCreated, thought.id]);
 
   useEffect(() => {
     // Notify parent of completion (for tracking purposes, not for collapse)
@@ -165,6 +167,7 @@ function ToolCallContent({
   onCreated,
   onCompleted,
   follow = false,
+  controller,
 }: {
   toolCall: NormalizedToolCall;
   isExpanded: boolean;
@@ -172,12 +175,28 @@ function ToolCallContent({
   onCreated?: () => void;
   onCompleted?: () => void;
   follow?: boolean;
+  controller?: SessionController;
 }) {
   const wasCompleted = useRef(false);
   const userHasInteracted = useRef(false);
   const autoExpanded = useRef(false);
+  const hasEmittedCreated = useRef(false);
   const [internalExpanded, setInternalExpanded] = useState(false);
-  const [hasEmittedCreated, setHasEmittedCreated] = useState(false);
+  
+  // Use event hook to track tool call lifecycle
+  const events = useToolCallEvents(controller!, toolCall.toolCallId);
+  const hasEvent = events.length > 0;
+  
+  // Check completion status from events
+  const isCompleted = events.some(event => {
+    const update = event.params as { sessionId?: string; update?: Record<string, unknown> };
+    const updateType = update.update?.type ?? update.update?.sessionUpdate;
+    if (updateType === "tool_call_update") {
+      const toolCallUpdate = update.update as { status?: string };
+      return toolCallUpdate.status === "completed" || toolCallUpdate.status === "done";
+    }
+    return false;
+  });
   
   // Use internal state if no parent handler is provided
   const effectiveIsExpanded = onExpandChange ? isExpanded : internalExpanded;
@@ -190,45 +209,42 @@ function ToolCallContent({
   }, [onExpandChange]);
 
   useEffect(() => {
-    // Auto-expand when follow is true and we haven't emitted created yet
-    if (follow && !hasEmittedCreated) {
-      setHasEmittedCreated(true);
-      console.log('[ToolCallContent] Created (deferred):', { 
+    // Auto-expand when follow is true and we have events (tool created)
+    if (follow && hasEvent && !hasEmittedCreated.current) {
+      hasEmittedCreated.current = true;
+      console.log('[ToolCallContent] Created (event-based):', { 
         toolId: toolCall.toolCallId, 
         follow, 
-        effectiveIsExpanded,
+        eventCount: events.length,
         willAutoExpand: !userHasInteracted.current 
       });
       onCreated?.();
       // Auto-expand on creation if follow is enabled and user hasn't interacted
       if (!userHasInteracted.current) {
-        console.log('[ToolCallContent] Auto-expanding tool (deferred)');
+        console.log('[ToolCallContent] Auto-expanding tool (event-based)');
         handleExpand(true);
         autoExpanded.current = true;
       }
     }
-  }, [follow, handleExpand, onCreated, toolCall.toolCallId, effectiveIsExpanded, hasEmittedCreated]);
+  }, [follow, hasEvent, events.length, handleExpand, onCreated, toolCall.toolCallId]);
 
   useEffect(() => {
-    if (!wasCompleted.current && onCompleted) {
-      const status = (toolCall as any).status;
-      if (status === "done" || status === "completed") {
-        wasCompleted.current = true;
-        console.log('[ToolCallContent] Tool completed:', { 
-          toolId: toolCall.toolCallId,
-          autoExpanded: autoExpanded.current,
-          userInteracted: userHasInteracted.current,
-          isExpanded: effectiveIsExpanded
-        });
-        // Only auto-collapse if we auto-expanded and user never interacted
-        if (!userHasInteracted.current && autoExpanded.current && effectiveIsExpanded) {
-          console.log('[ToolCallContent] Auto-collapsing tool');
-          handleExpand(false);
-        }
-        onCompleted();
+    if (!wasCompleted.current && isCompleted && onCompleted) {
+      wasCompleted.current = true;
+      console.log('[ToolCallContent] Tool completed (event-based):', { 
+        toolId: toolCall.toolCallId,
+        autoExpanded: autoExpanded.current,
+        userInteracted: userHasInteracted.current,
+        isExpanded: effectiveIsExpanded
+      });
+      // Only auto-collapse if we auto-expanded and user never interacted
+      if (!userHasInteracted.current && autoExpanded.current && effectiveIsExpanded) {
+        console.log('[ToolCallContent] Auto-collapsing tool');
+        handleExpand(false);
       }
+      onCompleted();
     }
-  }, [toolCall, onCompleted, handleExpand, effectiveIsExpanded]);
+  }, [isCompleted, onCompleted, handleExpand, effectiveIsExpanded, toolCall.toolCallId]);
 
   const handleClick = useCallback(() => {
     userHasInteracted.current = true;
@@ -268,6 +284,7 @@ function DefaultOpenRenderer({
   onToolCreated,
   onToolCompleted,
   follow,
+  controller,
 }: {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
@@ -279,6 +296,7 @@ function DefaultOpenRenderer({
   onToolCreated?: ((toolId: string, groupId: string) => void) | undefined;
   onToolCompleted?: ((toolId: string, groupId: string) => void) | undefined;
   follow?: boolean;
+  controller?: SessionController;
 }) {
   console.log('[DefaultOpenRenderer] Rendering with:', { 
     groupId: group.id, 
@@ -355,6 +373,7 @@ function DefaultOpenRenderer({
                   onThoughtCompleted?.(item.id, group.id);
                 }}
                 follow={follow ?? false}
+                {...(controller ? { controller } : {})}
               />
             ) : isToolCallItem(item) ? (
               <ToolCallContent
@@ -378,6 +397,7 @@ function DefaultOpenRenderer({
                   onToolCompleted?.(item.id, group.id);
                 }}
                 follow={follow ?? false}
+                {...(controller ? { controller } : {})}
               />
             ) : null}
           </div>
