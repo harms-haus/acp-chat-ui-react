@@ -1,6 +1,6 @@
 import { memo, useMemo } from "react";
 import type { ThreadItem } from "./types.js";
-import type { ThoughtGroupWithState, ThoughtStackRenderContext } from "../thought/types.js";
+import type { ThoughtGroupWithState, ThoughtStackRenderContext, ThoughtStackProps } from "../thought/types.js";
 import { MessageCard } from "../message/MessageCard.js";
 import { ThoughtStack } from "../thought/ThoughtStack.js";
 import { PermissionRequestCard } from "../permission-request/index.js";
@@ -15,6 +15,22 @@ export interface ThreadItemRendererProps {
   renderThoughtOpen?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
   onPermissionRespond?: (requestId: number, optionId: string) => void;
   toolCalls?: Map<string, NormalizedToolCall> | undefined;
+  /** Controlled expansion: set of item IDs that should be expanded */
+  expandedItems?: Set<string> | undefined;
+  /** Callback when expansion state changes */
+  onExpansionChange?: (expandedItems: Set<string>) => void;
+  /** Callback when a thought item is created */
+  onThoughtCreated?: (thoughtId: string, groupId: string) => void;
+  /** Callback when a thought item is completed */
+  onThoughtCompleted?: (thoughtId: string, groupId: string) => void;
+  /** Callback when a tool call item is created */
+  onToolCreated?: (toolId: string, groupId: string) => void;
+  /** Callback when a tool call item is completed */
+  onToolCompleted?: (toolId: string, groupId: string) => void;
+  /** Callback when the entire thought group is completed */
+  onThoughtGroupCompleted?: (groupId: string) => void;
+  /** Auto-follow: auto-open thought stack and auto-expand items while active */
+  follow?: boolean | undefined;
 }
 
 function isThoughtGroup(data: NormalizedMessage | ThoughtGroupWithState | NormalizedPermissionRequest): data is ThoughtGroupWithState {
@@ -28,6 +44,14 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
   renderThoughtOpen,
   onPermissionRespond,
   toolCalls,
+  expandedItems,
+  onExpansionChange,
+  onThoughtCreated,
+  onThoughtCompleted,
+  onToolCreated,
+  onToolCompleted,
+  onThoughtGroupCompleted,
+  follow,
 }: ThreadItemRendererProps) {
   const rendered = useMemo(() => {
     switch (item.type) {
@@ -43,14 +67,49 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
       }
       case "thought_group": {
         const group = item.data as ThoughtGroupWithState;
-        return (
-          <ThoughtStack
-            group={group}
-            isActive={group.isActive}
-            renderClosed={renderThoughtClosed}
-            renderOpen={renderThoughtOpen}
-          />
-        );
+        const thoughtStackProps: ThoughtStackProps = {
+          group,
+        };
+
+        console.log('[ThreadItemRenderer] Rendering thought_group:', {
+          groupId: group.id,
+          follow,
+          itemCount: group.items.length
+        });
+
+        // Conditionally add optional props to avoid exactOptionalPropertyTypes error
+        if (renderThoughtClosed !== undefined) {
+          thoughtStackProps.renderClosed = renderThoughtClosed;
+        }
+        if (renderThoughtOpen !== undefined) {
+          thoughtStackProps.renderOpen = renderThoughtOpen;
+        }
+        if (expandedItems !== undefined) {
+          thoughtStackProps.expandedItems = expandedItems;
+        }
+        if (onExpansionChange !== undefined) {
+          thoughtStackProps.onExpansionChange = onExpansionChange;
+        }
+        if (onThoughtCreated !== undefined) {
+          thoughtStackProps.onThoughtCreated = onThoughtCreated;
+        }
+        if (onThoughtCompleted !== undefined) {
+          thoughtStackProps.onThoughtCompleted = onThoughtCompleted;
+        }
+        if (onToolCreated !== undefined) {
+          thoughtStackProps.onToolCreated = onToolCreated;
+        }
+        if (onToolCompleted !== undefined) {
+          thoughtStackProps.onToolCompleted = onToolCompleted;
+        }
+        if (onThoughtGroupCompleted !== undefined) {
+          thoughtStackProps.onThoughtGroupCompleted = onThoughtGroupCompleted;
+        }
+        if (follow !== undefined) {
+          thoughtStackProps.follow = follow;
+        }
+
+        return <ThoughtStack {...thoughtStackProps} />;
       }
       case "permission_request": {
         const request = item.data as NormalizedPermissionRequest;
@@ -72,7 +131,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
           </div>
         );
     }
-  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls]);
+  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls, expandedItems, onExpansionChange, onThoughtCreated, onThoughtCompleted, onToolCreated, onToolCompleted, onThoughtGroupCompleted, follow]);
 
   return (
     <div

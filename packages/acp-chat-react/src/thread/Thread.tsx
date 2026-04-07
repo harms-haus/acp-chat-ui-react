@@ -5,7 +5,6 @@ import { useTimelineItems, useIsConnected, useActiveStreamingMessage, useToolCal
 import type { AcpStore } from "../store/index.js";
 import type { ThreadItem } from "./types.js";
 import type { ThoughtGroupWithState, ThoughtStackRenderContext } from "../thought/types.js";
-import { isThoughtGroupActive } from "@acp/chat-core";
 import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedThought, NormalizedToolCall } from "@acp/chat-core";
 import type { MessageAction } from "../actions/types.js";
 import type { ReactNode } from "react";
@@ -24,6 +23,22 @@ export interface ThreadProps {
   renderThoughtClosed?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
   renderThoughtOpen?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
   onPermissionRespond?: (requestId: number, optionId: string) => void;
+  /** Controlled expansion: set of item IDs that should be expanded */
+  expandedItems?: Set<string> | undefined;
+  /** Callback when expansion state changes */
+  onExpansionChange?: (expandedItems: Set<string>) => void;
+  /** Callback when a thought item is created */
+  onThoughtCreated?: (thoughtId: string, groupId: string) => void;
+  /** Callback when a thought item is completed */
+  onThoughtCompleted?: (thoughtId: string, groupId: string) => void;
+  /** Callback when a tool call item is created */
+  onToolCreated?: (toolId: string, groupId: string) => void;
+  /** Callback when a tool call item is completed */
+  onToolCompleted?: (toolId: string, groupId: string) => void;
+  /** Callback when the entire thought group is completed */
+  onThoughtGroupCompleted?: (groupId: string) => void;
+  /** Auto-follow: auto-open thought stack and auto-expand items while active. Defaults to false. */
+  follow?: boolean | undefined;
 }
 
 const MemoizedThreadItemRenderer = memo(ThreadItemRenderer);
@@ -42,6 +57,14 @@ export function Thread({
   renderThoughtClosed,
   renderThoughtOpen,
   onPermissionRespond,
+  expandedItems,
+  onExpansionChange,
+  onThoughtCreated,
+  onThoughtCompleted,
+  onToolCreated,
+  onToolCompleted,
+  onThoughtGroupCompleted,
+  follow,
 }: ThreadProps) {
   const timelineItems = useTimelineItems(store);
   const isConnected = useIsConnected(store);
@@ -55,6 +78,7 @@ export function Thread({
   const threadItems: ThreadItem[] = useMemo(() => {
     const result: ThreadItem[] = [];
     let currentThoughtGroup: ThoughtGroupWithState | null = null;
+    let hasSeenMessage = false; // Track if we've passed a message
 
     const pendingPermissionToolCallIds = new Set<string>();
     for (const item of timelineItems) {
@@ -66,17 +90,20 @@ export function Thread({
       }
     }
 
+    // Build thought groups and messages
     for (const item of timelineItems) {
       if (item.type === "thought") {
         const thought = item.data as NormalizedThought;
-        if (!currentThoughtGroup) {
+        // Start new group if we've seen a message or no group exists
+        if (hasSeenMessage || !currentThoughtGroup) {
           currentThoughtGroup = {
-            id: `thought-group-${result.length}`,
+            id: `thought-group-${result.filter(r => r.type === 'thought_group').length}`,
             items: [],
             startTime: thought.createdAt ?? Date.now(),
             endTime: thought.createdAt ?? Date.now(),
             isActive: false,
           };
+          hasSeenMessage = false; // Reset for new group
         }
         currentThoughtGroup.items.push({
           type: item.type,
@@ -91,14 +118,16 @@ export function Thread({
         if (pendingPermissionToolCallIds.has(toolCall.toolCallId)) {
           continue;
         }
-        if (!currentThoughtGroup) {
+        // Start new group if we've seen a message or no group exists
+        if (hasSeenMessage || !currentThoughtGroup) {
           currentThoughtGroup = {
-            id: `thought-group-${result.length}`,
+            id: `thought-group-${result.filter(r => r.type === 'thought_group').length}`,
             items: [],
             startTime: toolCall.createdAt ?? Date.now(),
             endTime: toolCall.createdAt ?? Date.now(),
             isActive: false,
           };
+          hasSeenMessage = false; // Reset for new group
         }
         currentThoughtGroup.items.push({
           type: item.type,
@@ -115,8 +144,6 @@ export function Thread({
           continue;
         }
         if (currentThoughtGroup) {
-          const isActive = isThoughtGroupActive([currentThoughtGroup], isAgentTyping);
-          currentThoughtGroup.isActive = isActive;
           result.push({
             type: "thought_group",
             id: currentThoughtGroup.id,
@@ -129,10 +156,8 @@ export function Thread({
           id: item.id,
           data: item.data as NormalizedPermissionRequest,
         });
-      } else {
+      } else if (item.type === "message") {
         if (currentThoughtGroup) {
-          const isActive = isThoughtGroupActive([currentThoughtGroup], isAgentTyping);
-          currentThoughtGroup.isActive = isActive;
           result.push({
             type: "thought_group",
             id: currentThoughtGroup.id,
@@ -140,6 +165,7 @@ export function Thread({
           });
           currentThoughtGroup = null;
         }
+        hasSeenMessage = true; // Mark that we've seen a message
         result.push({
           type: "message",
           id: item.id,
@@ -148,9 +174,8 @@ export function Thread({
       }
     }
 
+    // Final group - always inactive (active state detected by ThoughtStack via events)
     if (currentThoughtGroup) {
-      const isActive = isThoughtGroupActive([currentThoughtGroup], isAgentTyping);
-      currentThoughtGroup.isActive = isActive;
       result.push({
         type: "thought_group",
         id: currentThoughtGroup.id,
@@ -159,7 +184,7 @@ export function Thread({
     }
 
     return result;
-  }, [timelineItems, isAgentTyping]);
+  }, [timelineItems]);
 
   const renderItem = useCallback(
     (item: ThreadItem) => {
@@ -171,10 +196,18 @@ export function Thread({
           {...(renderThoughtClosed ? { renderThoughtClosed } : {})}
           {...(renderThoughtOpen ? { renderThoughtOpen } : {})}
           {...(onPermissionRespond ? { onPermissionRespond } : {})}
+          {...(expandedItems !== undefined ? { expandedItems } : {})}
+          {...(onExpansionChange !== undefined ? { onExpansionChange } : {})}
+          {...(onThoughtCreated !== undefined ? { onThoughtCreated } : {})}
+          {...(onThoughtCompleted !== undefined ? { onThoughtCompleted } : {})}
+          {...(onToolCreated !== undefined ? { onToolCreated } : {})}
+          {...(onToolCompleted !== undefined ? { onToolCompleted } : {})}
+          {...(onThoughtGroupCompleted !== undefined ? { onThoughtGroupCompleted } : {})}
+          {...(follow !== undefined ? { follow } : {})}
         />
       );
     },
-    [messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls]
+    [messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls, expandedItems, onExpansionChange, onThoughtCreated, onThoughtCompleted, onToolCreated, onToolCompleted, onThoughtGroupCompleted, follow]
   );
 
   const defaultEmptyState = useMemo(
