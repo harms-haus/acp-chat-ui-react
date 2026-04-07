@@ -173,6 +173,11 @@ function ThoughtContent({
         userInteracted: userHasInteracted.current,
         isExpanded: effectiveIsExpanded
       });
+      console.log('[ThoughtContent] Collapse check:', {
+        userHasInteracted: userHasInteracted.current,
+        autoExpanded: autoExpanded.current,
+        effectiveIsExpanded
+      });
       // Only auto-collapse if we auto-expanded and user never interacted
       if (!userHasInteracted.current && autoExpanded.current && effectiveIsExpanded) {
         console.log('[ThoughtContent] Auto-collapsing thought');
