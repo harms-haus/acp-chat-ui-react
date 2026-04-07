@@ -108,7 +108,15 @@ function ThoughtContent({
     }
     return false;
   });
-  
+
+  // Debug logging at component start
+  console.log('[ThoughtContent] Render:', { thoughtId: thought.id, eventCount: events.length, hasEvent, isCompleted });
+
+  // Show events array contents
+  if (events.length > 0) {
+    console.log('[ThoughtContent] Events:', events.map(e => ({ type: e.params?.update?.type, status: e.params?.update?.status })));
+  }
+
   // Use internal state if no parent handler is provided
   const effectiveIsExpanded = onExpandChange ? isExpanded : internalExpanded;
   const handleExpand = useCallback((expanded: boolean) => {
@@ -141,6 +149,14 @@ function ThoughtContent({
   }, [follow, hasEvent, events.length, handleExpand, onCreated, thought.id]);
 
   useEffect(() => {
+    console.log('[ThoughtContent] Completion check:', {
+      wasCompleted: wasCompleted.current,
+      isCompleted,
+      hasOnCompleted: !!onCompleted,
+      userHasInteracted: userHasInteracted.current,
+      autoExpanded: autoExpanded.current,
+      effectiveIsExpanded
+    });
     if (!wasCompleted.current && isCompleted && onCompleted) {
       wasCompleted.current = true;
       console.log('[ThoughtContent] Thought completed (event-based):', {
