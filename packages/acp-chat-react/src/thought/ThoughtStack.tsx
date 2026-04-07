@@ -109,13 +109,21 @@ function ThoughtContent({
     return false;
   });
 
-  // Debug logging at component start
-  console.log('[ThoughtContent] Render:', { thoughtId: thought.id, eventCount: events.length, hasEvent, isCompleted });
-
-  // Show events array contents
+  console.log('[ThoughtContent] Event debug for thought:', thought.id);
   if (events.length > 0) {
-    console.log('[ThoughtContent] Events:', events.map(e => ({ type: e.params?.update?.type, status: e.params?.update?.status })));
+    const lastIndex = events.length - 1;
+    if (events[lastIndex]) {
+      const lastEvent = events[lastIndex]!;
+      const params = lastEvent.params as { update?: Record<string, unknown> };
+      console.log('[ThoughtContent] Last event:', {
+        type: params.update?.type,
+        status: params.update?.status,
+        thoughtId: (params.update as { thoughtId?: string })?.thoughtId,
+        fullUpdate: params.update
+      });
+    }
   }
+  console.log('[ThoughtContent] isCompleted:', isCompleted);
 
   // Use internal state if no parent handler is provided
   const effectiveIsExpanded = onExpandChange ? isExpanded : internalExpanded;
