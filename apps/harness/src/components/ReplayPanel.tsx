@@ -64,7 +64,10 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
   const [pendingPermission, setPendingPermission] = useState<PermissionRequest | null>(null);
   const [replaySpeed, setReplaySpeed] = useState<number>(() => {
     const saved = localStorage.getItem("replay-speed");
-    return saved ? parseInt(saved, 10) : DEFAULT_REPLAY_SPEED;
+    if (!saved) return DEFAULT_REPLAY_SPEED;
+    const parsed = parseInt(saved, 10);
+    const initial = Number.isFinite(parsed) && !isNaN(parsed) ? parsed : DEFAULT_REPLAY_SPEED;
+    return initial;
   });
 
   useEffect(() => {
@@ -142,8 +145,8 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
         checkConnection();
       });
 
-      // Initialize replay mode with script, session ID, and speed
-      await newController.initReplay(selectedDemoType, SESSION_ID, replaySpeed);
+      await newController.initReplay(selectedDemoType, SESSION_ID);
+      newController.setReplaySpeed(replaySpeed);
 
       setController(newController);
       setConnectionStatus("replaying");

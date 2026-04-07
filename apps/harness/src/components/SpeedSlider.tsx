@@ -78,8 +78,8 @@ export function SpeedSlider({ value, onChange }: SpeedSliderProps) {
                 transform: "translate(-50%, -50%)",
                 cursor: "pointer",
                 border: "none",
-                outline: "none",
               }}
+              data-slider-thumb
             />
           </Slider.Track>
         </Slider.Control>

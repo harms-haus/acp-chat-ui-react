@@ -172,7 +172,14 @@ function ThreadPanel({
       }}
     >
       <div style={{ flex: "1 1 0", minHeight: 0, overflow: "hidden" }}>
-        <Thread store={store} layout="centered" followScroll={true} onPermissionRespond={handlePermissionRespond} />
+        <Thread
+          store={store}
+          layout="centered"
+          followScroll={true}
+          onPermissionRespond={handlePermissionRespond}
+          follow={true}
+          controller={controller as SessionController}
+        />
       </div>
       <div
         data-acp-composer-panel
