@@ -176,9 +176,19 @@ export class TransportClient {
     }
 
     setReplaySpeed(speed: number): void {
+        // Validate speed parameter
+        if (!Number.isFinite(speed) || speed <= 0) {
+            throw new Error(`setReplaySpeed: speed must be a finite positive number, got ${speed}`);
+        }
+        
+        // Check transport state before sending
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            throw new Error("setReplaySpeed: transport not connected");
+        }
+        
+        // Send as notification (no id field)
         const payload = {
-            jsonrpc: "2.0",
-            id: 0,
+            jsonrpc: "2.0" as const,
             method: "set_replay_speed",
             params: {
                 replaySpeed: speed

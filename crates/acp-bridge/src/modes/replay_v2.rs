@@ -84,8 +84,30 @@ pub struct ReplayV2Config {
   pub file_path: Option<String>,
   /// Base directory for replay data.
   pub replay_data_dir: Option<String>,
-  /// Tokens per second for replay timing. Defaults to 65.0.
+  /// Tokens per second for replay timing. Defaults to 65.0. Must be >= 0.01.
   pub tps: f64,
+}
+
+impl ReplayV2Config {
+    /// Create a new config with TPS validation. Returns error if tps < 0.01.
+    pub fn new(
+        demo_type: Option<String>,
+        session_id: Option<String>,
+        file_path: Option<String>,
+        replay_data_dir: Option<String>,
+        tps: f64,
+    ) -> Result<Self, String> {
+        if tps < 0.01 {
+            return Err(format!("tps must be >= 0.01, got {}", tps));
+        }
+        Ok(Self {
+            demo_type,
+            session_id,
+            file_path,
+            replay_data_dir,
+            tps,
+        })
+    }
 }
 
 /// A replay event as stored in replay-events.jsonl.
@@ -162,6 +184,9 @@ fn to_text(s: String) -> Message {
 fn delay_for_tokens(token_count: usize, tps: f64) -> u64 {
     if token_count == 0 {
         return ZERO_TOKEN_DELAY_MS;
+    }
+    if tps <= 0.0 {
+        return u64::MAX;
     }
     ((token_count as f64 / tps) * 1000.0) as u64
 }
@@ -325,9 +350,12 @@ async fn stream_events(
                             .map(|s| s.to_string());
 
                         for (i, word) in words.iter().enumerate() {
-        let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
-        let _ = current_tps; // read once to establish baseline; each section reads fresh
-                            let word_delay = ((1.0 / current_tps) * 1000.0) as u64;
+                            let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
+                            let word_delay = if current_tps > 0.0 {
+                                ((1.0 / current_tps) * 1000.0) as u64
+                            } else {
+                                u64::MAX
+                            };
 
                             let mut word_envelope = envelope_value.clone();
 

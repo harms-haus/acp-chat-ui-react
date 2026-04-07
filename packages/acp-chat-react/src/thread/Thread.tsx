@@ -5,7 +5,7 @@ import { useTimelineItems, useIsConnected, useActiveStreamingMessage, useToolCal
 import type { AcpStore } from "../store/index.js";
 import type { ThreadItem } from "./types.js";
 import type { ThoughtGroupWithState, ThoughtStackRenderContext } from "../thought/types.js";
-import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedThought, NormalizedToolCall } from "@acp/chat-core";
+import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedThought, NormalizedToolCall, SessionController } from "@acp/chat-core";
 import type { MessageAction } from "../actions/types.js";
 import type { ReactNode } from "react";
 
@@ -39,6 +39,8 @@ export interface ThreadProps {
   onThoughtGroupCompleted?: (groupId: string) => void;
   /** Auto-follow: auto-open thought stack and auto-expand items while active. Defaults to false. */
   follow?: boolean | undefined;
+  /** Session controller for event-based active state detection */
+  controller?: SessionController | undefined;
 }
 
 const MemoizedThreadItemRenderer = memo(ThreadItemRenderer);
@@ -65,6 +67,7 @@ export function Thread({
   onToolCompleted,
   onThoughtGroupCompleted,
   follow,
+  controller,
 }: ThreadProps) {
   const timelineItems = useTimelineItems(store);
   const isConnected = useIsConnected(store);
@@ -204,10 +207,11 @@ export function Thread({
           {...(onToolCompleted !== undefined ? { onToolCompleted } : {})}
           {...(onThoughtGroupCompleted !== undefined ? { onThoughtGroupCompleted } : {})}
           {...(follow !== undefined ? { follow } : {})}
+          {...(controller ? { controller } : {})}
         />
       );
     },
-    [messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls, expandedItems, onExpansionChange, onThoughtCreated, onThoughtCompleted, onToolCreated, onToolCompleted, onThoughtGroupCompleted, follow]
+    [messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls, expandedItems, onExpansionChange, onThoughtCreated, onThoughtCompleted, onToolCreated, onToolCompleted, onThoughtGroupCompleted, follow, controller]
   );
 
   const defaultEmptyState = useMemo(

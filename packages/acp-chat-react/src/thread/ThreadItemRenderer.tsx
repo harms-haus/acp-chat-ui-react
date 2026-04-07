@@ -4,7 +4,7 @@ import type { ThoughtGroupWithState, ThoughtStackRenderContext, ThoughtStackProp
 import { MessageCard } from "../message/MessageCard.js";
 import { ThoughtStack } from "../thought/ThoughtStack.js";
 import { PermissionRequestCard } from "../permission-request/index.js";
-import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedToolCall } from "@acp/chat-core";
+import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedToolCall, SessionController } from "@acp/chat-core";
 import type { MessageAction } from "../actions/types.js";
 import type { ReactNode } from "react";
 
@@ -31,6 +31,8 @@ export interface ThreadItemRendererProps {
   onThoughtGroupCompleted?: (groupId: string) => void;
   /** Auto-follow: auto-open thought stack and auto-expand items while active */
   follow?: boolean | undefined;
+  /** Session controller for event-based active state detection */
+  controller?: SessionController | undefined;
 }
 
 function isThoughtGroup(data: NormalizedMessage | ThoughtGroupWithState | NormalizedPermissionRequest): data is ThoughtGroupWithState {
@@ -52,6 +54,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
   onToolCompleted,
   onThoughtGroupCompleted,
   follow,
+  controller,
 }: ThreadItemRendererProps) {
   const rendered = useMemo(() => {
     switch (item.type) {
@@ -70,12 +73,6 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
         const thoughtStackProps: ThoughtStackProps = {
           group,
         };
-
-        console.log('[ThreadItemRenderer] Rendering thought_group:', {
-          groupId: group.id,
-          follow,
-          itemCount: group.items.length
-        });
 
         // Conditionally add optional props to avoid exactOptionalPropertyTypes error
         if (renderThoughtClosed !== undefined) {
@@ -108,6 +105,9 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
         if (follow !== undefined) {
           thoughtStackProps.follow = follow;
         }
+        if (controller !== undefined) {
+          thoughtStackProps.controller = controller;
+        }
 
         return <ThoughtStack {...thoughtStackProps} />;
       }
@@ -131,7 +131,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
           </div>
         );
     }
-  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls, expandedItems, onExpansionChange, onThoughtCreated, onThoughtCompleted, onToolCreated, onToolCompleted, onThoughtGroupCompleted, follow]);
+  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls, expandedItems, onExpansionChange, onThoughtCreated, onThoughtCompleted, onToolCreated, onToolCompleted, onThoughtGroupCompleted, follow, controller]);
 
   return (
     <div

@@ -137,6 +137,28 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@25.5.0)(jsdom@29.0.1)
 
+  packages/integration-tests:
+    dependencies:
+      '@acp/chat-core':
+        specifier: workspace:*
+        version: link:../acp-chat-core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.19.15
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.15)(jsdom@29.0.1)
+      ws:
+        specifier: ^8.20.0
+        version: 8.20.0
+
 packages:
 
   '@adobe/css-tools@4.4.4':

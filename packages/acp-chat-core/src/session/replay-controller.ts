@@ -381,9 +381,8 @@ export class ReplayController {
     console.log('[ReplayController] cancelPermission sent via transport.send()');
   }
 
-  /** Set the replay speed (tokens per second). Default 65, range 10-200. */
   setReplaySpeed(speed: number): void {
-    this.transport.send(JSON.stringify({jsonrpc:"2.0",id:0,method:"set_replay_speed",params:{replaySpeed:speed}}));
+    this.sendNotification("set_replay_speed", { replaySpeed: speed });
   }
 
   // ---------------------------------------------------------------------------

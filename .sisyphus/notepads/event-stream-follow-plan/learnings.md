@@ -740,3 +740,176 @@ The plan language about "replacing" sessionUpdate events appears to be outdated 
 
 ### Pre-existing Issues (Not Related to This Task)
 - `bun:test` import error in `packages/acp-chat-react/src/events/hooks.test.ts` - Test configuration issue, not event system
+
+## Bug Fix: Infinite Loop in useThoughtEvents and useToolCallEvents (2026-04-07)
+
+### Problem
+Browser console showed infinite re-render errors:
+- "Maximum update depth exceeded"
+- "The result of getSnapshot should be cached to avoid an infinite loop"
+
+### Root Cause
+The `getSnapshotFn` in `useThoughtEvents` and `useToolCallEvents` returned a new array reference each time:
+```typescript
+const getSnapshotFn = useCallback(() => {
+  if (!controller) {
+    return emptyRef.current;
+  }
+  const subscription = getThoughtEventSubscription(controller);
+  return subscription.getEvents(thoughtId); // Returns NEW array each time!
+}, [controller, thoughtId]);
+```
+
+React's `useSyncExternalStore` compares snapshot references. When `subscription.getEvents()` returns a new array (even if contents are identical), React thinks state changed and triggers infinite re-renders.
+
+### Solution
+Applied the same snapshot caching pattern used in `useChatEvent()` (lines 408-436):
+1. Added `lastSnapshotRef` to cache the snapshot
+2. Only create new array when events actually change (length or last timestamp)
+3. Return cached snapshot otherwise
+
+```typescript
+const lastSnapshotRef = useRef<{ snapshot: ChatEvent<"sessionUpdate", unknown>[]; version: number }>({ snapshot: [], version: 0 });
+
+const getSnapshotFn = useCallback(() => {
+  if (!controller) {
+    return emptyRef.current;
+  }
+  const subscription = getThoughtEventSubscription(controller);
+  const events = subscription.getEvents(thoughtId);
+  // Only create new snapshot array if events actually changed
+  const lastSnapshot = lastSnapshotRef.current.snapshot;
+  const lastTimestamp = lastSnapshot.length > 0 ? lastSnapshot[lastSnapshot.length - 1]?.timestamp : undefined;
+  const currentTimestamp = events.length > 0 ? events[events.length - 1]?.timestamp : undefined;
+  
+  if (events.length !== lastSnapshot.length || currentTimestamp !== lastTimestamp) {
+    lastSnapshotRef.current = { snapshot: [...events], version: lastSnapshotRef.current.version + 1 };
+  }
+  return lastSnapshotRef.current.snapshot;
+}, [controller, thoughtId]);
+```
+
+### Key Pattern
+- **Length check**: Detects if events were added/removed
+- **Timestamp check**: Detects if the last event changed (important for updates)
+- **Version increment**: Tracks cache validity for debugging
+- **Spread syntax**: Creates copy only when needed (`[...events]`)
+
+### Files Modified
+1. `packages/acp-chat-react/src/events/hooks.ts` - Added snapshot caching to `useThoughtEvents()` and `useToolCallEvents()`
+
+### Verification
+- ✅ TypeScript: No errors in hooks.ts
+- ✅ Build: Passes successfully
+- ✅ LSP diagnostics: No errors
+
+### Lessons Learned
+
+#### useSyncExternalStore Snapshot Caching is Critical
+When using `useSyncExternalStore`, the `getSnapshot` function MUST return stable references when state hasn't changed. React compares snapshots by reference, not by value.
+
+**WRONG:**
+```typescript
+const getSnapshot = () => store.getItems(); // Returns new array every time
+```
+
+**CORRECT:**
+```typescript
+const lastSnapshotRef = useRef([]);
+const getSnapshot = () => {
+  const items = store.getItems();
+  if (items.length !== lastSnapshotRef.current.length) {
+    lastSnapshotRef.current = [...items];
+  }
+  return lastSnapshotRef.current;
+};
+```
+
+#### Compare Multiple Metrics for Change Detection
+To detect if an array's contents changed, compare:
+1. **Length**: Catches additions/removals
+2. **Last item timestamp**: Catches updates to existing items
+3. **Version number**: Optional, for debugging
+
+This ensures we don't miss updates where length stays the same but content changed.
+
+#### Copy on Write Pattern
+Only create new array copy when change detected:
+```typescript
+if (changed) {
+  lastSnapshotRef.current = { snapshot: [...events], ... };
+}
+return lastSnapshotRef.current.snapshot; // Return cached reference
+```
+
+This prevents unnecessary allocations and reference changes.
+
+## Bug Fix: ThoughtEventSubscription Missing thought_update Events (2026-04-07)
+
+### Problem
+ThoughtContent component checks for `thought_update` events to detect completion and auto-collapse thoughts:
+```typescript
+const isCompleted = events.some(event => {
+  const update = event.params as { sessionId?: string; update?: Record<string, unknown> };
+  const updateType = update.update?.type ?? update.update?.sessionUpdate;
+  if (updateType === "thought_update") {
+    const thoughtUpdate = update.update as { status?: string };
+    return thoughtUpdate.status === "completed" || thoughtUpdate.status === "done";
+  }
+  return false;
+});
+```
+
+But ThoughtEventSubscription only captured `agent_thought_chunk` events:
+```typescript
+// Only track thought-related events
+if (updateType === "agent_thought_chunk") {  // Missing thought_update!
+  // ...capture events...
+}
+```
+
+This caused completion detection to fail because `thought_update` events were never stored, so thoughts would never auto-collapse.
+
+### Solution
+Updated ThoughtEventSubscription to capture both event types:
+```typescript
+// Only track thought-related events
+if (updateType === "agent_thought_chunk" || updateType === "thought_update") {
+  // ...capture both types...
+}
+```
+
+This matches the pattern used in ToolCallEventSubscription which captures both `tool_call` and `tool_call_update` events.
+
+### Key Implementation Details
+
+1. **Event Types**:
+   - `agent_thought_chunk`: Emits thought content during creation
+   - `thought_update`: Emits thought status updates (completed, done, etc.)
+
+2. **Storage**: Both event types are stored in the same events Map for each thoughtId
+
+3. **thoughtId Extraction**: Works the same for both event types since they both have `thoughtId` field in update payload
+
+### Files Modified
+1. `packages/acp-chat-react/src/events/hooks.ts` - Updated ThoughtEventSubscription.subscribe() to capture thought_update events
+
+### Verification
+- ✅ Build passes successfully
+- ✅ No TypeScript errors introduced
+- ✅ Pre-existing errors in hooks.test.ts unrelated to this change
+
+### Impact
+- Thoughts will now properly detect completion status from `thought_update` events
+- Auto-collapse functionality will work correctly when thoughts complete
+- Follow mode will properly collapse completed thoughts after auto-expanding them
+
+### Lesson Learned
+
+#### Complete Event Lifecycle Tracking
+When implementing lifecycle tracking features (like creation/completion detection), ensure you capture ALL relevant event types, not just the creation events:
+- **Creation events**: Tell you when something starts
+- **Update events**: Tell you when status changes (completed, failed, etc.)
+- Both are needed for complete lifecycle tracking
+
+The pattern in ToolCallEventSubscription (`tool_call` + `tool_call_update`) should have been followed in ThoughtEventSubscription from the start.

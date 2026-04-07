@@ -178,6 +178,7 @@ function ThreadPanel({
           followScroll={true}
           onPermissionRespond={handlePermissionRespond}
           follow={true}
+          controller={controller as SessionController}
         />
       </div>
       <div

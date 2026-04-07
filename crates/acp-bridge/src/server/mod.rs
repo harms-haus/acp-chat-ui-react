@@ -157,8 +157,9 @@ async fn run_client_session(
                                     if val.get("method").and_then(|v| v.as_str()) == Some("set_replay_speed") {
                                         if let Some(speed) = val.get("params").and_then(|p| p.get("replaySpeed")).and_then(|v| v.as_f64()) {
                                             if speed > 0.0 {
-                                                tps_clone.store((speed * 100.0) as u64, Ordering::Relaxed);
-                                                tracing::info!("Mid-replay speed changed to {} TPS", speed);
+                                                let stored_tps = (speed * 100.0) as u64;
+                                                tps_clone.store(stored_tps, Ordering::Relaxed);
+                                                tracing::info!("Mid-replay speed changed to {}x ({} TPS stored)", speed, stored_tps);
                                             }
                                         }
                                     } else {
@@ -299,6 +300,20 @@ async fn handle_init_message(
       return Err(format!("script not found: {}/{}/{}", base_dir, script, session_id).into());
     }
 
+    // Validate replay speed before sending success response
+    let tps_value = init_msg.replay_speed.unwrap_or(65.0);
+    if tps_value <= 0.0 {
+        return Err(format!("replay_speed must be > 0.0, got {}", tps_value).into());
+    }
+
+    let replay_config = ReplayV2Config {
+      demo_type: Some(script.clone()),
+      session_id: Some(session_id.clone()),
+      file_path: Some(format!("{}/{}/{}", base_dir, script, session_id)),
+      replay_data_dir: Some(base_dir.to_string()),
+      tps: tps_value,
+    };
+
             let success_response = serde_json::json!({
                 "type": "init",
                 "initId": init_msg.init_id,
@@ -310,14 +325,6 @@ async fn handle_init_message(
             )).await?;
 
             tracing::info!("Replay mode initialized: {}/{}", script, session_id);
-            
-    let replay_config = ReplayV2Config {
-      demo_type: Some(script.clone()),
-      session_id: Some(session_id.clone()),
-      file_path: Some(format!("{}/{}/{}", base_dir, script, session_id)),
-      replay_data_dir: Some(base_dir.to_string()),
-      tps: init_msg.replay_speed.unwrap_or(65.0),
-    };
             
             Ok(SessionState::ReplayLoaded { config: replay_config })
         }

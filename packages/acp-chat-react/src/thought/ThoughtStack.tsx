@@ -127,6 +127,13 @@ function ThoughtContent({
 
   // Use internal state if no parent handler is provided
   const effectiveIsExpanded = onExpandChange ? isExpanded : internalExpanded;
+  console.log('[ThoughtContent] State:', {
+    thoughtId: thought.id,
+    effectiveIsExpanded,
+    internalExpanded,
+    hasOnExpandChange: !!onExpandChange,
+    isExpandedProp: isExpanded
+  });
   const handleExpand = useCallback((expanded: boolean) => {
     if (onExpandChange) {
       onExpandChange(expanded);

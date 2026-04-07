@@ -28,16 +28,21 @@ const REPO_ROOT = resolve(__dirname, '../../../..');
 export async function spawnBridge(port: number): Promise<ChildProcess> {
     return new Promise<ChildProcess>((resolveSpawn, rejectSpawn) => {
         const args = [
+            '--addr',
+            `127.0.0.1:${port}`,
+            '--demo-type',
+            'long-context',
+            '--session-id',
+            'session-1'
+        ];
+
+        const bridge = spawn('cargo', [
             'run',
             '--manifest-path',
             'crates/acp-bridge/Cargo.toml',
             '--',
-            'replay-v2',
-            '--addr',
-            `127.0.0.1:${port}`
-        ];
-
-        const bridge = spawn('cargo', args, {
+            ...args
+        ], {
             cwd: REPO_ROOT,
             stdio: ['ignore', 'pipe', 'pipe'],
             env: { ...process.env, RUST_LOG: 'error' }
