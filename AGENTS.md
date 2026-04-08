@@ -14,21 +14,18 @@ The wiki documentation is the **single source of truth** for the project's archi
 
 ```
 docs/wiki/
-├── acp-chat-core/           # Core library documentation
-│   ├── Home.md              # Main landing page
-│   ├── Architecture.md      # Layered architecture
-│   ├── Types-Reference.md   # Complete type catalog
-│   ├── Events.md            # Event system documentation
-│   ├── Session-Management.md # SessionController API
-│   ├── Implementation-Guide.md # Framework-agnostic patterns
-│   └── ... (other pages)
-├── acp-chat-react/          # React implementation documentation
-│   ├── Home.md              # React package overview
-│   └── ... (other pages)
-├── ACP-Protocol.md          # External ACP protocol reference
-├── Glossary.md              # Terminology (when created)
-└── Troubleshooting.md       # Common issues (when created)
+├── Home.md                      # Main landing page
+├── acp-chat-core-Home.md        # Core library landing page
+├── acp-chat-core-Architecture.md # Layered architecture
+├── acp-chat-core-Types-Reference.md # Complete type catalog
+├── acp-chat-core-Events.md      # Event system documentation
+├── acp-chat-core-Session-Management.md # SessionController API
+├── acp-chat-core-Implementation-Guide.md # Framework-agnostic patterns
+├── acp-chat-react-Home.md       # React package overview
+└── ACP-Protocol.md              # External ACP protocol reference
 ```
+
+**Note:** GitHub wikis require a flat structure (no subdirectories). All files are at the root level with `acp-chat-core-` and `acp-chat-react-` prefixes.
 
 ---
 
@@ -54,9 +51,9 @@ async createSession(cwd: string, mcpServers?: unknown[]): Promise<unknown>
 async createSession(cwd: string, mcpServers?: unknown[], config?: SessionConfig): Promise<SessionResult>
 
 // You MUST update:
-// - Types-Reference.md (type definition)
-// - Session-Management.md (method signature and examples)
-// - Implementation-Guide.md (usage examples)
+// - acp-chat-core-Types-Reference.md (type definition)
+// - acp-chat-core-Session-Management.md (method signature and examples)
+// - acp-chat-core-Implementation-Guide.md (usage examples)
 ```
 
 ---
@@ -66,10 +63,10 @@ async createSession(cwd: string, mcpServers?: unknown[], config?: SessionConfig)
 **When making changes, prefer updating existing wiki pages over creating new ones.**
 
 **DO:**
-- Update existing type definitions in `Types-Reference.md`
-- Add new methods to existing class documentation in `Session-Management.md`
-- Update examples in `Implementation-Guide.md` to reflect new patterns
-- Modify architecture diagrams in `Architecture.md` to show new layers
+- Update existing type definitions in `acp-chat-core-Types-Reference.md`
+- Add new methods to existing class documentation in `acp-chat-core-Session-Management.md`
+- Update examples in `acp-chat-core-Implementation-Guide.md` to reflect new patterns
+- Modify architecture diagrams in `acp-chat-core-Architecture.md` to show new layers
 
 **DON'T:**
 - Create `Types-Reference-v2.md` for updated types
@@ -80,7 +77,7 @@ async createSession(cwd: string, mcpServers?: unknown[], config?: SessionConfig)
 
 ---
 
-### Rule 3: USE EXISTING PATTERNS & TERMINOLOGY
+### Rule 2: PREFER UPDATING EXISTING PAGES
 
 **When documenting new features, use the same patterns and terminology as existing pages.**
 
@@ -130,16 +127,16 @@ await controller.methodName("value");
 
 ---
 
-### Rule 4: UPDATE ALL AFFECTED EXAMPLES
+### Rule 3: UPDATE ALL AFFECTED EXAMPLES
 
 **When you change an API, update ALL code examples that use it.**
 
 **Check these files for examples:**
 - `Home.md` (quick start examples)
-- `Session-Management.md` (usage examples throughout)
-- `Implementation-Guide.md` (implementation patterns)
-- `Events.md` (event handling examples)
-- `acp-chat-react/Home.md` (React integration examples)
+- `acp-chat-core-Session-Management.md` (usage examples throughout)
+- `acp-chat-core-Implementation-Guide.md` (implementation patterns)
+- `acp-chat-core-Events.md` (event handling examples)
+- `acp-chat-react-Home.md` (React integration examples)
 
 **Example:**
 If you change `createSession()` signature:
@@ -150,44 +147,34 @@ If you change `createSession()` signature:
 
 ---
 
-### Rule 5: LINK CORRECTLY BETWEEN PAGES
+### Rule 4: LINK CORRECTLY BETWEEN PAGES
 
 **Use relative links that work in GitHub wiki:**
 
-**Same folder:**
+**All pages at root level (flat structure):**
 ```markdown
-[Architecture](./Architecture)
-[Types Reference](./Types-Reference)
-```
-
-**Sibling folder:**
-```markdown
-[React Home](../acp-chat-react/Home)
-[ACP Protocol](../ACP-Protocol)
-```
-
-**Parent folder:**
-```markdown
-[Glossary](../Glossary)
-[Troubleshooting](../Troubleshooting)
+[Architecture](./acp-chat-core-Architecture)
+[Types Reference](./acp-chat-core-Types-Reference)
+[React Home](./acp-chat-react-Home)
+[ACP Protocol](./ACP-Protocol)
 ```
 
 **DON'T use:**
 - Absolute paths (`/docs/wiki/Architecture.md`)
-- `.md` extensions in links (`Architecture.md` ❌, `Architecture` ✅)
+- Folder paths (`acp-chat-core/Architecture` ❌)
+- `.md` extensions in links (`Architecture.md` ❌, `acp-chat-core-Architecture` ✅)
 - Broken links to non-existent pages
 
 ---
 
-### Rule 6: VERIFY BEFORE COMMITTING
+### Rule 5: VERIFY BEFORE COMMITTING
 
 **Before committing changes that affect the wiki:**
 
-1. ✅ **Type signatures match** - Compare wiki with source code
-2. ✅ **All examples updated** - Search for old usage patterns
-3. ✅ **Links work** - Verify relative paths are correct
-4. ✅ **No broken references** - Check for links to deleted pages
-5. ✅ **Consistent terminology** - Use same terms as existing docs
+- ✅ **Type signatures match** - Compare wiki with source code
+- ✅ **All examples updated** - Search for old usage patterns
+- ✅ **Links verified** (no broken references)
+- ✅ **Terminology consistent** with existing docs
 
 **Quick checklist:**
 ```bash
@@ -197,7 +184,7 @@ grep -r "oldMethodName" docs/wiki/
 # Verify type exports match index.ts
 grep "export type" packages/acp-chat-core/src/index.ts
 
-# Check for broken links
+# Check for broken links (GitHub wiki uses flat structure)
 grep "\]\(./NonExistent\)" docs/wiki/*.md
 ```
 
@@ -231,21 +218,21 @@ grep "\]\(./NonExistent\)" docs/wiki/*.md
 
 | Change Type | Update This File |
 |-------------|------------------|
-| New type/interface | `Types-Reference.md` |
-| Changed method signature | `Session-Management.md` + examples |
-| New event type | `Events.md` |
-| New component | `acp-chat-react/Components.md` (when created) |
-| New hook | `acp-chat-react/Hooks.md` (when created) |
-| Architecture change | `Architecture.md` |
-| Usage pattern change | `Implementation-Guide.md` |
-| Export change | `Types-Reference.md` + all examples |
+| New type/interface | `acp-chat-core-Types-Reference.md` |
+| Changed method signature | `acp-chat-core-Session-Management.md` + examples |
+| New event type | `acp-chat-core-Events.md` |
+| New component | `acp-chat-react-Components.md` (when created) |
+| New hook | `acp-chat-react-Hooks.md` (when created) |
+| Architecture change | `acp-chat-core-Architecture.md` |
+| Usage pattern change | `acp-chat-core-Implementation-Guide.md` |
+| Export change | `acp-chat-core-Types-Reference.md` + all examples |
 
 ### File Locations:
 
 | Documentation | Location |
 |---------------|----------|
-| acp-chat-core wiki | `docs/wiki/acp-chat-core/` |
-| acp-chat-react wiki | `docs/wiki/acp-chat-react/` |
+| acp-chat-core wiki | `docs/wiki/` (flat structure, `acp-chat-core-*` prefix) |
+| acp-chat-react wiki | `docs/wiki/` (flat structure, `acp-chat-react-*` prefix) |
 | ACP Protocol (external) | `docs/wiki/ACP-Protocol.md` |
 | This guide | `AGENTS.md` |
 
@@ -362,7 +349,7 @@ Cross-reference related pages:
 Use this checklist when making API changes:
 
 ```
-[ ] Type definitions updated in Types-Reference.md
+[ ] Type definitions updated in acp-chat-core-Types-Reference.md
 [ ] Method signatures updated in relevant files
 [ ] All code examples updated (search for old usage)
 [ ] Return types documented correctly
@@ -370,7 +357,7 @@ Use this checklist when making API changes:
 [ ] Links verified (no broken references)
 [ ] Terminology consistent with existing docs
 [ ] Architecture diagram updated if needed
-[ ] Event types updated in Events.md
+[ ] Event types updated in acp-chat-core-Events.md
 [ ] Export list updated if changed
 [ ] acp-chat-react docs updated if API affects React layer
 [ ] Protocol reference updated if external API changed
@@ -381,9 +368,9 @@ Use this checklist when making API changes:
 ## 🔗 Resources
 
 - **Wiki Location:** `/docs/wiki/`
-- **Core Docs:** `/docs/wiki/acp-chat-core/`
-- **React Docs:** `/docs/wiki/acp-chat-react/`
-- **Protocol Reference:** `/docs/wiki/ACP-Protocol.md`
+- **Core Docs:** `docs/wiki/acp-chat-core-*.md` (flat structure)
+- **React Docs:** `docs/wiki/acp-chat-react-*.md` (flat structure)
+- **Protocol Reference:** `docs/wiki/ACP-Protocol.md`
 - **Source Code:** `/packages/acp-chat-core/src/`
 - **React Source:** `/packages/acp-chat-react/src/`
 
