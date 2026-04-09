@@ -1,9 +1,9 @@
 [package]
-name = "acp-bridge"
+name = "harms_haus_acp_harness_server"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-description = "WebSocket bridge for ACP stdio sessions"
+description = "Harness server with ACP WebSocket bridge integration"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -19,6 +19,7 @@ which = "7"
 tiktoken-rs = "0.9"
 quick-xml = { version = "0.36", features = ["serialize"] }
 thiserror = "2"
+harms_haus_acp_ws_bridge = { path = "../acp-ws-bridge" }
 
 [dev-dependencies]
 tokio-test = "0.4"

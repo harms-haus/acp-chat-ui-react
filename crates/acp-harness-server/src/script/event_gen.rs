@@ -2,9 +2,9 @@
 
 use serde_json::json;
 
-use crate::contract::{BridgeEnvelope, BridgeMessage};
 use crate::script::chunker::chunk_text;
 use crate::script::{Script, ScriptEvent, ScriptSession};
+use harms_haus_acp_ws_bridge::{BridgeEnvelope, BridgeMessage, BridgeStatus};
 
 pub fn generate_events(script: &Script) -> Vec<BridgeEnvelope> {
     let mut all_events = Vec::new();
@@ -26,22 +26,25 @@ fn generate_session_events(session: &ScriptSession, base_timestamp: u64) -> Vec<
         BridgeMessage::replay_metadata(base_timestamp, 0, Some(format!("Session {}", session.id))),
         base_timestamp,
         seq,
+        None,
     );
     events.push(metadata);
     seq += 1;
 
     let starting = BridgeEnvelope::new_replay(
-        BridgeMessage::bridge_status(crate::contract::BridgeStatus::Starting),
+        BridgeMessage::bridge_status(BridgeStatus::Starting),
         base_timestamp + 100,
         seq,
+        None,
     );
     events.push(starting);
     seq += 1;
 
     let connected = BridgeEnvelope::new_replay(
-        BridgeMessage::bridge_status(crate::contract::BridgeStatus::Connected),
+        BridgeMessage::bridge_status(BridgeStatus::Connected),
         base_timestamp + 200,
         seq,
+        None,
     );
     events.push(connected);
     seq += 1;
@@ -79,9 +82,10 @@ fn generate_session_events(session: &ScriptSession, base_timestamp: u64) -> Vec<
     }
 
     let disconnected = BridgeEnvelope::new_replay(
-        BridgeMessage::bridge_status(crate::contract::BridgeStatus::Disconnected),
+        BridgeMessage::bridge_status(BridgeStatus::Disconnected),
         base_timestamp + seq * 1000 + 100,
         seq,
+        None,
     );
     events.push(disconnected);
 
@@ -123,6 +127,7 @@ fn generate_thought_chunks(
                 BridgeMessage::acp_payload(payload),
                 timestamp + chunk.index as u64 * 15,
                 start_seq + chunk.index as u64,
+                None,
             )
         })
         .collect()
@@ -168,6 +173,7 @@ fn generate_message_chunks(
                 BridgeMessage::acp_payload(payload),
                 timestamp + chunk.index as u64 * 15,
                 start_seq + chunk.index as u64,
+                None,
             )
         })
         .collect()
@@ -198,7 +204,7 @@ fn generate_tool_call_event(
         }
     });
 
-    BridgeEnvelope::new_replay(BridgeMessage::acp_payload(payload), timestamp, seq)
+    BridgeEnvelope::new_replay(BridgeMessage::acp_payload(payload), timestamp, seq, None)
 }
 
 fn generate_tool_response_event(
@@ -228,7 +234,7 @@ fn generate_tool_response_event(
         }
     });
 
-    BridgeEnvelope::new_replay(BridgeMessage::acp_payload(payload), timestamp, seq)
+    BridgeEnvelope::new_replay(BridgeMessage::acp_payload(payload), timestamp, seq, None)
 }
 
 fn now_ms() -> u64 {

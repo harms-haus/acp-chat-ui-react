@@ -1,4 +1,4 @@
-//! Proxy mode: spawn an ACP agent and proxy its stdio over WebSocket.
+//! Dynamic proxy mode: wait for StartAgent message then spawn and proxy ACP process.
 
 use std::os::unix::process::ExitStatusExt;
 use std::process::Stdio;
@@ -9,25 +9,20 @@ use futures_util::{SinkExt, StreamExt};
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::{broadcast, mpsc};
-
 use tokio_tungstenite::{WebSocketStream, tungstenite::Message};
 
-use crate::contract::{BridgeEnvelope, BridgeMessage, BridgeStatus};
+use harms_haus_acp_ws_bridge::{BridgeEnvelope, BridgeMessage, BridgeStatus};
 
-pub struct ProxyConfig {
-    pub command: String,
-    pub args: Vec<String>,
-    pub cwd: Option<String>,
-    pub env: Vec<(String, String)>,
+pub struct DynamicConfig {
+    pub default_cwd: Option<String>,
+    pub default_env: Vec<(String, String)>,
 }
 
-impl Default for ProxyConfig {
+impl Default for DynamicConfig {
     fn default() -> Self {
         Self {
-            command: String::new(),
-            args: Vec::new(),
-            cwd: None,
-            env: Vec::new(),
+            default_cwd: None,
+            default_env: Vec::new(),
         }
     }
 }
@@ -43,8 +38,8 @@ fn to_text(s: String) -> Message {
     Message::Text(s.into())
 }
 
-pub async fn run_proxy_mode(
-    config: ProxyConfig,
+pub async fn run_dynamic_mode(
+    config: DynamicConfig,
     ws_stream: WebSocketStream<tokio::net::TcpStream>,
     mut shutdown_rx: broadcast::Receiver<()>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -55,22 +50,92 @@ pub async fn run_proxy_mode(
 
     send_envelope(&out_tx, BridgeMessage::bridge_status(BridgeStatus::Starting))?;
 
-    let mut cmd = Command::new(&config.command);
-    cmd.args(&config.args)
+    // Wait for StartAgent message from client
+    let start_agent = loop {
+        tokio::select! {
+            msg = ws_rx.next() => {
+                match msg {
+                    Some(Ok(Message::Text(text))) => {
+                        if let Ok(envelope) = serde_json::from_str::<BridgeEnvelope>(&text) {
+                            if let BridgeMessage::StartAgent { command, args, cwd, env } = envelope.message {
+                                break Some((command, args, cwd, env));
+                            }
+                        }
+                    }
+                    Some(Ok(Message::Close(_))) | None => {
+                        tracing::info!("Client disconnected before StartAgent");
+                        return Ok(());
+                    }
+                    _ => {}
+                }
+            }
+            _ = shutdown_rx.recv() => {
+                tracing::info!("Shutdown signal received while waiting for StartAgent");
+                return Ok(());
+            }
+        }
+    };
+
+    let (command, args, cwd, env) = match start_agent {
+        Some(cfg) => cfg,
+        None => {
+            tracing::error!("No StartAgent message received");
+            return Ok(());
+        }
+    };
+
+    let cwd = cwd.or(config.default_cwd.clone()).map(|p| {
+        if p.starts_with("~/") {
+            if let Ok(home) = std::env::var("HOME") {
+                return format!("{}{}", home, &p[1..]);
+            }
+        }
+        p
+    });
+
+    let (resolved_command, resolved_args) = if command.contains('/') {
+        (command.clone(), args.clone())
+    } else {
+        match which::which(&command) {
+            Ok(path) => {
+                tracing::info!("Resolved '{}' to {:?}", command, path);
+                (path.to_string_lossy().to_string(), args.clone())
+            }
+            Err(_) => {
+                tracing::info!("Command '{}' not found in PATH, using shell execution", command);
+                let shell_args = vec!["-c".to_string(), format!("{} {}", command, args.join(" "))];
+                ("/bin/sh".to_string(), shell_args)
+            }
+        }
+    };
+
+    tracing::info!("Spawning agent: command={}, args={:?}, cwd={:?}", resolved_command, resolved_args, cwd);
+    let mut cmd = Command::new(&resolved_command);
+    cmd.args(&resolved_args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .kill_on_drop(true);
 
-    if let Some(cwd) = &config.cwd {
+    if let Some(cwd) = &cwd {
+        tracing::info!("Setting working directory: {}", cwd);
         cmd.current_dir(cwd);
     }
 
-    for (key, value) in &config.env {
+    if let Ok(path) = std::env::var("PATH") {
+        cmd.env("PATH", path);
+    }
+
+    let mut merged_env = config.default_env.clone();
+    merged_env.extend(env);
+    for (key, value) in &merged_env {
         cmd.env(key, value);
     }
 
-    let mut child = cmd.spawn()?;
+    let mut child = cmd.spawn().map_err(|e| {
+        tracing::error!("Failed to spawn process '{}': {} (cwd={:?})", resolved_command, e, cwd);
+        e
+    })?;
     let _pid = child.id().unwrap_or(0);
 
     let stdout = child.stdout.take().expect("stdout should be piped");
@@ -82,18 +147,19 @@ pub async fn run_proxy_mode(
 
     send_envelope(&out_tx, BridgeMessage::bridge_status(BridgeStatus::Connected))?;
 
+    // Spawn tasks for stdout, stderr, child process, and websocket handling
     let out_tx_stdout = out_tx.clone();
     let stdout_fut = async move {
         let mut reader = BufReader::new(stdout).lines();
         let mut batch: Vec<serde_json::Value> = Vec::new();
-        
+
         while let Ok(Some(line)) = reader.next_line().await {
             let payload: serde_json::Value = serde_json::from_str(&line)
                 .unwrap_or(serde_json::Value::String(line));
-            
+
             if is_session_update(&payload) {
                 batch.push(payload);
-                
+
                 if batch.len() >= 100 {
                     let batched = create_batched_payload(std::mem::take(&mut batch));
                     let _ = send_envelope(&out_tx_stdout, BridgeMessage::acp_payload(batched));
@@ -106,7 +172,7 @@ pub async fn run_proxy_mode(
                 let _ = send_envelope(&out_tx_stdout, BridgeMessage::acp_payload(payload));
             }
         }
-        
+
         if !batch.is_empty() {
             let batched = create_batched_payload(batch);
             let _ = send_envelope(&out_tx_stdout, BridgeMessage::acp_payload(batched));

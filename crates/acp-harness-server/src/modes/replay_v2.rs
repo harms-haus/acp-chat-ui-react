@@ -27,7 +27,7 @@ use serde::Deserialize;
 use tokio::sync::{broadcast, mpsc};
 use tokio_tungstenite::{WebSocketStream, tungstenite::Message};
 
-use crate::contract::{BridgeEnvelope, BridgeMessage, BridgeStatus};
+use harms_haus_acp_ws_bridge::{BridgeEnvelope, BridgeMessage, BridgeStatus};
 
 /// Sub-chunk size when splitting large bursts.
 const CHUNK_TOKENS: usize = 10;

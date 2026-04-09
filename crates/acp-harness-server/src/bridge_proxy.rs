@@ -1,6 +1,6 @@
 //! Tests for bridge proxy mode functionality.
 
-use crate::contract::{BridgeEnvelope, BridgeMessage, BridgeStatus};
+use harms_haus_acp_ws_bridge::{BridgeEnvelope, BridgeMessage, BridgeStatus};
 
 #[test]
 fn test_bridge_proxy_envelope_creation() {

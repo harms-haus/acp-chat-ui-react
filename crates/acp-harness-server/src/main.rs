@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
-use acp_bridge::{ReplayV2Config, ServerConfig, run_server};
+use harms_haus_acp_harness_server::{ReplayV2Config, ServerConfig, run_server};
 
 #[derive(Subcommand)]
 enum Commands {
@@ -102,7 +102,7 @@ fn run_convert_script(
     output_dir: &str,
     force: bool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    use acp_bridge::{generate_events, generate_manifest, generate_session_data_all, parse_script, write_json, write_replay_events};
+    use harms_haus_acp_harness_server::{generate_events, generate_manifest, generate_session_data_all, parse_script, write_json, write_replay_events};
 
     // Read script file
     let script_xml = fs::read_to_string(script_path)
@@ -140,7 +140,7 @@ fn run_convert_script(
 
     // Generate and write session-data.json for each session
     let session_data_list = generate_session_data_all(&script);
-    for (i, session_data) in session_data_list.iter().enumerate() {
+    for (_i, session_data) in session_data_list.iter().enumerate() {
         let session_dir = output_path.join(&session_data.session_id);
         fs::create_dir_all(&session_dir)?;
         

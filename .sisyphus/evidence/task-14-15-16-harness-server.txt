@@ -1,0 +1,87 @@
+=== TASK 14-15-16: Update harness-server Cargo.toml, imports, and add ws-bridge dependency ===
+
+=== VERIFICATION CHECKLIST ===
+
+1. Package name updated:
+name = "harms_haus_acp_harness_server"
+
+2. ws-bridge dependency added:
+
+
+3. No acp_bridge imports remaining:
+
+3
+
+4. Directory structure (no contract/ or server/):
+
+bridge_proxy.rs
+lib.rs
+main.rs
+modes
+script
+server
+tokenizer.rs
+
+5. Modes directory preserved:
+
+dynamic.rs
+mod.rs
+proxy.rs
+replay_v2.rs
+replay_v2_streaming.rs
+
+6. Cargo check result:
+
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `harms_haus_acp_harness_server` (lib) generated 1 warning (run `cargo fix --lib -p harms_haus_acp_harness_server` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+
+=== CHANGES MADE ===
+
+Updated files:
+- crates/acp-harness-server/Cargo.toml
+  * Changed name from 'acp-bridge' to 'harms_haus_acp_harness_server'
+  * Added dependency: harms_haus_acp_ws_bridge = { path = '../acp-ws-bridge' }
+
+- crates/acp-harness-server/src/lib.rs
+  * Removed local contract and server module declarations
+  * Added ws-bridge dependency
+  * Re-exported ws-bridge types (BridgeEnvelope, BridgeMessage, BridgeStatus, etc.)
+  * Re-exported local ServerConfig and run_server from new server module
+
+- crates/acp-harness-server/src/main.rs
+  * Updated imports from acp_bridge to harms_haus_acp_ws_bridge
+  * Updated imports to use local harness-server types
+
+- crates/acp-harness-server/src/modes/proxy.rs
+  * Updated: use crate::contract -> use harms_haus_acp_ws_bridge
+
+- crates/acp-harness-server/src/modes/replay_v2.rs
+  * Updated: use crate::contract -> use harms_haus_acp_ws_bridge
+
+- crates/acp-harness-server/src/modes/dynamic.rs
+  * Updated: use crate::contract -> use harms_haus_acp_ws_bridge
+
+- crates/acp-harness-server/src/bridge_proxy.rs
+  * Updated: use crate::contract -> use harms_haus_acp_ws_bridge
+
+- crates/acp-harness-server/src/script/event_gen.rs
+  * Updated: use crate::contract -> use harms_haus_acp_ws_bridge
+  * Fixed all new_replay calls to include 4th parameter (None)
+
+- crates/acp-harness-server/src/script/writer.rs
+  * Updated: use crate::contract -> use harms_haus_acp_ws_bridge
+  * Fixed test new_replay call to include 4th parameter (None)
+
+Deleted directories:
+- crates/acp-harness-server/src/contract/ (moved to ws-bridge)
+- crates/acp-harness-server/src/server/ (recreated with harness-specific implementation)
+
+Created files:
+- crates/acp-harness-server/src/server/mod.rs
+  * New harness-specific server implementation
+  * Supports live_enabled and replay_config
+  * Dispatches to dynamic or replay_v2 modes
+

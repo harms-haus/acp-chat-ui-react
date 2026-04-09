@@ -6,7 +6,7 @@ use std::path::Path;
 
 use serde::Serialize;
 
-use crate::contract::BridgeEnvelope;
+use harms_haus_acp_ws_bridge::{BridgeEnvelope, BridgeMessage, BridgeStatus};
 
 /// Write replay events to a JSONL file.
 ///
@@ -59,9 +59,10 @@ mod tests {
         let file_path = temp_dir.path().join("test.jsonl");
 
         let events = vec![BridgeEnvelope::new_replay(
-            crate::contract::BridgeMessage::bridge_status(crate::contract::BridgeStatus::Starting),
+            BridgeMessage::bridge_status(BridgeStatus::Starting),
             1000,
             0,
+            None,
         )];
 
         write_replay_events(&events, &file_path).unwrap();
