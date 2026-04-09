@@ -1,0 +1,18 @@
+# Task 9: Extract TransportClient to ws-bridge package
+
+## Verification Steps
+
+### 1. client.ts exists
+/home/blake/Documents/software/acp-react-chat-ui/packages/acp-ws-bridge/src/client.ts
+
+### 2. TransportClient exported from index
+export { TransportClient, type ConnectionStatus } from "./client";
+
+### 3. TypeScript compilation
+SUCCESS: TypeScript compilation passed
+
+## Summary
+- TransportClient copied to ws-bridge: YES
+- Client imports updated to use local types: YES
+- index.ts exports TransportClient: YES
+- tsc --noEmit passes in ws-bridge: YES

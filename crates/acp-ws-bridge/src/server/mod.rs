@@ -49,9 +49,11 @@ pub async fn run_server(config: ServerConfig) -> Result<(), Box<dyn std::error::
     loop {
         let (stream, addr) = listener.accept().await?;
         tracing::info!("Client connected from {}", addr);
+        tracing::trace!("WebSocket connection established from {:?}", addr);
 
         let ws_stream = tokio_tungstenite::accept_async(stream).await?;
         tracing::info!("WebSocket handshake completed for {}", addr);
+        tracing::trace!("WebSocket handshake completed for {:?}", addr);
 
         let shutdown_rx = shutdown_tx.subscribe();
         let shutdown_tx = shutdown_tx.clone();
@@ -64,6 +66,7 @@ pub async fn run_server(config: ServerConfig) -> Result<(), Box<dyn std::error::
             }
 
             tracing::info!("Client {} disconnected", addr);
+            tracing::trace!("WebSocket connection closed for {:?}", addr);
         });
     }
 }
@@ -85,6 +88,7 @@ async fn run_client_session(
                 match wait_for_messages(&mut ws_tx, &mut ws_rx, &mut shutdown_rx).await {
                     Ok(_reason) => {
                         tracing::info!("Session ended, waiting for new init");
+                        tracing::trace!("Session ended, waiting for new init");
                         // Reunite stream for next iteration
                         match ws_tx.reunite(ws_rx) {
                             Ok(stream) => {
@@ -125,6 +129,7 @@ async fn wait_for_init(
             msg = ws_rx.next() => {
                 match msg {
                     Some(Ok(tokio_tungstenite::tungstenite::Message::Text(text))) => {
+                        tracing::trace!("Message received during init: {}", text);
                         match serde_json::from_str::<InitMessage>(&text) {
                             Ok(_init_msg) => {
                                 // Send success response
@@ -133,6 +138,7 @@ async fn wait_for_init(
                                     "initId": _init_msg.init_id,
                                     "status": "success"
                                 });
+                                tracing::trace!("Sending init success response");
                                 ws_tx.send(tokio_tungstenite::tungstenite::Message::Text(
                                     serde_json::to_string(&success_response)?.into()
                                 )).await?;
@@ -145,6 +151,7 @@ async fn wait_for_init(
                                 let error_response = serde_json::json!({
                                     "error": format!("Invalid init message: {}", e)
                                 });
+                                tracing::trace!("Sending init error response");
                                 ws_tx.send(tokio_tungstenite::tungstenite::Message::Text(
                                     serde_json::to_string(&error_response)?.into()
                                 )).await?;
@@ -156,6 +163,7 @@ async fn wait_for_init(
                     }
                     Some(Ok(tokio_tungstenite::tungstenite::Message::Close(_))) | None => {
                         tracing::info!("Client disconnected before initialization");
+                        tracing::trace!("WebSocket connection closed before initialization");
                         return Ok(SessionState::Uninitialized);
                     }
                     Some(Ok(tokio_tungstenite::tungstenite::Message::Ping(data))) => {
@@ -185,12 +193,14 @@ async fn wait_for_messages(
             msg = ws_rx.next() => {
                 match msg {
                     Some(Ok(tokio_tungstenite::tungstenite::Message::Text(text))) => {
+                        tracing::trace!("Message received: {}", text);
                         // Check for disconnect message
                         if let Ok(_disconnect) = serde_json::from_str::<DisconnectMessage>(&text) {
                             tracing::info!("Disconnect request received");
                             let success_response = serde_json::json!({
                                 "status": "success"
                             });
+                            tracing::trace!("Sending disconnect success response");
                             ws_tx.send(tokio_tungstenite::tungstenite::Message::Text(
                                 serde_json::to_string(&success_response)?.into()
                             )).await?;
@@ -200,6 +210,7 @@ async fn wait_for_messages(
                     }
                     Some(Ok(tokio_tungstenite::tungstenite::Message::Close(_))) | None => {
                         tracing::info!("Client disconnected");
+                        tracing::trace!("WebSocket connection closed in wait_for_messages");
                         return Ok(DisconnectReason::ClientClosed);
                     }
                     Some(Ok(tokio_tungstenite::tungstenite::Message::Ping(data))) => {

@@ -4,3 +4,5 @@ export type {
   BridgeStatus,
   UnsupportedVersionError,
 } from "./types";
+
+export { TransportClient, type ConnectionStatus } from "./client";

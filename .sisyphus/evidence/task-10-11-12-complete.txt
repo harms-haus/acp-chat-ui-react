@@ -1,0 +1,83 @@
+================================================================================
+WAVE 3, TASKS 10-12: Complete ws-bridge package and add trace logging
+================================================================================
+
+TASK 10: Update ws-bridge package exports and build
+----------------------------------------------------
+
+✅ index.ts exports all required types:
+   - BridgeEnvelope
+   - BridgeMessage
+   - BridgeStatus
+   - UnsupportedVersionError
+   - TransportClient
+   - ConnectionStatus
+
+✅ Created tsconfig.build.json following acp-chat-core pattern
+✅ pnpm build succeeded
+
+Current exports:
+export type {
+  BridgeEnvelope,
+  BridgeMessage,
+  BridgeStatus,
+  UnsupportedVersionError,
+} from "./types";
+
+export { TransportClient, type ConnectionStatus } from "./client";
+
+
+TASK 11: Add trace logging to Rust ws-bridge
+---------------------------------------------
+
+✅ Added 11 trace! macros at key points:
+   - Connection established (tracing::trace!("WebSocket connection established from {:?}", addr))
+   - WebSocket handshake completed (tracing::trace!("WebSocket handshake completed for {:?}", addr))
+   - Connection closed (tracing::trace!("WebSocket connection closed for {:?}", addr))
+   - Connection closed in wait_for_messages (tracing::trace!("WebSocket connection closed in wait_for_messages"))
+   - Connection closed before init (tracing::trace!("WebSocket connection closed before initialization"))
+   - Session ended (tracing::trace!("Session ended, waiting for new init"))
+   - Message received during init (tracing::trace!("Message received during init: {}", text))
+   - Message received in wait_for_messages (tracing::trace!("Message received: {}", text))
+   - Sending init success response (tracing::trace!("Sending init success response"))
+   - Sending init error response (tracing::trace!("Sending init error response"))
+   - Sending disconnect response (tracing::trace!("Sending disconnect success response"))
+
+✅ cargo check passed: Finished `dev` profile in 0.23s
+
+
+TASK 12: Add trace logging to TypeScript ws-bridge
+--------------------------------------------------
+
+✅ Added 7 console.trace calls at key points:
+   Line 119: console.trace('[WS] Sending message:', data);
+   Line 204: console.trace('[WS] State change:', status);
+   Line 211: console.trace('[WS] Connection opened');
+   Line 218: console.trace('[WS] Message received:', event.data);
+   Line 267: console.trace('[WS] WebSocket error');
+   Line 278: console.trace('[WS] Connection closed');
+
+✅ pnpm run check passed (tsc --noEmit)
+
+
+BUILD VERIFICATION
+------------------
+
+✅ Rust build: cargo check - PASSED
+✅ TypeScript build: pnpm build - PASSED
+✅ TypeScript check: pnpm run check - PASSED
+✅ No behavioral changes (logging only)
+✅ No println! in Rust (using tracing macros only)
+✅ No verbose logging for internal operations (only at key points)
+
+
+CONCLUSION
+----------
+
+All Wave 3, Tasks 10-12 completed successfully:
+- ws-bridge package exports and build configuration ✓
+- Rust trace logging at all key points ✓
+- TypeScript console.trace at all key points ✓
+- All builds passing ✓
+
+================================================================================

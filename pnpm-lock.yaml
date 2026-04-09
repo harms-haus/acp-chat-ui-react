@@ -138,6 +138,10 @@ importers:
         version: 2.1.9(@types/node@25.5.0)(jsdom@29.0.1)
 
   packages/acp-ws-bridge:
+    dependencies:
+      '@acp/chat-core':
+        specifier: workspace:*
+        version: link:../acp-chat-core
     devDependencies:
       typescript:
         specifier: ^5.7.0
