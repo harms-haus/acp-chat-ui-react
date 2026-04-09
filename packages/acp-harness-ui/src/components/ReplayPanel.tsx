@@ -7,7 +7,7 @@ import { SpeedSlider } from "./SpeedSlider";
 
 const DEFAULT_REPLAY_SPEED = 65;
 
-type DemoType = "tool-calling-thinking" | "long-context" | "permission-request";
+type DemoType = "tool-calling-thinking" | "long-context" | "permission-request" | "filesystem-test";
 
 type ConnectionStatus = "disconnected" | "connecting" | "replaying" | "complete" | "error";
 
@@ -38,6 +38,11 @@ const DEMO_TYPES: { id: DemoType; name: string; description: string }[] = [
     id: "permission-request",
     name: "Permission Request",
     description: "Agent requesting user permission for actions",
+  },
+  {
+    id: "filesystem-test",
+    name: "Filesystem Events",
+    description: "ACP filesystem read/write events (fs/read_text_file, fs/write_text_file)",
   },
 ];
 
