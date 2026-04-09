@@ -32,7 +32,7 @@ function createTestItems(count: number): ThreadItem[] {
     data: {
       id: `msg-${i}`,
       role: i % 2 === 0 ? "user" : "agent",
-      status: "complete",
+      status: "completed",
       content: `Message ${i} content`,
       contentBlocks: [{ type: "text" as const, text: `Message ${i} content` }],
     } as NormalizedMessage,
@@ -186,7 +186,7 @@ describe("VirtualizedThread", () => {
       {
         type: "message",
         id: "msg-1",
-        data: { id: "msg-1", role: "user", status: "complete", content: "Hello", contentBlocks: [] },
+        data: { id: "msg-1", role: "user", status: "completed", content: "Hello", contentBlocks: [] },
       },
       {
         type: "thought_group",
@@ -230,7 +230,7 @@ describe("VirtualizedThread", () => {
       data: {
         id: "msg-new",
         role: "user",
-        status: "complete",
+        status: "completed",
         content: "New message",
         contentBlocks: [{ type: "text", text: "New message" }],
       } as NormalizedMessage,

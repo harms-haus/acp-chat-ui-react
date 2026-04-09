@@ -3,7 +3,6 @@ import type { ThoughtStackProps, ThoughtItem } from "./types.js";
 import type { NormalizedThought, NormalizedToolCall, SessionController } from "@acp/chat-core";
 import type { Logger } from "../utils/logger.js";
 import { noOpLogger } from "../utils/logger.js";
-import { useActiveItems, useThoughtEvents, useToolCallEvents } from "../events/hooks.js";
 
 function isThoughtItem(item: ThoughtItem): item is { type: "thought"; id: string; data: NormalizedThought } {
   return item.type === "thought";
@@ -94,35 +93,10 @@ function ThoughtContent({
   const hasEmittedCreated = useRef(false);
   const [internalExpanded, setInternalExpanded] = useState(false);
 
-  // Use event hook to track thought lifecycle
-  const events = useThoughtEvents(controller, thought.id);
-  const hasEvent = events.length > 0;
+  // Check completion status directly from normalized thought
+  const isCompleted = thought.status === "completed";
 
-  // Check completion status from events
-  const isCompleted = events.some(event => {
-    const update = event.params as { sessionId?: string; update?: Record<string, unknown> };
-    const updateType = update.update?.type ?? update.update?.sessionUpdate;
-    if (updateType === "thought_update" || updateType === "agent_thought_chunk") {
-      const thoughtUpdate = update.update as { status?: string };
-      return thoughtUpdate.status === "completed" || thoughtUpdate.status === "done";
-    }
-    return false;
-  });
-
-  console.log('[ThoughtContent] Event debug for thought:', thought.id);
-  if (events.length > 0) {
-    const lastIndex = events.length - 1;
-    if (events[lastIndex]) {
-      const lastEvent = events[lastIndex]!;
-      const params = lastEvent.params as { update?: Record<string, unknown> };
-      console.log('[ThoughtContent] Last event:', {
-        type: params.update?.type,
-        status: params.update?.status,
-        thoughtId: (params.update as { thoughtId?: string })?.thoughtId,
-        fullUpdate: params.update
-      });
-    }
-  }
+  console.log('[ThoughtContent] Thought status for thought:', thought.id, thought.status);
   console.log('[ThoughtContent] isCompleted:', isCompleted);
 
   // Use internal state if no parent handler is provided
@@ -143,25 +117,23 @@ function ThoughtContent({
   }, [onExpandChange]);
 
   useEffect(() => {
-    // Auto-expand when follow is true and we have events (thought created)
-    if (follow && hasEvent && !hasEmittedCreated.current) {
+    if (follow && thought.status === "streaming" && !hasEmittedCreated.current) {
       hasEmittedCreated.current = true;
-      console.log('[ThoughtContent] Created (event-based):', { 
+      console.log('[ThoughtContent] Created (status-based):', { 
         thoughtId: thought.id, 
         follow, 
-        eventCount: events.length,
+        status: thought.status,
         userHasInteracted: userHasInteracted.current,
         willAutoExpand: !userHasInteracted.current
       });
       onCreated?.();
-      // Auto-expand on creation if follow is enabled and user hasn't interacted
       if (!userHasInteracted.current) {
-        console.log('[ThoughtContent] Auto-expanding thought (event-based)');
+        console.log('[ThoughtContent] Auto-expanding thought (status-based)');
         handleExpand(true);
         autoExpanded.current = true;
       }
     }
-  }, [follow, hasEvent, events.length, handleExpand, onCreated, thought.id]);
+  }, [follow, thought.status, handleExpand, onCreated, thought.id]);
 
   useEffect(() => {
     console.log('[ThoughtContent] Completion check:', {
@@ -174,7 +146,7 @@ function ThoughtContent({
     });
     if (!wasCompleted.current && isCompleted && onCompleted) {
       wasCompleted.current = true;
-      console.log('[ThoughtContent] Thought completed (event-based):', {
+      console.log('[ThoughtContent] Thought completed (status-based):', {
         thoughtId: thought.id,
         autoExpanded: autoExpanded.current,
         userInteracted: userHasInteracted.current,
@@ -185,7 +157,6 @@ function ThoughtContent({
         autoExpanded: autoExpanded.current,
         effectiveIsExpanded
       });
-      // Only auto-collapse if we auto-expanded and user never interacted
       if (!userHasInteracted.current && autoExpanded.current && effectiveIsExpanded) {
         console.log('[ThoughtContent] Auto-collapsing thought');
         handleExpand(false);
@@ -241,20 +212,7 @@ function ToolCallContent({
   const hasEmittedCreated = useRef(false);
   const [internalExpanded, setInternalExpanded] = useState(false);
   
-  // Use event hook to track tool call lifecycle
-  const events = useToolCallEvents(controller, toolCall.toolCallId);
-  const hasEvent = events.length > 0;
-  
-  // Check completion status from events
-  const isCompleted = events.some(event => {
-    const update = event.params as { sessionId?: string; update?: Record<string, unknown> };
-    const updateType = update.update?.type ?? update.update?.sessionUpdate;
-    if (updateType === "tool_call_update") {
-      const toolCallUpdate = update.update as { status?: string };
-      return toolCallUpdate.status === "completed" || toolCallUpdate.status === "done";
-    }
-    return false;
-  });
+  const isCompleted = toolCall.status === "completed";
   
   // Use internal state if no parent handler is provided
   const effectiveIsExpanded = onExpandChange ? isExpanded : internalExpanded;
@@ -267,35 +225,31 @@ function ToolCallContent({
   }, [onExpandChange]);
 
   useEffect(() => {
-    // Auto-expand when follow is true and we have events (tool created)
-    if (follow && hasEvent && !hasEmittedCreated.current) {
+    if (follow && toolCall.status === "in_progress" && !hasEmittedCreated.current) {
       hasEmittedCreated.current = true;
-      console.log('[ToolCallContent] Created (event-based):', { 
+      console.log('[ToolCallContent] Created (status-based):', { 
         toolId: toolCall.toolCallId, 
         follow, 
-        eventCount: events.length,
+        status: toolCall.status,
         willAutoExpand: !userHasInteracted.current 
       });
       onCreated?.();
-      // Auto-expand on creation if follow is enabled and user hasn't interacted
       if (!userHasInteracted.current) {
-        console.log('[ToolCallContent] Auto-expanding tool (event-based)');
         handleExpand(true);
         autoExpanded.current = true;
       }
     }
-  }, [follow, hasEvent, events.length, handleExpand, onCreated, toolCall.toolCallId]);
+  }, [follow, toolCall.status, handleExpand, onCreated, toolCall.toolCallId]);
 
   useEffect(() => {
     if (!wasCompleted.current && isCompleted && onCompleted) {
       wasCompleted.current = true;
-      console.log('[ToolCallContent] Tool completed (event-based):', { 
+      console.log('[ToolCallContent] Tool completed (status-based):', { 
         toolId: toolCall.toolCallId,
         autoExpanded: autoExpanded.current,
         userInteracted: userHasInteracted.current,
         isExpanded: effectiveIsExpanded
       });
-      // Only auto-collapse if we auto-expanded and user never interacted
       if (!userHasInteracted.current && autoExpanded.current && effectiveIsExpanded) {
         console.log('[ToolCallContent] Auto-collapsing tool');
         handleExpand(false);
@@ -476,20 +430,18 @@ export const ThoughtStack = memo(function ThoughtStack({
   follow = false,
   controller,
 }: ThoughtStackProps & { controller?: SessionController }) {
-  const allActiveItems = useActiveItems(controller);
-  const activeThoughts = controller ? allActiveItems.activeThoughts : [];
-  const activeToolCalls = controller ? allActiveItems.activeToolCalls : [];
-
   const isActive = useMemo(() => {
     return group.items.some(item => {
       if (item.type === "thought") {
-        return activeThoughts.includes(item.id);
+        const thought = item.data as NormalizedThought;
+        return thought.status === "streaming";
       } else if (item.type === "tool_call") {
-        return activeToolCalls.includes(item.id);
+        const toolCall = item.data as NormalizedToolCall;
+        return toolCall.status === "in_progress" || toolCall.status === "pending";
       }
       return false;
     });
-  }, [group.items, activeThoughts, activeToolCalls]);
+  }, [group.items]);
   
   const [hasBeenActive, setHasBeenActive] = useState(() => isActive);
   const userHasToggled = useRef(false);
@@ -556,26 +508,25 @@ export const ThoughtStack = memo(function ThoughtStack({
 
     // Check for completed items
     for (const item of currentItems) {
-      if (!completedItemsRef.current.has(item.id)) {
-        let isCompleted = false;
-        if (isToolCallItem(item)) {
-          const status = (item.data as any).status;
-          isCompleted = status === "done" || status === "completed";
-        } else if (isThoughtItem(item)) {
-          // A thought is "completed" when there's a newer item after it
-          const itemIndex = currentItems.findIndex(i => i.id === item.id);
-          isCompleted = itemIndex < currentItems.length - 1;
-        }
+        if (!completedItemsRef.current.has(item.id)) {
+          let isCompleted = false;
+          if (isToolCallItem(item)) {
+            const status = (item.data as any).status;
+            isCompleted = status === "completed";
+          } else if (isThoughtItem(item)) {
+            const itemIndex = currentItems.findIndex(i => i.id === item.id);
+            isCompleted = itemIndex < currentItems.length - 1;
+          }
 
-        if (isCompleted) {
-          completedItemsRef.current.add(item.id);
-          if (isThoughtItem(item)) {
-            onThoughtCompleted?.(item.id, group.id);
-          } else if (isToolCallItem(item)) {
-            onToolCompleted?.(item.id, group.id);
+          if (isCompleted) {
+            completedItemsRef.current.add(item.id);
+            if (isThoughtItem(item)) {
+              onThoughtCompleted?.(item.id, group.id);
+            } else if (isToolCallItem(item)) {
+              onToolCompleted?.(item.id, group.id);
+            }
           }
         }
-      }
     }
 
     // Check if entire group is completed

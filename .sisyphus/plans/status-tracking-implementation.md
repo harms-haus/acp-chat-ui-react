@@ -133,7 +133,7 @@ Critical Path: Task 1 → Task 2 → Task 3 → Task 4 → Task 5
 
 ## TODOs
 
-- [ ] 1. Define ThoughtStatus Type and Update NormalizedThought Interface
+- [x] 1. Define ThoughtStatus Type and Update NormalizedThought Interface
 
   **What to do**:
   - Add `ThoughtStatus` type definition matching `MessageStatus`: `"streaming" | "complete" | "cancelled" | "error"`
@@ -185,7 +185,7 @@ Critical Path: Task 1 → Task 2 → Task 3 → Task 4 → Task 5
   - Message: `feat(types): add ThoughtStatus and update NormalizedThought`
   - Files: `packages/acp-chat-core/src/normalization/store.ts`, `packages/acp-chat-core/src/index.ts`
 
-- [ ] 2. Implement Status Inference in applyAgentThoughtChunk()
+- [x] 2. Implement Status Inference in applyAgentThoughtChunk()
 
   **What to do**:
   - Modify `applyAgentThoughtChunk()` to track status transitions
@@ -247,7 +247,7 @@ Critical Path: Task 1 → Task 2 → Task 3 → Task 4 → Task 5
   - Message: `feat(normalization): implement status inference for thoughts`
   - Files: `packages/acp-chat-core/src/normalization/store.ts`
 
-- [ ] 3. Enhance Tool Call Status Tracking
+- [x] 3. Enhance Tool Call Status Tracking
 
   **What to do**:
   - Update `mapToolCallStatus()` to handle ACP protocol states:
@@ -308,7 +308,7 @@ Critical Path: Task 1 → Task 2 → Task 3 → Task 4 → Task 5
   - Message: `feat(normalization): enhance tool call status tracking`
   - Files: `packages/acp-chat-core/src/normalization/store.ts`
 
-- [ ] 4. Update Wiki Documentation
+- [x] 4. Update Wiki Documentation
 
   **What to do**:
   - Update `acp-chat-core-Types-Reference.md`:

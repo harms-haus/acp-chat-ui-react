@@ -7,7 +7,7 @@ export const MessageStatusIndicator = memo(function MessageStatusIndicator({
 }: MessageStatusIndicatorProps) {
   const statusLabel = {
     streaming: "Streaming",
-    complete: "Complete",
+    completed: "Completed",
     cancelled: "Cancelled",
     error: "Error",
   }[status];
@@ -22,7 +22,7 @@ export const MessageStatusIndicator = memo(function MessageStatusIndicator({
           ●
         </span>
       )}
-      {status === "complete" && (
+      {status === "completed" && (
         <span className="acp-message__status-indicator" aria-hidden="true">
           ✓
         </span>

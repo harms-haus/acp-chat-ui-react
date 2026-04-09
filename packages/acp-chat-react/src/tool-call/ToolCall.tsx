@@ -12,12 +12,12 @@ const ToolCallHeader = memo(function ToolCallHeader({
   isExpanded: boolean;
 }) {
   const statusIcon = toolCall.status === "completed" ? "✓" : "○";
-  const statusClass = `acp-tool-call__status--${toolCall.status}`;
+  const statusClass = `acp-tool-call__status--${toolCall.status ?? "pending"}`;
 
   return (
     <div
       data-acp-tool-call-header
-      data-acp-tool-call-status={toolCall.status}
+      data-acp-tool-call-status={toolCall.status ?? "pending"}
       className="acp-tool-call__header"
     >
       <span data-acp-tool-call-status-icon className={`acp-tool-call__status-icon ${statusClass}`}>
@@ -94,7 +94,7 @@ export const ToolCall = memo(function ToolCall({
       data-acp-tool-call-root
       data-acp-tool-call-id={toolCall.toolCallId}
       data-acp-tool-call-kind={toolCall.kind}
-      data-acp-tool-call-status={toolCall.status}
+      data-acp-tool-call-status={toolCall.status ?? "pending"}
       data-acp-tool-call-expanded={isExpanded}
       className={`acp-tool-call ${className}`}
     >

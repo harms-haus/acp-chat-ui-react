@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createNormalizedState, applySessionUpdate, getMessages, getMessage, getThoughts } from "./store.js";
+import { createNormalizedState, applySessionUpdate, getMessages, getMessage, getThoughts, getToolCalls } from "./store.js";
 import type { NormalizedMessage } from "./store.js";
 
 describe("Normalization", () => {
@@ -138,7 +138,7 @@ status: "done",
 });
 
 if (completed && "status" in completed) {
-expect(completed.status).toBe("complete");
+expect(completed.status).toBe("completed");
 }
 });
 
@@ -158,7 +158,7 @@ expect(message).not.toBeNull();
 if (message && "role" in message) {
 expect(message.role).toBe("user");
 expect(message.content).toBe("Hi there");
-expect(message.status).toBe("complete");
+expect(message.status).toBe("completed");
 }
 });
 
@@ -370,5 +370,331 @@ content: [
     }
     expect(state.messages.size).toBe(1);
     expect(state.timelineOrder.length).toBe(1);
+  });
+});
+describe("status tracking - unit tests", () => {
+  it("marks previous thought complete when new turn starts", () => {
+    const state = createNormalizedState();
+
+    applySessionUpdate(state, {
+      update: {
+        type: "agent_thought_chunk",
+        turnId: "turn-1",
+        content: [{ type: "text", text: "Thinking..." }],
+        status: "in_progress",
+      },
+    });
+
+    applySessionUpdate(state, {
+      update: {
+        type: "agent_thought_chunk",
+        turnId: "turn-2",
+        content: [{ type: "text", text: "More thinking..." }],
+        status: "in_progress",
+      },
+    });
+
+    const thoughts = getThoughts(state);
+    expect(thoughts).toHaveLength(2);
+
+    const firstThought = thoughts.find((t) => t.turnId === "turn-1");
+    expect(firstThought?.status).toBe("completed");
+
+    const secondThought = thoughts.find((t) => t.turnId === "turn-2");
+    expect(secondThought?.status).toBe("streaming");
+  });
+
+  it("maps thought status correctly", () => {
+    const state = createNormalizedState();
+
+    applySessionUpdate(state, {
+      update: {
+        type: "agent_thought_chunk",
+        turnId: "turn-1",
+        content: [{ type: "text", text: "Thinking..." }],
+        status: "in_progress",
+      },
+    });
+
+    const thoughts = getThoughts(state);
+    const thought = thoughts[0];
+    expect(thought?.status).toBe("streaming");
+
+    applySessionUpdate(state, {
+      update: {
+        type: "agent_thought_chunk",
+        turnId: "turn-1",
+        content: [{ type: "text", text: "Done thinking." }],
+        status: "done",
+      },
+    });
+
+    const updatedThoughts = getThoughts(state);
+    const updatedThought = updatedThoughts.find((t) => t.turnId === "turn-1");
+    expect(updatedThought?.status).toBe("completed");
+  });
+
+  it("maps tool status correctly", () => {
+    const state = createNormalizedState();
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call",
+        toolCallId: "tool-1",
+        kind: "read",
+        title: "Read file",
+        status: "pending",
+      },
+    });
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call_update",
+        toolCallId: "tool-1",
+        status: "in_progress",
+      },
+    });
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call_update",
+        toolCallId: "tool-1",
+        status: "completed",
+      },
+    });
+
+    const tools = getToolCalls(state);
+    const tool = tools.find((t) => t.toolCallId === "tool-1");
+    expect(tool?.status).toBe("completed");
+  });
+
+  it("maps tool call status values correctly", () => {
+    const state = createNormalizedState();
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call",
+        toolCallId: "tool-1",
+        kind: "read",
+        title: "Read file",
+        status: "pending",
+      },
+    });
+
+    const tools1 = getToolCalls(state);
+    expect(tools1[0]?.status).toBe("pending");
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call_update",
+        toolCallId: "tool-1",
+        status: "in_progress",
+      },
+    });
+
+    const tools2 = getToolCalls(state);
+    expect(tools2[0]?.status).toBe("in_progress");
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call_update",
+        toolCallId: "tool-1",
+        status: "completed",
+      },
+    });
+
+    const tools3 = getToolCalls(state);
+    expect(tools3[0]?.status).toBe("completed");
+
+    const state2 = createNormalizedState();
+    applySessionUpdate(state2, {
+      update: {
+        type: "tool_call",
+        toolCallId: "tool-2",
+        kind: "search",
+        title: "Search",
+        status: "failed",
+      },
+    });
+
+    const tools4 = getToolCalls(state2);
+    const failedTool = tools4.find((t) => t.toolCallId === "tool-2");
+    expect(failedTool?.status).toBe("failed");
+  });
+
+  it("tracks message status correctly", () => {
+    const state = createNormalizedState();
+
+    applySessionUpdate(state, {
+      update: {
+        type: "user_message",
+        turnId: "turn-1",
+        content: "Hello world",
+      },
+    });
+
+    const messages1 = getMessages(state);
+    const userMsg = messages1.find((m) => m.role === "user");
+    expect(userMsg?.status).toBe("completed");
+
+    applySessionUpdate(state, {
+      update: {
+        type: "agent_message_chunk",
+        turnId: "turn-2",
+        content: [{ type: "text", text: "Hi there!" }],
+        status: "in_progress",
+      },
+    });
+
+    const messages2 = getMessages(state);
+    const agentMsg = messages2.find((m) => m.role === "agent");
+    expect(agentMsg?.status).toBe("streaming");
+
+    applySessionUpdate(state, {
+      update: {
+        type: "agent_message_chunk",
+        turnId: "turn-2",
+        content: [{ type: "text", text: "Hi there!" }],
+        status: "done",
+      },
+    });
+
+    const messages3 = getMessages(state);
+    const completedAgentMsg = messages3.find((m) => m.role === "agent" && m.turnId === "turn-2");
+    expect(completedAgentMsg?.status).toBe("completed");
+  });
+
+  it("handles multiple thoughts in sequence", () => {
+    const state = createNormalizedState();
+
+    applySessionUpdate(state, {
+      update: {
+        type: "agent_thought_chunk",
+        turnId: "turn-1a",
+        content: [{ type: "text", text: "First thought" }],
+        status: "in_progress",
+      },
+    });
+
+    applySessionUpdate(state, {
+      update: {
+        type: "agent_thought_chunk",
+        turnId: "turn-1a",
+        content: [{ type: "text", text: " more content" }],
+        status: "in_progress",
+      },
+    });
+
+    const thoughts1 = getThoughts(state);
+    expect(thoughts1).toHaveLength(1);
+    expect(thoughts1[0]?.content).toBe("First thought more content");
+
+    applySessionUpdate(state, {
+      update: {
+        type: "agent_thought_chunk",
+        turnId: "turn-1b",
+        content: [{ type: "text", text: "Second thought" }],
+        status: "in_progress",
+      },
+    });
+
+    const thoughts2 = getThoughts(state);
+    expect(thoughts2).toHaveLength(2);
+
+    const firstThought = thoughts2.find((t) => t.turnId === "turn-1a");
+    expect(firstThought?.status).toBe("completed");
+
+    const secondThought = thoughts2.find((t) => t.turnId === "turn-1b");
+    expect(secondThought?.status).toBe("streaming");
+  });
+
+  it("verifies tool statuses are valid normalized values", () => {
+    const state = createNormalizedState();
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call",
+        toolCallId: "tool-1",
+        kind: "read",
+        title: "Tool 1",
+        status: "pending",
+      },
+    });
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call",
+        toolCallId: "tool-2",
+        kind: "search",
+        title: "Tool 2",
+        status: "in_progress",
+      },
+    });
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call",
+        toolCallId: "tool-3",
+        kind: "write",
+        title: "Tool 3",
+        status: "completed",
+      },
+    });
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call",
+        toolCallId: "tool-4",
+        kind: "execute",
+        title: "Tool 4",
+        status: "failed",
+      },
+    });
+
+    applySessionUpdate(state, {
+      update: {
+        type: "tool_call",
+        toolCallId: "tool-5",
+        kind: "edit",
+        title: "Tool 5",
+        status: "cancelled",
+      },
+    });
+
+    const toolCalls = getToolCalls(state);
+
+    for (const tool of toolCalls) {
+      expect(["pending", "in_progress", "completed", "failed", "cancelled"]).toContain(tool.status);
+    }
+
+    expect(toolCalls).toHaveLength(5);
+  });
+
+  it("handles edge cases with undefined status values", () => {
+    const state = createNormalizedState();
+
+    applySessionUpdate(state, {
+      update: {
+        type: "agent_thought_chunk",
+        turnId: "turn-1",
+        content: [{ type: "text", text: "Thought" }],
+      },
+    });
+
+    const thoughts1 = getThoughts(state);
+    expect(thoughts1[0]?.status).toBe("streaming");
+
+    const state2 = createNormalizedState();
+    applySessionUpdate(state2, {
+      update: {
+        type: "tool_call",
+        toolCallId: "tool-1",
+        kind: "read",
+        title: "Tool",
+      },
+    });
+
+    const tools1 = getToolCalls(state2);
+    expect(tools1[0]?.status).toBeUndefined();
   });
 });
