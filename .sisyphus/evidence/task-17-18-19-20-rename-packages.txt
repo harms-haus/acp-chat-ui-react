@@ -1,0 +1,54 @@
+================================================================================
+Wave 5, Tasks 17-20: Rename all TypeScript packages with @harms-haus/ prefix
+================================================================================
+
+COMPLETED: 2026-04-09
+
+CHANGES MADE:
+-------------
+
+1. packages/acp-chat-core/package.json
+   - name: @acp/chat-core → @harms-haus/acp-chat-core
+
+2. packages/acp-chat-react/package.json
+   - name: @acp/chat-react → @harms-haus/acp-chat-react
+   - dependencies: @acp/chat-core → @harms-haus/acp-chat-core
+
+3. apps/harness → packages/acp-harness-ui (moved via git mv)
+   - name: @acp/harness → @harms-haus/acp-harness-ui
+   - dependencies: @acp/chat-core → @harms-haus/acp-chat-core
+   - dependencies: @acp/chat-react → @harms-haus/acp-chat-react
+
+4. packages/integration-tests/package.json
+   - name: @acp/integration-tests → @harms-haus/integration-tests
+   - dependencies: @acp/chat-core → @harms-haus/acp-chat-core
+
+5. packages/acp-ws-bridge/package.json (additional fix)
+   - dependencies: @acp/chat-core → @harms-haus/acp-chat-core
+
+VERIFICATION RESULTS:
+--------------------
+
+1. Package names check:
+packages/acp-chat-core/package.json:  "name": "@harms-haus/acp-chat-core",
+packages/acp-chat-react/package.json:  "name": "@harms-haus/acp-chat-react",
+packages/acp-harness-ui/package.json:  "name": "@harms-haus/acp-harness-ui",
+packages/acp-ws-bridge/package.json:  "name": "@harms-haus/acp-ws-bridge",
+packages/integration-tests/package.json:  "name": "@harms-haus/integration-tests",
+
+2. acp-harness-ui in packages/:
+acp-harness-ui
+
+3. harness in apps/ (should be empty):
+(no harness found - correct)
+
+4. pnpm install result:
+SUCCESS - pnpm install completed successfully
+
+SUMMARY:
+--------
+✅ All 4 packages renamed with @harms-haus/ prefix
+✅ apps/harness moved to packages/acp-harness-ui
+✅ All workspace dependencies updated to match new package names
+✅ pnpm install succeeded
+✅ QA verification passed

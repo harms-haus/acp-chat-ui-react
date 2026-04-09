@@ -1,5 +1,5 @@
 {
-  "name": "@acp/integration-tests",
+  "name": "@harms-haus/integration-tests",
   "version": "0.0.1",
   "license": "MIT",
   "type": "module",
@@ -9,7 +9,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@acp/chat-core": "workspace:*"
+    "@harms-haus/acp-chat-core": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

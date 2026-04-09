@@ -1,5 +1,5 @@
 {
-  "name": "@acp/harness",
+  "name": "@harms-haus/acp-harness-ui",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -12,8 +12,8 @@
     "test:visual:update": "playwright test --project=visual --update-snapshots"
   },
   "dependencies": {
-    "@acp/chat-core": "workspace:*",
-    "@acp/chat-react": "workspace:*",
+    "@harms-haus/acp-chat-core": "workspace:*",
+    "@harms-haus/acp-chat-react": "workspace:*",
     "@base-ui-components/react": "^1.0.0-rc.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

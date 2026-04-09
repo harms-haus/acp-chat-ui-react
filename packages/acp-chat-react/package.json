@@ -1,5 +1,5 @@
 {
-  "name": "@acp/chat-react",
+  "name": "@harms-haus/acp-chat-react",
   "version": "0.0.1",
   "license": "MIT",
   "type": "module",
@@ -32,7 +32,7 @@
     "react-dom": "^18.3.0 || ^19.0.0"
   },
   "dependencies": {
-    "@acp/chat-core": "workspace:*",
+    "@harms-haus/acp-chat-core": "workspace:*",
     "@chenglou/pretext": "^0.0.4",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.0"
