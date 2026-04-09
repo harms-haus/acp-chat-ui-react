@@ -4,6 +4,21 @@
 //! The script format captures all events (thoughts, messages, tool calls, etc.)
 //! that occurred during a live session, allowing for deterministic replay.
 
+mod chunker;
+mod event_gen;
+mod parser;
+mod session_gen;
+mod writer;
+
+pub use chunker::{chunk_text, TextChunk};
+pub use event_gen::generate_events;
+pub use parser::{parse_script, ParseError, ParseResult};
+pub use session_gen::{
+    generate_manifest, generate_session_data, generate_session_data_all, Manifest, ManifestSession,
+    SessionData,
+};
+pub use writer::{write_json, write_replay_events};
+
 use serde::{Deserialize, Serialize};
 
 /// A complete script representing a captured ACP session.
@@ -40,10 +55,10 @@ pub struct ScriptMetadata {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ScriptSession {
     /// Unique identifier for this session.
-    #[serde(rename = "id")]
+    #[serde(rename = "@id")]
     pub id: String,
     /// Working directory where the session ran.
-    #[serde(rename = "cwd")]
+    #[serde(rename = "@cwd")]
     pub cwd: String,
     /// Events that occurred in this session.
     #[serde(rename = "$value")]
@@ -58,12 +73,16 @@ pub struct ScriptSession {
 #[serde(rename_all = "kebab-case")]
 pub enum ScriptEvent {
     /// An internal thought/reasoning step by the agent.
+    #[serde(rename = "thought")]
     Thought(Thought),
     /// A message exchanged between user and agent.
+    #[serde(rename = "message")]
     Message(Message),
     /// A tool invocation by the agent.
+    #[serde(rename = "tool-call")]
     ToolCall(ToolCall),
     /// The response from a tool invocation.
+    #[serde(rename = "tool-response")]
     ToolResponse(ToolResponse),
 }
 
@@ -71,7 +90,7 @@ pub enum ScriptEvent {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Thought {
     /// Unique identifier for this thought.
-    #[serde(rename = "id")]
+    #[serde(rename = "@id")]
     pub id: String,
     /// The content of the thought.
     #[serde(rename = "$text")]
@@ -82,10 +101,10 @@ pub struct Thought {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Message {
     /// Unique identifier for this message.
-    #[serde(rename = "id")]
+    #[serde(rename = "@id")]
     pub id: String,
     /// The role of the message sender (user or assistant).
-    #[serde(rename = "role")]
+    #[serde(rename = "@role")]
     pub role: MessageRole,
     /// The content of the message.
     #[serde(rename = "$text")]
@@ -94,11 +113,12 @@ pub struct Message {
 
 /// The role of a message sender.
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
 pub enum MessageRole {
     /// Message from the user.
+    #[serde(rename = "user")]
     User,
     /// Message from the assistant/agent.
+    #[serde(rename = "assistant")]
     Assistant,
 }
 
@@ -106,13 +126,13 @@ pub enum MessageRole {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ToolCall {
     /// Unique identifier for this tool call.
-    #[serde(rename = "id")]
+    #[serde(rename = "@id")]
     pub id: String,
     /// The kind/name of tool being called.
-    #[serde(rename = "kind")]
+    #[serde(rename = "@kind")]
     pub kind: String,
     /// Optional title for the tool call.
-    #[serde(rename = "title")]
+    #[serde(rename = "@title")]
     pub title: Option<String>,
     /// The arguments/parameters for the tool call.
     #[serde(rename = "$text")]
@@ -123,10 +143,10 @@ pub struct ToolCall {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ToolResponse {
     /// The ID of the tool call this response is for.
-    #[serde(rename = "id")]
+    #[serde(rename = "@id")]
     pub id: String,
     /// Whether the tool call was successful.
-    #[serde(rename = "success")]
+    #[serde(rename = "@success")]
     pub success: bool,
     /// The response content.
     #[serde(rename = "$text")]
@@ -197,21 +217,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_script_parsing() {
-        let xml = r#"
-            <script>
-                <metadata>
-                    <description>Test script</description>
-                </metadata>
-                <session id="test-session" cwd="/test">
-                    <thought id="t1">Thinking...</thought>
-                    <message id="m1" role="user">Hello</message>
-                </session>
-            </script>
-        "#;
-
-        // This will fail until XML parsing is implemented
-        // For now, just verify types compile
+    fn test_script_types_compile() {
+        // Verify types compile and can be constructed
+        // XML parsing is tested in parser::tests
         let _ = Script {
             metadata: Some(ScriptMetadata {
                 description: Some("Test".to_string()),

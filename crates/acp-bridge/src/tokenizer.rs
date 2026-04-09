@@ -31,7 +31,15 @@ pub fn encode_to_tokens(text: &str) -> Vec<String> {
 
     let token_ids = bpe.encode_with_special_tokens(text);
 
-    token_ids.iter().map(|id| id.to_string()).collect()
+    // Decode each token ID back to its string representation
+    token_ids
+        .iter()
+        .filter_map(|id| {
+            bpe.decode(vec![*id])
+                .ok()
+                .and_then(|s| if s.is_empty() { None } else { Some(s) })
+        })
+        .collect()
 }
 
 #[cfg(test)]

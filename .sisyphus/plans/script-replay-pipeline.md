@@ -391,7 +391,7 @@ Wave 4 (Verification - Depends on Wave 3):
 
 ### Wave 2: Core Implementation
 
-- [ ] **Task 5: Implement XML script parser with validation**
+- [x] **Task 5: Implement XML script parser with validation**
 
   **What to do**:
   1. Add `quick-xml = { version = "0.36", features = ["serialize"] }` to Cargo.toml
@@ -452,7 +452,7 @@ Wave 4 (Verification - Depends on Wave 3):
 
 ---
 
-- [ ] **Task 6: Implement token-based chunking for text events**
+- [x] **Task 6: Implement token-based chunking for text events**
 
   **What to do**:
   Create `src/script/chunker.rs` module:
@@ -518,7 +518,7 @@ Wave 4 (Verification - Depends on Wave 3):
 
 ---
 
-- [ ] **Task 7: Implement ACP event generator**
+- [x] **Task 7: Implement ACP event generator**
 
   **What to do**:
   Create `src/script/event_gen.rs` module:
@@ -583,7 +583,7 @@ Wave 4 (Verification - Depends on Wave 3):
 
 ---
 
-- [ ] **Task 8: Implement JSONL writer and file output**
+- [x] **Task 8: Implement JSONL writer and file output**
 
   **What to do**:
   Create `src/script/writer.rs` module:
@@ -636,7 +636,7 @@ Wave 4 (Verification - Depends on Wave 3):
 
 ### Wave 3: Integration
 
-- [ ] **Task 9: Integrate convert-script into main.rs CLI**
+- [x] **Task 9: Integrate convert-script into main.rs CLI**
 
   **What to do**:
   1. Wire up ConvertScript command handling in main.rs
