@@ -1,6 +1,6 @@
 # CSS Variables Contract
 
-This document defines the canonical `--acp-*` CSS variable contract for styling `@acp/chat-react` components. Variables are derived from current inline style usage and preserve existing fallback semantics.
+This document defines the canonical `--acp-*` CSS variable contract for styling `@harms-haus/acp-chat-react` components. Variables are derived from current inline style usage and preserve existing fallback semantics.
 
 ## Overview
 

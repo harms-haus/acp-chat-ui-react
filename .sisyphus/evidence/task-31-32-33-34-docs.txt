@@ -1,0 +1,55 @@
+Task 31: Update wiki pages with new package names
+Status: COMPLETED
+Result: Wiki does not exist (docs/wiki/ directory not found). No action needed.
+
+Task 32: Update AGENTS.md with new conventions
+Status: COMPLETED
+Result: No @acp/ references found in AGENTS.md. No action needed.
+
+Task 33: Update package README.md files
+Status: COMPLETED
+Files Updated:
+  - packages/acp-chat-react/README.md
+    * Changed: # @acp/chat-react → # @harms-haus/acp-chat-react
+  - packages/acp-chat-react/CSS-VARIABLES.md
+    * Changed: @acp/chat-react → @harms-haus/acp-chat-react
+  - packages/acp-chat-react/MIGRATION.md
+    * Changed: @acp/chat-react → @harms-haus/acp-chat-react (replaceAll)
+
+Task 34: Update inline code comments (JSDoc examples)
+Status: COMPLETED
+Files Updated:
+  - packages/acp-chat-core/src/index.test.ts
+    * Changed: describe("@acp/chat-core scaffold" → describe("@harms-haus/acp-chat-core scaffold")
+  - packages/acp-chat-core/src/index.ts
+    * Changed: @acp/chat-core → @harms-haus/acp-chat-core (file header)
+  - packages/acp-chat-react/src/client/index.ts
+    * Changed: @acp/chat-react/client → @harms-haus/acp-chat-react/client (file header)
+  - packages/acp-chat-react/src/thread/pretext-estimator.ts
+    * Changed: @acp/chat-react → @harms-haus/acp-chat-react (JSDoc examples at lines 64, 288)
+  - packages/acp-chat-react/src/thread/types.ts
+    * Changed: @acp/chat-react → @harms-haus/acp-chat-react (JSDoc examples at lines 71, 85)
+  - packages/acp-chat-react/src/actions/MessageActionBar.tsx
+    * Changed: @acp/chat-react → @harms-haus/acp-chat-react (console.warn at line 21)
+  - packages/acp-chat-react/src/types/css-variables.ts
+    * Changed: @acp/chat-react → @harms-haus/acp-chat-react (JSDoc comments at lines 5, 160)
+  - packages/acp-chat-react/src/utils/clipboard.ts
+    * Changed: @acp/chat-react → @harms-haus/acp-chat-react (JSDoc examples, console.warn messages)
+  - packages/acp-chat-react/src/utils/browser-apis.ts
+    * Changed: @acp/chat-react → @harms-haus/acp-chat-react (JSDoc examples, console.warn messages)
+  - packages/acp-chat-react/src/index.browser.ts
+    * Changed: @acp/chat-react → @harms-haus/acp-chat-react (JSDoc example at line 16)
+  - packages/acp-harness-ui/vite.config.ts
+    * Changed: @acp/chat-core → @harms-haus/acp-chat-core (alias)
+    * Changed: @acp/chat-react → @harms-haus/acp-chat-react (alias)
+  - packages/integration-tests/src/helpers/websocket-polyfill.ts
+    * Changed: @acp/chat-core → @harms-haus/acp-chat-core (comment at line 5)
+
+Verification Results:
+- Documentation files: 0 remaining @acp/ references
+- Source files (excluding vite.config.ts): 0 remaining @acp/ references
+- All package names updated to @harms-haus/*
+
+Notes:
+- dist/ files contain build artifacts and will be regenerated on next build
+- vite.config.ts files intentionally keep @acp/ references for build-time alias resolution

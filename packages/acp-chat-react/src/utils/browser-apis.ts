@@ -1,8 +1,8 @@
 /**
  * Browser API Default Implementations
  *
- * This module provides default browser API implementations for the abstractions
- * defined in @acp/chat-react/types/browser-apis.
+ * This module provides default browser API implementations for abstractions
+ * defined in @harms-haus/acp-chat-react/types/browser-apis.
  *
  * Implementations include:
  * - SSR-safe guards (no-op methods when browser APIs unavailable)
@@ -36,7 +36,7 @@ import { isBrowserEnvironment } from "../index.browser.js";
  *
  * @example
  * ```typescript
- * import { defaultClipboard } from '@acp/chat-react/utils';
+ * import { defaultClipboard } from '@harms-haus/acp-chat-react/utils';
  *
  * async function handleCopy() {
  *   await defaultClipboard.writeText('Hello, world!');
@@ -51,7 +51,7 @@ export const defaultClipboard: ClipboardAPI = {
 
     if (typeof navigator === "undefined" || !navigator.clipboard) {
       console.warn(
-        "[@acp/chat-react] Clipboard API unavailable in current environment"
+        "[@harms-haus/acp-chat-react] Clipboard API unavailable in current environment"
       );
       return;
     }
@@ -61,7 +61,7 @@ export const defaultClipboard: ClipboardAPI = {
     } catch (err) {
       if (err instanceof Error && err.name === "NotAllowedError") {
         console.warn(
-          "[@acp/chat-react] Clipboard write denied by user or secure context requirement"
+          "[@harms-haus/acp-chat-react] Clipboard write denied by user or secure context requirement"
         );
         return;
       }
@@ -80,7 +80,7 @@ export const defaultClipboard: ClipboardAPI = {
  *
  * @example
  * ```typescript
- * import { createViewportObserverFactory } from '@acp/chat-react/utils';
+ * import { createViewportObserverFactory } from '@harms-haus/acp-chat-react/utils';
  *
  * const observerFactory = createViewportObserverFactory();
  * const observer = observerFactory.create((entries) => {
@@ -107,7 +107,7 @@ export function createViewportObserverFactory(): ViewportObserverFactory {
 
       if (typeof ResizeObserver === "undefined") {
         console.warn(
-          "[@acp/chat-react] ResizeObserver unavailable in current environment"
+          "[@harms-haus/acp-chat-react] ResizeObserver unavailable in current environment"
         );
         return {
           observe: () => {},
@@ -153,7 +153,7 @@ export function createViewportObserverFactory(): ViewportObserverFactory {
  *
  * @example
  * ```typescript
- * import { defaultScheduler } from '@acp/chat-react/utils';
+ * import { defaultScheduler } from '@harms-haus/acp-chat-react/utils';
  *
  * function throttleScroll() {
  *   const rafId = defaultScheduler.requestAnimationFrame((time) => {
@@ -172,7 +172,7 @@ export const defaultScheduler: Scheduler = {
 
     if (typeof requestAnimationFrame === "undefined") {
       console.warn(
-        "[@acp/chat-react] requestAnimationFrame unavailable in current environment"
+        "[@harms-haus/acp-chat-react] requestAnimationFrame unavailable in current environment"
       );
       return 0;
     }
@@ -201,7 +201,7 @@ export const defaultScheduler: Scheduler = {
 
     if (typeof setTimeout === "undefined") {
       console.warn(
-        "[@acp/chat-react] setTimeout unavailable in current environment"
+        "[@harms-haus/acp-chat-react] setTimeout unavailable in current environment"
       );
       return 0;
     }

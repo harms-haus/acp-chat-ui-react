@@ -68,25 +68,25 @@ export interface VirtualizedThreadProps {
    *
    * @example
    * ```tsx
-   * import { createViewportObserverFactory } from '@acp/chat-react';
+   * import { createViewportObserverFactory } from '@harms-haus/acp-chat-react';
    *
    * <VirtualizedThread items={items} renderItem={renderItem} viewportObserverFactory={createViewportObserverFactory()} />
    * ```
    */
-  viewportObserverFactory?: ViewportObserverFactory | undefined;
-  /**
-   * Scheduler for requestAnimationFrame and timeout operations.
-   *
-   * Optional. If not provided, defaults to native browser scheduler.
-   * Provide a custom implementation for testing or SSR environments.
-   *
-   * @example
-   * ```tsx
-   * import { defaultScheduler } from '@acp/chat-react';
-   *
-   * <VirtualizedThread items={items} renderItem={renderItem} scheduler={defaultScheduler} />
-   * ```
-   */
+   viewportObserverFactory?: ViewportObserverFactory | undefined;
+   /**
+    * Scheduler for requestAnimationFrame and timeout operations.
+    *
+    * Optional. If not provided, defaults to native browser scheduler.
+    * Provide a custom implementation for testing or SSR environments.
+    *
+    * @example
+    * ```tsx
+    * import { defaultScheduler } from '@harms-haus/acp-chat-react';
+    *
+    * <VirtualizedThread items={items} renderItem={renderItem} scheduler={defaultScheduler} />
+    * ```
+    */
   scheduler?: Scheduler | undefined;
 }
 

@@ -2,7 +2,7 @@
  * WebSocket polyfill for Node.js integration tests
  *
  * This helper sets up the ws package as a polyfill for the global WebSocket object,
- * allowing @acp/chat-core's TransportClient to work in Node.js environment.
+ * allowing @harms-haus/acp-chat-core's TransportClient to work in Node.js environment.
  */
 
 /**

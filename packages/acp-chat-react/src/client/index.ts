@@ -1,5 +1,5 @@
 /**
- * @acp/chat-react/client
+ * @harms-haus/acp-chat-react/client
  *
  * Browser-only entry point for ACP connection utilities.
  * This module contains WebSocket-dependent code and should NOT be

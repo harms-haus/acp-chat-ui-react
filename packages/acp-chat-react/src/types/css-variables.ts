@@ -2,7 +2,7 @@
  * CSS Variables Type Surface
  *
  * This module provides TypeScript types for the `--acp-*` CSS variable contract.
- * These types enable type-safe customization of @acp/chat-react component styling.
+ * These types enable type-safe customization of @harms-haus/acp-chat-react component styling.
  *
  * @see CSS-VARIABLES.md for the complete styling contract
  */
@@ -157,7 +157,7 @@ export interface AcpLayoutVariables {
 }
 
 /**
- * Complete CSS variables contract for @acp/chat-react styling.
+ * Complete CSS variables contract for @harms-haus/acp-chat-react styling.
  *
  * This type surface provides type-safe access to all `--acp-*` CSS variables.
  * Use these types when defining CSS variable overrides in TypeScript or when

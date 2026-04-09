@@ -1,4 +1,4 @@
-# @acp/chat-react
+# @harms-haus/acp-chat-react
 
 React components for ACP chat UI.
 

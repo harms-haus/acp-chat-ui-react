@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@acp/chat-core": path.resolve(__dirname, "../../packages/acp-chat-core/src"),
-      "@acp/chat-react": path.resolve(__dirname, "../../packages/acp-chat-react/src"),
+      "@harms-haus/acp-chat-core": path.resolve(__dirname, "../../packages/acp-chat-core/src"),
+      "@harms-haus/acp-chat-react": path.resolve(__dirname, "../../packages/acp-chat-react/src"),
     },
   },
   server: {

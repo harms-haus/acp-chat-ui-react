@@ -37,7 +37,7 @@ export interface CreateClipboardAPIOptions {
  *
  * @example
  * ```typescript
- * import { createClipboardAPI } from '@acp/chat-react/utils';
+ * import { createClipboardAPI } from '@harms-haus/acp-chat-react/utils';
  *
  * // Default: with fallback to execCommand
  * const clipboard = createClipboardAPI();
@@ -87,11 +87,11 @@ export function createClipboardAPI(
           // Log the failure but try fallback
           if (err instanceof Error && err.name === "NotAllowedError") {
             console.warn(
-              "[@acp/chat-react] Clipboard write denied by user or secure context requirement, trying fallback"
+              "[@harms-haus/acp-chat-react] Clipboard write denied by user or secure context requirement, trying fallback"
             );
           } else {
             console.warn(
-              "[@acp/chat-react] navigator.clipboard.writeText failed, trying fallback:",
+              "[@harms-haus/acp-chat-react] navigator.clipboard.writeText failed, trying fallback:",
               err
             );
           }
@@ -115,13 +115,13 @@ export function createClipboardAPI(
 
           if (!successful) {
             console.warn(
-              "[@acp/chat-react] document.execCommand('copy') failed"
+              "[@harms-haus/acp-chat-react] document.execCommand('copy') failed"
             );
           }
           return;
         } catch (err) {
           console.warn(
-            "[@acp/chat-react] document.execCommand('copy') fallback failed:",
+            "[@harms-haus/acp-chat-react] document.execCommand('copy') fallback failed:",
             err
           );
           throw err;
@@ -130,7 +130,7 @@ export function createClipboardAPI(
 
       // No clipboard API available
       console.warn(
-        "[@acp/chat-react] Clipboard API unavailable in current environment"
+        "[@harms-haus/acp-chat-react] Clipboard API unavailable in current environment"
       );
     },
   };
@@ -145,7 +145,7 @@ export function createClipboardAPI(
  *
  * @example
  * ```typescript
- * import { defaultClipboardWithFallback } from '@acp/chat-react/utils';
+ * import { defaultClipboardWithFallback } from '@harms-haus/acp-chat-react/utils';
  *
  * await defaultClipboardWithFallback.writeText('Hello, world!');
  * ```
@@ -163,7 +163,7 @@ export const defaultClipboardWithFallback = createClipboardAPI({
  *
  * @example
  * ```typescript
- * import { strictClipboard } from '@acp/chat-react/utils';
+ * import { strictClipboard } from '@harms-haus/acp-chat-react/utils';
  *
  * await strictClipboard.writeText('Hello, world!');
  * ```

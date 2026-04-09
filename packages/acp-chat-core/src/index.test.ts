@@ -6,7 +6,7 @@ import {
   isSupportedVersion,
 } from "./index.js";
 
-describe("@acp/chat-core scaffold", () => {
+describe("@harms-haus/acp-chat-core scaffold", () => {
   it("exports package version", () => {
     expect(PACKAGE_VERSION).toBe("0.0.1");
   });

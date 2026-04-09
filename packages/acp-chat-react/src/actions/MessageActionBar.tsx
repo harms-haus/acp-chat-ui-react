@@ -18,7 +18,7 @@ export const MessageActionBar = memo(function MessageActionBar({
   useEffect(() => {
     if (injectedClipboard === undefined) {
       console.warn(
-        "[@acp/chat-react] MessageActionBar: Using default clipboard implementation. " +
+        "[@harms-haus/acp-chat-react] MessageActionBar: Using default clipboard implementation. " +
         "For production, consider providing a custom clipboard implementation via the 'clipboard' prop " +
         "to ensure consistent behavior across environments. " +
         "Example: clipboard={strictClipboard} or clipboard={defaultClipboardWithFallback}"

@@ -61,7 +61,7 @@ interface PretextEstimatorState {
  *
  * @example
  * ```typescript
- * import { createPretextEstimator } from '@acp/chat-react';
+ * import { createPretextEstimator } from '@harms-haus/acp-chat-react';
  *
  * // Use default config
  * const estimator = createPretextEstimator();
@@ -285,7 +285,7 @@ export { DEFAULT_HEIGHT_ESTIMATOR_CONFIG } from '../types/height-estimator.js';
  *
  * @example
  * ```typescript
- * import { defaultPretextEstimator } from '@acp/chat-react';
+ * import { defaultPretextEstimator } from '@harms-haus/acp-chat-react';
  *
  * // Use directly in VirtualizedThread
  * <VirtualizedThread

@@ -1,10 +1,10 @@
 # Migration Guide: Headless Conversion
 
-This guide covers migrating from inline styles to the headless CSS variable architecture in `@acp/chat-react`.
+This guide covers migrating from inline styles to the headless CSS variable architecture in `@harms-haus/acp-chat-react`.
 
 ## Overview
 
-The headless conversion transforms `@acp/chat-react` from inline style-based styling to a CSS variable-driven architecture. This enables complete visual customization while preserving all existing functionality.
+The headless conversion transforms `@harms-haus/acp-chat-react` from inline style-based styling to a CSS variable-driven architecture. This enables complete visual customization while preserving all existing functionality.
 
 ### Two-Phase Approach
 
@@ -25,7 +25,7 @@ The headless conversion transforms `@acp/chat-react` from inline style-based sty
 ### 1. Update Dependencies
 
 ```bash
-pnpm update @acp/chat-react
+pnpm update @harms-haus/acp-chat-react
 ```
 
 ### 2. Add CSS to Your Application

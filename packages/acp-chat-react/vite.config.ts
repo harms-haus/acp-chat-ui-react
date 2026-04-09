@@ -26,7 +26,7 @@ export default defineConfig({
         "react",
         "react-dom",
         /^@base-ui-components\/react/,
-        "@acp/chat-core"
+        "@harms-haus/acp-chat-core"
       ],
     },
   },

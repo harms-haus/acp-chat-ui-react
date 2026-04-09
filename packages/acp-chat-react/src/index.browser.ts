@@ -11,9 +11,9 @@
  * @example
  * // In your client-side React app:
  * import { createBrowserAcpStore, useAcpConnection } from '@harms-haus/acp-chat-react/browser';
- * 
+ *
  * // SSR-safe main index.ts is imported by default for server environments
- * import { AcpStore, useMessages } from '@acp/chat-react';
+ * import { AcpStore, useMessages } from '@harms-haus/acp-chat-react';
  */
 
 import { useEffect, useRef, useState } from "react";

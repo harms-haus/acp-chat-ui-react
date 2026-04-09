@@ -1,5 +1,5 @@
 /**
- * @acp/chat-core
+ * @harms-haus/acp-chat-core
  *
  * Internal TypeScript package for generated bridge types, ACP transport client,
  * session controller, dev-launch preset parsing, and incremental normalization.
