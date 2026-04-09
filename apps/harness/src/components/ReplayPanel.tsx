@@ -145,8 +145,7 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
         checkConnection();
       });
 
-      await newController.initReplay(selectedDemoType, SESSION_ID);
-      newController.setReplaySpeed(replaySpeed);
+      await newController.initReplay(selectedDemoType, SESSION_ID, replaySpeed);
 
       setController(newController);
       setConnectionStatus("replaying");

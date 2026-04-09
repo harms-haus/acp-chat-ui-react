@@ -266,6 +266,14 @@ async fn stream_events(
     for event in events {
         let token_count = event.token_count.unwrap_or(0);
         let envelope_value = event.extract_envelope()?;
+        
+        let delay_ms = if token_count > 0 {
+            let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
+            delay_for_tokens(token_count, current_tps)
+        } else {
+            let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
+            delay_for_tokens(1, current_tps)
+        };
 
         // Check if this is a permission_request with status: "pending"
         if let Some(payload) = envelope_value.get("payload") {
@@ -456,8 +464,6 @@ async fn stream_events(
       }
     }
   } else {
-    let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
-    let delay_ms = delay_for_tokens(token_count, current_tps);
     let deadline = tokio::time::Instant::now() + Duration::from_millis(delay_ms);
 
     loop {

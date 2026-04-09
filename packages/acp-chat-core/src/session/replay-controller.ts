@@ -218,8 +218,8 @@ export class ReplayController {
    * Initialize replay mode with script and session ID.
    * Must be called after connect() and before creating sessions.
    */
-  async initReplay(script: string, sessionId: string): Promise<{ status: "success"; mode: "replay" | "live" }> {
-    return this.transport.initReplay(script, sessionId);
+  async initReplay(script: string, sessionId: string, replaySpeed?: number): Promise<{ status: "success"; mode: "replay" | "live" }> {
+    return this.transport.initReplay(script, sessionId, replaySpeed);
   }
 
   /** Close the WebSocket and reject all pending requests. */

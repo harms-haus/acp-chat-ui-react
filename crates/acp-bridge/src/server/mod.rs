@@ -159,7 +159,7 @@ async fn run_client_session(
                                             if speed > 0.0 {
                                                 let stored_tps = (speed * 100.0) as u64;
                                                 tps_clone.store(stored_tps, Ordering::Relaxed);
-                                                tracing::info!("Mid-replay speed changed to {}x ({} TPS stored)", speed, stored_tps);
+                                                tracing::info!("Mid-replay speed changed to {} TPS (internally stored as {})", speed, stored_tps);
                                             }
                                         }
                                     } else {
