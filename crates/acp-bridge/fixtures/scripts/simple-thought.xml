@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Simple script with a single thought and message -->
+<script>
+  <metadata>
+    <description>Minimal example with one thought and response</description>
+  </metadata>
+  <session id="session-1" cwd="/test">
+    <thought id="t1">This is a simple thought demonstrating tokenization.</thought>
+    <message id="m1" role="assistant">Hello! This is a response message.</message>
+  </session>
+</script>

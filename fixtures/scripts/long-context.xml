@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Long Context Example
+  
+  This script demonstrates architecture analysis with multiple thoughts
+  and file reading operations. Based on existing long-context replay.
+-->
+<script>
+  <metadata>
+    <description>Architecture analysis with systematic codebase examination</description>
+    <author>ACP Bridge Team</author>
+  </metadata>
+  <session id="long-context-analysis-1" cwd="/home/user/project">
+    <message id="msg-1" role="user">
+      Analyze the architecture of this codebase. I want to understand the overall structure, key components, and how data flows through the system.
+    </message>
+    
+    <thought id="thought-1">
+      Let me analyze this architecture systematically. I'll start by examining the project structure and configuration files to understand the overall organization.
+    </thought>
+    
+    <tool-call id="tc-1" kind="read" title="Read package.json">
+      {"path": "/home/user/project/package.json"}
+    </tool-call>
+    
+    <tool-response id="tc-1" success="true">
+      {
+        "name": "acp-react-chat-ui",
+        "private": true,
+        "workspaces": ["packages/*", "apps/*"],
+        "scripts": {
+          "dev": "bun run --filter acp-chat-react-harness dev",
+          "build": "bun run --filter '*' build"
+        }
+      }
+    </tool-response>
+    
+    <thought id="thought-2">
+      The package.json reveals this is a monorepo using npm workspaces. I can see packages/* and apps/* workspace patterns. Let me check the TypeScript configuration next.
+    </thought>
+    
+    <tool-call id="tc-2" kind="read" title="Read tsconfig.json">
+      {"path": "/home/user/project/tsconfig.json"}
+    </tool-call>
+    
+    <tool-response id="tc-2" success="true">
+      {
+        "compilerOptions": {
+          "target": "ES2022",
+          "module": "NodeNext",
+          "moduleResolution": "NodeNext",
+          "strict": true,
+          "esModuleInterop": true
+        }
+      }
+    </tool-response>
+    
+    <thought id="thought-3">
+      TypeScript uses ES2022 target with NodeNext module resolution - modern setup. Now I need to examine the core session controller to understand the ACP protocol implementation.
+    </thought>
+    
+    <tool-call id="tc-3" kind="read" title="Read SessionController">
+      {"path": "/home/user/project/packages/acp-chat-core/src/session/controller.ts"}
+    </tool-call>
+    
+    <tool-response id="tc-3" success="true">
+      export class SessionController {
+        async initialize(capabilities: ClientCapabilities) {
+          // ACP protocol initialization
+        }
+        
+        async createSession(cwd: string, mcpServers?: McpServer[]) {
+          // session/new implementation
+        }
+        
+        async sendPrompt(sessionId: string, prompt: ContentBlock[]) {
+          // session/prompt implementation
+        }
+      }
+    </tool-response>
+    
+    <thought id="thought-4">
+      The session controller implements the full ACP protocol with JSON-RPC methods. I can see initialize, session/new, session/prompt handlers. Let me examine the normalization store to understand state management.
+    </thought>
+    
+    <tool-call id="tc-4" kind="read" title="Read normalization store">
+      {"path": "/home/user/project/packages/acp-chat-core/src/normalization/store.ts"}
+    </tool-call>
+    
+    <tool-response id="tc-4" success="true">
+      export class NormalizedStore {
+        messages: Map&lt;string, NormalizedMessage&gt; = new Map();
+        thoughts: Map&lt;string, NormalizedThought&gt; = new Map();
+        toolCalls: Map&lt;string, NormalizedToolCall&gt; = new Map();
+        
+        applySessionUpdate(update: SessionUpdate) {
+          // Handle agent_message_chunk, agent_thought_chunk, tool_call, etc.
+        }
+      }
+    </tool-response>
+    
+    <thought id="thought-5">
+      Excellent! Now I have a complete picture. The normalization store uses map-based architecture with separate maps for messages, thoughts, and tool calls. This provides O(1) lookup and clean separation of concerns.
+    </thought>
+    
+    <message id="msg-2" role="assistant">
+      ## Architecture Analysis Summary
+      
+      I've analyzed the codebase structure. Here are the key findings:
+      
+      ### Project Structure
+      - **Monorepo** with npm workspaces (packages/*, apps/*)
+      - **TypeScript** with ES2022 target and NodeNext module resolution
+      - **Modern tooling** with Bun runtime
+      
+      ### Core Components
+      
+      **1. SessionController** (`packages/acp-chat-core/src/session/controller.ts`)
+      - Implements full ACP protocol (JSON-RPC 2.0)
+      - Methods: initialize, createSession, sendPrompt
+      - Manages WebSocket connection to Rust bridge
+      
+      **2. NormalizedStore** (`packages/acp-chat-core/src/normalization/store.ts`)
+      - Map-based architecture for O(1) lookups
+      - Separate maps: messages, thoughts, toolCalls
+      - Event-driven updates via applySessionUpdate()
+      
+      **3. Rust Bridge** (`crates/acp-bridge/`)
+      - WebSocket ↔ stdio proxy for ACP agents
+      - Supports replay mode with token-based timing
+      - BridgeEnvelope format for all messages
+      
+      ### Data Flow
+      
+      ```
+      User → React UI → SessionController → Rust Bridge → ACP Agent
+                        ↓
+                   NormalizedStore (state)
+                        ↓
+                   React Hooks (subscriptions)
+      ```
+      
+      ### Key Design Patterns
+      
+      1. **Separation of Concerns**: Protocol layer (controller) separate from state layer (store)
+      2. **Event-Driven**: All state changes flow through applySessionUpdate()
+      3. **Type Safety**: Full TypeScript coverage with strict mode
+      
+      The architecture is well-structured and follows modern React/TypeScript best practices. Would you like me to dive deeper into any specific component?
+    </message>
+  </session>
+</script>

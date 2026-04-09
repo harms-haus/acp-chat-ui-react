@@ -308,7 +308,7 @@ describe("thread-view", () => {
         },
       });
 
-  expect((message as NormalizedMessage | null)?.status).toBe("complete");
+  expect((message as NormalizedMessage | null)?.status).toBe("completed");
   });
 
   it("marks streaming agent messages as streaming", () => {
@@ -340,7 +340,7 @@ describe("thread-view", () => {
       },
     });
 
-    expect((message as NormalizedMessage | null)?.status).toBe("complete");
+    expect((message as NormalizedMessage | null)?.status).toBe("completed");
   });
 
   it("marks cancelled agent messages as cancelled", () => {

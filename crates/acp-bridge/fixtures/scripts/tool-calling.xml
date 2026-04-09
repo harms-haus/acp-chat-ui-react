@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Script demonstrating tool calls and responses -->
+<script>
+  <metadata>
+    <description>Tool calling example with read operation</description>
+  </metadata>
+  <session id="tool-session" cwd="/workspace">
+    <thought id="t1">I need to read a file to understand the codebase.</thought>
+    <tool-call id="tc1" kind="read" title="Read main.rs">
+      {"filePath": "src/main.rs"}
+    </tool-call>
+    <tool-response id="tc1" success="true">
+      fn main() { println!("Hello, world!"); }
+    </tool-response>
+    <thought id="t2">Now I can analyze the code.</thought>
+  </session>
+</script>

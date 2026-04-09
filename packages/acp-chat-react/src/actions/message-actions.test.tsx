@@ -17,7 +17,7 @@ Object.assign(navigator, {
 const mockMessage: NormalizedMessage = {
   id: "msg-123",
   role: "user",
-  status: "complete",
+  status: "completed",
   content: "Test message content",
   contentBlocks: [{ type: "text", text: "Test message content" }],
   createdAt: Date.now(),

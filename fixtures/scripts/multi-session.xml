@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Multi-Session Example
+  
+  This script demonstrates multiple sessions within a single script file.
+  Each session will generate its own session-data.json in a subdirectory.
+-->
+<script>
+  <metadata>
+    <description>Multiple sessions example for batch replay generation</description>
+    <author>ACP Bridge Team</author>
+  </metadata>
+  
+  <!-- Session 1: Code Review -->
+  <session id="code-review-1" cwd="/home/user/project">
+    <thought id="thought-1">
+      Let me review the pull request changes for the authentication module.
+    </thought>
+    <message id="msg-1" role="user">
+      Can you review the authentication changes in PR #123?
+    </message>
+    <message id="msg-2" role="assistant">
+      I'll analyze the authentication module changes and provide feedback on security and code quality.
+    </message>
+  </session>
+  
+  <!-- Session 2: Debug Session -->
+  <session id="debug-1" cwd="/home/user/project">
+    <thought id="thought-1">
+      The user is reporting a TypeError in the dashboard component. Let me trace through the error.
+    </thought>
+    <message id="msg-1" role="user">
+      I'm getting "Cannot read properties of undefined" in Dashboard.tsx line 45
+    </message>
+    <thought id="thought-2">
+      Line 45 accesses userData.profile - this suggests userData might be undefined. Let me check the data flow.
+    </thought>
+  </session>
+</script>

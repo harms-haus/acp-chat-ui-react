@@ -5,7 +5,6 @@ export {
   useChatEvent,
   useThoughtEvents,
   useToolCallEvents,
-  useActiveItems,
 } from "./hooks.js";
 export type {
   ChatEventType,

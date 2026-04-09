@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Script with code snippets in CDATA sections -->
+<script>
+  <metadata>
+    <description>Code example with Rust code in CDATA</description>
+  </metadata>
+  <session id="code-session" cwd="/rust-project">
+    <thought id="t1">Let me review this Rust implementation.</thought>
+    <tool-call id="tc1" kind="read" title="Read lib.rs">
+      {"filePath": "src/lib.rs"}
+    </tool-call>
+    <tool-response id="tc1" success="true">
+<![CDATA[
+pub fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_add() {
+        assert_eq!(add(2, 3), 5);
+    }
+}
+]]>
+    </tool-response>
+    <message id="m1" role="assistant">The code looks correct! The `add` function properly adds two i32 values.</message>
+  </session>
+</script>

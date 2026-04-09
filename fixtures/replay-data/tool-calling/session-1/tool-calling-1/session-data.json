@@ -1,0 +1,29 @@
+{
+  "messages": [],
+  "thoughts": [
+    {
+      "@id": "thought-1",
+      "$text": "The user wants me to find all authentication-related files. I'll use the search tool to locate them."
+    },
+    {
+      "@id": "thought-2",
+      "$text": "Good, I found the authentication files. Now let me read the main authentication module to understand the implementation."
+    }
+  ],
+  "toolCalls": [
+    {
+      "@id": "tc-1",
+      "@kind": "search",
+      "@title": "Search for auth files",
+      "$text": "{\"pattern\": \"**/*auth*.{ts,js}\", \"path\": \"/home/user/project/src\"}"
+    },
+    {
+      "@id": "tc-2",
+      "@kind": "read",
+      "@title": "Read authentication.ts",
+      "$text": "{\"path\": \"/home/user/project/src/auth/authentication.ts\"}"
+    }
+  ],
+  "sessionId": "tool-calling-1",
+  "cwd": "/home/user/project"
+}

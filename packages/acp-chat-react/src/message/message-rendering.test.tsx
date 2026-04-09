@@ -11,7 +11,7 @@ import type { NormalizedMessage, ContentBlock } from "@acp/chat-core";
 const mockUserMessage: NormalizedMessage = {
   id: "msg_1",
   role: "user",
-  status: "complete",
+  status: "completed",
   content: "Hello, this is a test message",
   contentBlocks: [{ type: "text", text: "Hello, this is a test message" }],
   createdAt: Date.now(),
@@ -29,7 +29,7 @@ const mockAgentMessage: NormalizedMessage = {
 const mockAgentMessageWithResource: NormalizedMessage = {
   id: "msg_3",
   role: "agent",
-  status: "complete",
+  status: "completed",
   content: "Here is the file content",
   contentBlocks: [
     { type: "text", text: "Here is the file content" },
@@ -119,9 +119,9 @@ describe("MessageStatusIndicator", () => {
   });
 
   it("renders complete status", () => {
-    render(<MessageStatusIndicator status="complete" />);
+render(<MessageStatusIndicator status="completed" />);
 
-    const indicator = document.querySelector("[data-acp-message-status='complete']");
+const indicator = document.querySelector("[data-acp-message-status='completed']");
     expect(indicator).toBeTruthy();
     expect(screen.getByText("Complete")).toBeTruthy();
   });

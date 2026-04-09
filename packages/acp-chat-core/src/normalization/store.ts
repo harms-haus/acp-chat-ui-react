@@ -1,6 +1,8 @@
 export type MessageRole = "user" | "agent";
 
-export type MessageStatus = "streaming" | "complete" | "cancelled" | "error";
+export type MessageStatus = "streaming" | "completed" | "cancelled" | "error";
+
+export type ThoughtStatus = "streaming" | "completed" | "cancelled" | "error";
 
 export type ContentBlockType = "text" | "resource" | "resource_link";
 
@@ -45,19 +47,20 @@ export interface NormalizedThought {
   id: string;
   content: string;
   turnId?: string;
+  status?: ThoughtStatus;
   createdAt?: number;
   updatedAt?: number;
 }
 
 export type ToolCallKind = "read" | "search" | "edit" | "write" | "execute" | "glob" | "grep" | "unknown";
 
-export type ToolCallStatus = "pending" | "completed";
+export type ToolCallStatus = "pending" | "in_progress" | "completed" | "failed" | "cancelled";
 
 export interface NormalizedToolCall {
   toolCallId: string;
   kind: ToolCallKind;
   title: string;
-  status: ToolCallStatus;
+  status?: ToolCallStatus;
   rawInput?: {
     filePath?: string;
     command?: string;
@@ -297,18 +300,33 @@ function applyAgentMessageChunk(state: NormalizedState, update: AgentMessageChun
 }
 
 function mapChunkStatus(status: string | undefined): MessageStatus {
-switch (status) {
-case "in_progress":
-return "streaming";
-case "done":
-return "complete";
-case "cancelled":
-return "cancelled";
-case "error":
-return "error";
-default:
-return "complete";
-}
+ switch (status) {
+ case "in_progress":
+ return "streaming";
+ case "done":
+ return "completed";
+ case "cancelled":
+ return "cancelled";
+ case "error":
+ return "error";
+ default:
+ return "completed";
+ }
+ }
+
+function mapThoughtStatus(status: string | undefined): ThoughtStatus {
+  switch (status) {
+    case "in_progress":
+      return "streaming";
+    case "done":
+      return "completed";
+    case "cancelled":
+      return "cancelled";
+    case "error":
+      return "error";
+    default:
+      return "streaming";
+  }
 }
 
 function applyUserMessage(state: NormalizedState, update: UserMessage): NormalizedMessage | null {
@@ -326,7 +344,7 @@ function applyUserMessage(state: NormalizedState, update: UserMessage): Normaliz
   const message: NormalizedMessage = {
     id,
     role: "user",
-    status: "complete",
+    status: "completed",
     content: extractText(update.content),
     contentBlocks: extractContentBlocks(update.content),
     ...(turnId ? { turnId } : {}),
@@ -360,13 +378,35 @@ function applyAgentThoughtChunk(state: NormalizedState, update: AgentMessageChun
         content: existingThought.content + extractedContent,
         ...(timestamp !== undefined && { updatedAt: timestamp }),
       };
+
+      if (update.status) {
+        updatedThought.status = mapThoughtStatus(update.status);
+      } else if (existingThought.status === undefined) {
+        updatedThought.status = "streaming";
+      }
+
       state.thoughts.set(existingId, updatedThought);
       return updatedThought;
     }
   }
 
+  if (turnId) {
+    const previousStreaming = Array.from(state.thoughts.entries()).find(
+      ([_, t]) => t.turnId !== undefined && t.turnId !== turnId && t.status === "streaming"
+    );
+    if (previousStreaming) {
+      const [prevId, prevThought] = previousStreaming;
+      state.thoughts.set(prevId, { ...prevThought, status: "completed" });
+    }
+  }
+
   const id = generateThoughtId();
-  const thought: NormalizedThought = { id, content: extractedContent, ...(turnId && { turnId }) };
+  const thought: NormalizedThought = {
+    id,
+    content: extractedContent,
+    status: "streaming",
+    ...(turnId && { turnId }),
+  };
   if (timestamp !== undefined) {
     thought.createdAt = timestamp;
     thought.updatedAt = timestamp;
@@ -499,9 +539,16 @@ function mapToolCallKind(kind: string | undefined): ToolCallKind {
 
 function mapToolCallStatus(status: string | undefined): ToolCallStatus {
   switch (status) {
+    case "pending":
+      return "pending";
+    case "in_progress":
+      return "in_progress";
     case "completed":
       return "completed";
-    case "pending":
+    case "failed":
+      return "failed";
+    case "cancelled":
+      return "cancelled";
     default:
       return "pending";
   }
@@ -531,7 +578,7 @@ function applyToolCall(state: NormalizedState, update: ToolCallUpdate): Normaliz
       ...existing,
       kind: update.kind ? mapToolCallKind(update.kind) : existing.kind,
       title: update.title ?? existing.title,
-      status: update.status ? mapToolCallStatus(update.status) : existing.status,
+      ...(update.status ? { status: mapToolCallStatus(update.status) } : {}),
     };
     if (update.rawInput !== undefined) {
       updated.rawInput = update.rawInput;
@@ -565,7 +612,7 @@ function applyToolCall(state: NormalizedState, update: ToolCallUpdate): Normaliz
     toolCallId,
     kind: mapToolCallKind(update.kind),
     title: update.title ?? toolCallId,
-    status: mapToolCallStatus(update.status),
+    ...(update.status ? { status: mapToolCallStatus(update.status) } : {}),
   };
   if (update.rawInput !== undefined) {
     toolCall.rawInput = update.rawInput;

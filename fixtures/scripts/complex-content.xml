@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Complex Content Example
+  
+  This script demonstrates code snippets, markdown, and special characters.
+  Uses CDATA sections to preserve XML-like content in code.
+-->
+<script>
+  <metadata>
+    <description>Complex content with code, markdown, and special characters</description>
+    <author>ACP Bridge Team</author>
+  </metadata>
+  <session id="complex-content-1" cwd="/home/user/project">
+    <thought id="thought-1">
+      I need to fix the TypeScript generic type issue. The problem is with the constraint `T extends Record&lt;string, any&gt;`.
+    </thought>
+    <message id="msg-1" role="assistant">
+      ## Analysis
+      
+      The issue is in the generic constraint. Here's the fix:
+      
+      ```typescript
+      // Before (broken)
+      function processData&lt;T extends Record&lt;string, any&gt;&gt;(data: T): T {
+        return data;
+      }
+      
+      // After (fixed)
+      function processData&lt;T extends object&gt;(data: T): T {
+        return { ...data, processed: true };
+      }
+      ```
+      
+      ### Why this works:
+      
+      1. `Record&lt;string, any&gt;` is too restrictive
+      2. `object` is more flexible for generic constraints
+      3. The spread operator preserves the original type
+    </message>
+    <tool-call id="tc-1" kind="edit" title="Fix generic type">
+      {"path": "src/utils/processor.ts", "changes": [{"line": 15, "old": "T extends Record&lt;string, any&gt;", "new": "T extends object"}]}
+    </tool-call>
+    <tool-response id="tc-1" success="true">
+      Successfully updated src/utils/processor.ts:
+      - Line 15: Generic constraint changed from `Record&lt;string, any&gt;` to `object`
+      - Type checking passes ✓
+      - No breaking changes detected ✓
+    </tool-response>
+    <message id="msg-2" role="assistant">
+      Done! The fix includes:
+      
+      - ✅ Changed generic constraint
+      - ✅ Updated type annotations
+      - ✅ Added unit tests
+      - ✅ No breaking changes
+      
+      Let me know if you need any adjustments! &lt;3
+    </message>
+  </session>
+</script>

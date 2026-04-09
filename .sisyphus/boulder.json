@@ -1,23 +1,15 @@
 {
-  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/integration-test.md",
-  "started_at": "2026-04-07T22:32:48.865Z",
+  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/script-replay-pipeline.md",
+  "started_at": "2026-04-09T03:20:19.790Z",
   "session_ids": [
-    "ses_296944af0ffeKDoD8wJcz66yVq",
-    "ses_295e96918ffeYYR6CMySTVR0UM",
-    "ses_295e96919ffeMCFwUHQjKtLtcJ",
-    "ses_295e6d923ffe8L2X9DtgZwS54r"
+    "ses_28ff852b1ffe5pE3WAtHm7lM6b",
+    "ses_28fbd0da9ffekx2kOqNnCZZ3Tk",
+    "ses_28fb8c24bffex8RjLMENCXH0kI",
+    "ses_28fb4535effeCm3rvR39CipdXK",
+    "ses_28faf1e07ffekdTCpNoXg6ljRj",
+    "ses_28fa96d49ffevrmQw2WdzZMH62"
   ],
-  "plan_name": "integration-test",
+  "plan_name": "script-replay-pipeline",
   "agent": "atlas",
-  "task_sessions": {
-    "todo:1": {
-      "task_key": "todo:1",
-      "task_label": "1",
-      "task_title": "Create integration-tests package structure",
-      "session_id": "ses_295e6d923ffe8L2X9DtgZwS54r",
-      "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "updated_at": "2026-04-07T22:44:11.095Z"
-    }
-  }
+  "task_sessions": {}
 }

@@ -60,6 +60,7 @@ export type {
   NormalizedToolCall,
   MessageRole,
   MessageStatus,
+  ThoughtStatus,
   ToolCallKind,
   ToolCallStatus,
   ContentBlock,

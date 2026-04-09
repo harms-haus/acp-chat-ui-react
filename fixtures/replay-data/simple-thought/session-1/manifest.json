@@ -1,0 +1,17 @@
+{
+  "demoType": "script-replay",
+  "sessions": [
+    {
+      "demoType": "script-replay",
+      "sessionId": "simple-thought-1",
+      "modes": [
+        "script-replay"
+      ],
+      "models": [],
+      "capturedAt": 1775707532453,
+      "tokenCount": 50,
+      "eventCount": 1,
+      "description": "Thought: I need to analyze this codebase carefully. Let me "
+    }
+  ]
+}

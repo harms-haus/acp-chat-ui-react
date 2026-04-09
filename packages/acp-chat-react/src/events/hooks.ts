@@ -278,97 +278,10 @@ class ToolCallEventSubscription {
   }
 }
 
-/**
- * Subscription manager for tracking active items (thoughts/tools in progress)
- */
-class ActiveItemsSubscription {
-  private activeThoughts = new Set<string>();
-  private activeToolCalls = new Set<string>();
-  private sessionController: SessionController;
-  private _cachedSnapshot: { activeThoughts: string[]; activeToolCalls: string[] } | null = null;
-
-  constructor(sessionController: SessionController) {
-    this.sessionController = sessionController;
-  }
-
-  subscribe(onStoreChange: () => void): () => void {
-    const unsubscribeSessionUpdate = this.sessionController.on("sessionUpdate", (params: unknown) => {
-      const update = params as { sessionId?: string; update?: Record<string, unknown> };
-      const updateType = update.update?.type ?? update.update?.sessionUpdate;
-      let changed = false;
-
-      // Track thought lifecycle
-      if (updateType === "agent_thought_chunk") {
-        const thoughtUpdate = update.update as { thoughtId?: string; status?: string };
-        if (thoughtUpdate.thoughtId) {
-          if (thoughtUpdate.status === "completed" || thoughtUpdate.status === "done") {
-            this.activeThoughts.delete(thoughtUpdate.thoughtId);
-            changed = true;
-          } else {
-            this.activeThoughts.add(thoughtUpdate.thoughtId);
-            changed = true;
-          }
-        }
-      }
-
-      // Track tool call lifecycle
-      if (updateType === "tool_call" || updateType === "tool_call_update") {
-        const toolCallUpdate = update.update as { toolCallId?: string; status?: string };
-        if (toolCallUpdate.toolCallId) {
-          if (toolCallUpdate.status === "completed" || toolCallUpdate.status === "done") {
-            this.activeToolCalls.delete(toolCallUpdate.toolCallId);
-            changed = true;
-          } else {
-            this.activeToolCalls.add(toolCallUpdate.toolCallId);
-            changed = true;
-          }
-        }
-      }
-
-      // Invalidate cache when data changes
-      if (changed) {
-        this._cachedSnapshot = null;
-        onStoreChange();
-      }
-    });
-
-    // Clear active items on session clearing
-    const unsubscribeClearing = this.sessionController.on("sessionClearing", () => {
-      this.activeThoughts.clear();
-      this.activeToolCalls.clear();
-      this._cachedSnapshot = null;
-      onStoreChange();
-    });
-
-    return () => {
-      unsubscribeSessionUpdate();
-      unsubscribeClearing();
-    };
-  }
-
-  getActiveItems(): {
-    activeThoughts: string[];
-    activeToolCalls: string[];
-  } {
-    if (!this._cachedSnapshot) {
-      this._cachedSnapshot = {
-        activeThoughts: Array.from(this.activeThoughts),
-        activeToolCalls: Array.from(this.activeToolCalls),
-      };
-    }
-    return this._cachedSnapshot;
-  }
-
-  getServerSnapshot(): { activeThoughts: string[]; activeToolCalls: string[] } {
-    return { activeThoughts: [], activeToolCalls: [] };
-  }
-}
-
 // WeakMap-based subscription managers keyed by SessionController
 const chatEventSubscriptions = new WeakMap<SessionController, ChatEventSubscription>();
 const thoughtEventSubscriptions = new WeakMap<SessionController, ThoughtEventSubscription>();
 const toolCallEventSubscriptions = new WeakMap<SessionController, ToolCallEventSubscription>();
-const activeItemsSubscriptions = new WeakMap<SessionController, ActiveItemsSubscription>();
 
 function getChatEventSubscription(controller: SessionController): ChatEventSubscription {
   if (!chatEventSubscriptions.has(controller)) {
@@ -389,13 +302,6 @@ function getToolCallEventSubscription(controller: SessionController): ToolCallEv
     toolCallEventSubscriptions.set(controller, new ToolCallEventSubscription(controller));
   }
   return toolCallEventSubscriptions.get(controller)!;
-}
-
-function getActiveItemsSubscription(controller: SessionController): ActiveItemsSubscription {
-  if (!activeItemsSubscriptions.has(controller)) {
-    activeItemsSubscriptions.set(controller, new ActiveItemsSubscription(controller));
-  }
-  return activeItemsSubscriptions.get(controller)!;
 }
 
 /**
@@ -531,42 +437,6 @@ export function useToolCallEvents(
     }
     return getToolCallEventSubscription(controller).getServerSnapshot();
   }, [controller]);
-
-  return useSyncExternalStore(subscribeFn, getSnapshotFn, getServerSnapshotFn);
-}
-
-/**
- * Get currently active thoughts and tool calls
- *
- * @param controller - SessionController instance
- * @returns Object containing arrays of active thought IDs and tool call IDs
- */
-export function useActiveItems(
-  controller: SessionController | undefined
-): {
-  activeThoughts: string[];
-  activeToolCalls: string[];
-} {
-  const emptyRef = useRef<{ activeThoughts: string[]; activeToolCalls: string[] }>({ activeThoughts: [], activeToolCalls: [] });
-  
-  const subscribeFn = useMemo(() => {
-    if (!controller) {
-      return (_onStoreChange: () => void) => () => {};
-    }
-    const subscription = getActiveItemsSubscription(controller);
-    return subscription.subscribe.bind(subscription);
-  }, [controller]);
-  
-  const getSnapshotFn = useCallback(() => {
-    if (!controller) {
-      return emptyRef.current;
-    }
-    return getActiveItemsSubscription(controller).getActiveItems();
-  }, [controller]);
-  
-  const getServerSnapshotFn = useCallback(() => {
-    return EMPTY_SERVER_SNAPSHOT;
-  }, []);
 
   return useSyncExternalStore(subscribeFn, getSnapshotFn, getServerSnapshotFn);
 }
