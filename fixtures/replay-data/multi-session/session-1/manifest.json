@@ -1,0 +1,29 @@
+{
+  "demoType": "script-replay",
+  "sessions": [
+    {
+      "demoType": "script-replay",
+      "sessionId": "code-review-1",
+      "modes": [
+        "script-replay"
+      ],
+      "models": [],
+      "capturedAt": 1775707532755,
+      "tokenCount": 39,
+      "eventCount": 3,
+      "description": "Thought: Let me review the pull request changes for the aut"
+    },
+    {
+      "demoType": "script-replay",
+      "sessionId": "debug-1",
+      "modes": [
+        "script-replay"
+      ],
+      "models": [],
+      "capturedAt": 1775707532868,
+      "tokenCount": 56,
+      "eventCount": 3,
+      "description": "Thought: The user is reporting a TypeError in the dashboard"
+    }
+  ]
+}

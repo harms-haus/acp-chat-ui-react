@@ -1,0 +1,23 @@
+{
+  "messages": [
+    {
+      "@id": "msg-1",
+      "@role": "user",
+      "$text": "Can you review the authentication changes in PR #123?"
+    },
+    {
+      "@id": "msg-2",
+      "@role": "assistant",
+      "$text": "I'll analyze the authentication module changes and provide feedback on security and code quality."
+    }
+  ],
+  "thoughts": [
+    {
+      "@id": "thought-1",
+      "$text": "Let me review the pull request changes for the authentication module."
+    }
+  ],
+  "toolCalls": [],
+  "sessionId": "code-review-1",
+  "cwd": "/home/user/project"
+}

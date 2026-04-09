@@ -1,0 +1,17 @@
+{
+  "demoType": "script-replay",
+  "sessions": [
+    {
+      "demoType": "script-replay",
+      "sessionId": "tool-calling-1",
+      "modes": [
+        "script-replay"
+      ],
+      "models": [],
+      "capturedAt": 1775707532558,
+      "tokenCount": 42,
+      "eventCount": 6,
+      "description": "Thought: The user wants me to find all authentication-relat"
+    }
+  ]
+}

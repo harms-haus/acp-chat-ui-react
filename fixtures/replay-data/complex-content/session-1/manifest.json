@@ -1,0 +1,17 @@
+{
+  "demoType": "script-replay",
+  "sessions": [
+    {
+      "demoType": "script-replay",
+      "sessionId": "complex-content-1",
+      "modes": [
+        "script-replay"
+      ],
+      "models": [],
+      "capturedAt": 1775707532654,
+      "tokenCount": 199,
+      "eventCount": 5,
+      "description": "Thought: I need to fix the TypeScript generic type issue. T"
+    }
+  ]
+}

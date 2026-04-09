@@ -1,0 +1,22 @@
+{
+  "messages": [
+    {
+      "@id": "msg-1",
+      "@role": "user",
+      "$text": "I'm getting \"Cannot read properties of undefined\" in Dashboard.tsx line 45"
+    }
+  ],
+  "thoughts": [
+    {
+      "@id": "thought-1",
+      "$text": "The user is reporting a TypeError in the dashboard component. Let me trace through the error."
+    },
+    {
+      "@id": "thought-2",
+      "$text": "Line 45 accesses userData.profile - this suggests userData might be undefined. Let me check the data flow."
+    }
+  ],
+  "toolCalls": [],
+  "sessionId": "debug-1",
+  "cwd": "/home/user/project"
+}
