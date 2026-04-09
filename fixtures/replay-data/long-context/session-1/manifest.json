@@ -1,0 +1,17 @@
+{
+  "demoType": "script-replay",
+  "sessions": [
+    {
+      "demoType": "script-replay",
+      "sessionId": "long-context-analysis-1",
+      "modes": [
+        "script-replay"
+      ],
+      "models": [],
+      "capturedAt": 1775707696057,
+      "tokenCount": 572,
+      "eventCount": 15,
+      "description": "Message: Analyze the architecture of this codebase. I want "
+    }
+  ]
+}
