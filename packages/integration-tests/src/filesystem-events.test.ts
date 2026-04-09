@@ -134,7 +134,14 @@ describe("filesystem events", () => {
 
     // Filter out expected WebSocket disconnection errors
     const unexpectedErrors = errorEvents.filter(
-      (e) => !e.message.includes("WebSocket") && !e.message.includes("disconnected"),
+      (e) => {
+        const isWebSocketDisconnection =
+          e.message.includes("WebSocket") && e.message.includes("disconnected");
+        const isExpected = e.message === "WebSocket disconnected" ||
+                           e.message.includes("WebSocket connection closed");
+        // Only suppress WebSocket disconnection errors, not all errors
+        return !isWebSocketDisconnection || isExpected;
+      },
     );
 
     expect(unexpectedErrors).toHaveLength(0);

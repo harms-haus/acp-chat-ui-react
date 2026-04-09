@@ -487,14 +487,14 @@ export class SessionController {
   }
 
   private async sendJsonRpcResponse(requestId: number, result: FileReadResponse | FileWriteResponse): Promise<void> {
-    const response = {
+    const payload = {
       jsonrpc: "2.0" as const,
       id: requestId,
       result,
     };
-    const json = JSON.stringify(response);
-    console.log("[SessionController] Sending JSON-RPC response:", response);
-    this.transport.send(json);
+    console.log("[SessionController] Sending JSON-RPC response:", payload);
+    this.emitTraffic("out", payload);
+    this.transport.send(JSON.stringify(payload));
   }
 
     private handleError(error: Error): void {

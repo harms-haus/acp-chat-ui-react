@@ -90,6 +90,12 @@ pub fn parse_script(xml: &str) -> ParseResult<Script> {
 /// - Tool call IDs are unique
 /// - Tool responses reference valid tool calls
 /// - Tool responses appear after their tool calls
+
+// Note: FsReadResponse and FsWriteResponse don't validate request_id uniqueness
+// because the harness generates both requests and responses from the same
+// script for replay purposes. The request_id in these responses links
+// to the request event in the script, not to a separate request ID registry.
+
 fn validate_session(session: &ScriptSession) -> ParseResult<()> {
     let mut tool_call_ids = std::collections::HashSet::new();
     let mut seen_tool_responses = std::collections::HashSet::new();

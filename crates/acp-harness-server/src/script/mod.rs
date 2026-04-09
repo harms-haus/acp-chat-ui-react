@@ -190,6 +190,8 @@ pub struct FsReadResponse {
     pub content: String,
 }
 
+/// Content fields use XML attributes for simplicity (small string content).
+/// For larger content, would use text nodes instead of attributes.
 /// A filesystem write request.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct FsWriteRequest {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { FileSystemSubscriptionManager } from "../filesystem/subscription-manager.js";
 
 describe("FileSystemSubscriptionManager", () => {
@@ -37,7 +37,7 @@ describe("FileSystemSubscriptionManager", () => {
     const handler2 = async () => null;
     const handler3 = async () => null;
 
-    const subscription1 = manager.subscribeToFileReads(handler1);
+    manager.subscribeToFileReads(handler1);
     const subscription2 = manager.subscribeToFileReads(handler2);
     manager.subscribeToFileReads(handler3);
 
@@ -112,7 +112,7 @@ describe("FileSystemSubscriptionManager", () => {
     const writeHandler = async () => null;
 
     const readSubscription = manager.subscribeToFileReads(readHandler);
-    const writeSubscription = manager.subscribeToFileWrites(writeHandler);
+    manager.subscribeToFileWrites(writeHandler);
 
     const readHandlers = manager.getReadHandlers();
     const writeHandlers = manager.getWriteHandlers();
