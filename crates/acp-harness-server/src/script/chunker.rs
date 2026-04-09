@@ -37,7 +37,7 @@ pub struct TextChunk {
 /// # Example
 ///
 /// ```rust
-/// use acp_bridge::script::chunk_text;
+/// use harms_haus_acp_harness_server::script::chunk_text;
 ///
 /// let chunks = chunk_text("hello world");
 /// assert!(chunks.len() >= 2); // At least 2 tokens

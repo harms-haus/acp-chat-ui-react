@@ -21,7 +21,7 @@ use tiktoken_rs::cl100k_base;
 /// # Example
 ///
 /// ```rust
-/// use acp_bridge::encode_to_tokens;
+/// use harms_haus_acp_harness_server::tokenizer::encode_to_tokens;
 ///
 /// let tokens = encode_to_tokens("hello world");
 /// assert!(!tokens.is_empty());

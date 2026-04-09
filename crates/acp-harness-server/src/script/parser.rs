@@ -59,7 +59,7 @@ pub type ParseResult<T> = Result<T, ParseError>;
 /// # Example
 ///
 /// ```rust
-/// use acp_bridge::script::parse_script;
+/// use harms_haus_acp_harness_server::script::parse_script;
 ///
 /// let xml = r#"
 ///     <script>

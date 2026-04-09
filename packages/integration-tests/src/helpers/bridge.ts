@@ -39,7 +39,7 @@ export async function spawnBridge(port: number): Promise<ChildProcess> {
         const bridge = spawn('cargo', [
             'run',
             '--manifest-path',
-            'crates/acp-bridge/Cargo.toml',
+            'crates/acp-harness-server/Cargo.toml',
             '--',
             ...args
         ], {
@@ -72,7 +72,7 @@ export async function spawnBridge(port: number): Promise<ChildProcess> {
             outputBuffer += line;
 
             // Check for the ready message
-            const readyPattern = new RegExp(`Bridge listening on 127\\.0\\.0\\.1:${port}`);
+            const readyPattern = new RegExp(`(Bridge|Harness server) listening on 127\\.0\\.0\\.1:${port}`);
             if (readyPattern.test(line) && !ready) {
                 ready = true;
                 cleanup();
