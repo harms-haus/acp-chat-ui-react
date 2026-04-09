@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Filesystem Events Integration Test
+
+  This script demonstrates filesystem read and write events.
+  These events trigger fs/read_text_file and fs/write_text_file JSON-RPC methods.
+-->
+<script>
+  <metadata>
+    <description>Filesystem events integration test</description>
+    <author>ACP Bridge Team</author>
+  </metadata>
+  <session id="fs-test-session" cwd="/workspace">
+    <message id="m1" role="user">Read the config file</message>
+    <fs-read-request id="req1" path="config.json"/>
+    <fs-read-response request-id="req1" content='{"debug": true}'/>
+    <message id="m2" role="assistant">I'll update the config</message>
+    <fs-write-request id="req2" path="config.json" content='{"debug": false}'/>
+    <fs-write-response request-id="req2" success="true"/>
+  </session>
+</script>

@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "@id": "m1",
+      "@role": "user",
+      "$text": "Read the config file"
+    },
+    {
+      "@id": "m2",
+      "@role": "assistant",
+      "$text": "I'll update the config"
+    }
+  ],
+  "thoughts": [],
+  "toolCalls": [],
+  "sessionId": "fs-test-session",
+  "cwd": "/workspace"
+}
