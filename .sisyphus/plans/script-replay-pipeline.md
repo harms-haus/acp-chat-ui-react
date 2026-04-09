@@ -796,7 +796,7 @@ Wave 4 (Verification - Depends on Wave 3):
 
 ### Wave 4: Verification
 
-- [ ] **Task 12: Build roundtrip verification script**
+- [x] **Task 12: Build roundtrip verification script**
 
   **What to do**:
   Create `scripts/verify-convert.sh`:
@@ -847,7 +847,7 @@ Wave 4 (Verification - Depends on Wave 3):
 
 ---
 
-- [ ] **Task 13: Run integration tests and verify replays load correctly**
+- [x] **Task 13: Run integration tests and verify replays load correctly**
 
   **What to do**:
   1. Convert all example scripts
@@ -896,7 +896,7 @@ Wave 4 (Verification - Depends on Wave 3):
 
 ---
 
-- [ ] **Task 14: Documentation and final review**
+- [x] **Task 14: Documentation and final review**
 
   **What to do**:
   1. Update crate-level documentation in `src/lib.rs`
