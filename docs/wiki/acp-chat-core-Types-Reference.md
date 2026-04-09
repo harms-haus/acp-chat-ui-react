@@ -321,6 +321,113 @@ interface GroupedTimelineItem {
 
 ---
 
+## Filesystem Types
+
+### `FileReadRequest`
+
+```typescript
+interface FileReadRequest {
+  path: string;
+  line?: number;
+  limit?: number;
+}
+```
+
+**File**: `src/filesystem/types.ts`  
+**Purpose**: Request parameters for `fs/read_text_file` operation.  
+**Fields**:
+- `path` (string): File path to read
+- `line` (number, optional): Starting line (0-indexed)
+- `limit` (number, optional): Maximum lines to read
+
+---
+
+### `FileReadResponse`
+
+```typescript
+interface FileReadResponse {
+  content: string;
+}
+```
+
+**File**: `src/filesystem/types.ts`  
+**Purpose**: Response from `fs/read_text_file` operation.  
+**Fields**:
+- `content` (string): File content
+
+---
+
+### `FileWriteRequest`
+
+```typescript
+interface FileWriteRequest {
+  path: string;
+  content: string;
+}
+```
+
+**File**: `src/filesystem/types.ts`  
+**Purpose**: Request parameters for `fs/write_text_file` operation.  
+**Fields**:
+- `path` (string): File path to write
+- `content` (string): Content to write
+
+---
+
+### `FileWriteResponse`
+
+```typescript
+interface FileWriteResponse {
+  success: boolean;
+}
+```
+
+**File**: `src/filesystem/types.ts`  
+**Purpose**: Response from `fs/write_text_file` operation.  
+**Fields**:
+- `success` (boolean): Whether write succeeded
+
+---
+
+### `FileReadHandler`
+
+```typescript
+type FileReadHandler = (request: FileReadRequest) => Promise<FileReadResponse | null>;
+```
+
+**File**: `src/filesystem/types.ts`  
+**Purpose**: Handler function signature for file read requests.  
+**Returns**: `Promise` resolving to response or `null` for failure
+
+---
+
+### `FileWriteHandler`
+
+```typescript
+type FileWriteHandler = (request: FileWriteRequest) => Promise<FileWriteResponse | null>;
+```
+
+**File**: `src/filesystem/types.ts`  
+**Purpose**: Handler function signature for file write requests.  
+**Returns**: `Promise` resolving to response or `null` for failure
+
+---
+
+### `FileSystemSubscription`
+
+```typescript
+interface FileSystemSubscription {
+  unsubscribe(): void;
+}
+```
+
+**File**: `src/filesystem/types.ts`  
+**Purpose**: Subscription object returned from handler registration.  
+**Methods**:
+- `unsubscribe()`: Remove handler registration
+
+---
+
 ## Related Documentation
 
 - [Architecture](./acp-chat-core-Architecture) - System overview

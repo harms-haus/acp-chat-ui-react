@@ -207,6 +207,93 @@ unsubscribeUpdate();
 | `sessionClearing` | `void` | Session being cleared |
 | `permissionRequest` | `PermissionRequest` | Permission requested |
 
+---
+
+## Filesystem Handler Registration
+
+The SessionController supports handling ACP filesystem events (`fs/read_text_file` and `fs/write_text_file`) through handler registration.
+
+### `subscribeToFileReads()`
+
+Register a handler for file read requests.
+
+```typescript
+subscribeToFileReads(handler: FileReadHandler): FileSystemSubscription {
+  return this.fileSystemManager.subscribeToFileReads(handler);
+}
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `handler` | `FileReadHandler` | Async function that receives read requests |
+
+**Returns:** `FileSystemSubscription` object with `unsubscribe()` method
+
+**Example:**
+```typescript
+const subscription = controller.subscribeToFileReads(async (request) => {
+  const content = await fs.readFile(request.path, 'utf-8');
+  return { content };
+});
+
+// Later, to unsubscribe:
+subscription.unsubscribe();
+```
+
+---
+
+### `subscribeToFileWrites()`
+
+Register a handler for file write requests.
+
+```typescript
+subscribeToFileWrites(handler: FileWriteHandler): FileSystemSubscription {
+  return this.fileSystemManager.subscribeToFileWrites(handler);
+}
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `handler` | `FileWriteHandler` | Async function that receives write requests |
+
+**Returns:** `FileSystemSubscription` object with `unsubscribe()` method
+
+**Example:**
+```typescript
+const subscription = controller.subscribeToFileWrites(async (request) => {
+  await fs.writeFile(request.path, request.content, 'utf-8');
+  return { success: true };
+});
+```
+
+---
+
+### Filesystem Event Flow
+
+```
+ACP Bridge (fs/read_text_file)
+    ↓
+SessionController.handleAcpPayload()
+    ↓
+Path validation (reject .., /)
+    ↓
+Call all handlers (Promise.allSettled)
+    ↓
+First successful response
+    ↓
+Send JSON-RPC response to bridge
+```
+
+**Security:**
+- Paths containing `..` (traversal) are rejected
+- Absolute paths starting with `/` are rejected
+- Multiple handlers supported, first successful response wins
+- Graceful degradation: no-op if no handlers registered
+
+---
+
 ## Usage Examples
 
 ### Basic Initialization
