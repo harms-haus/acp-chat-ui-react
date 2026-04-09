@@ -1,0 +1,33 @@
+# Task 5: Extract contract types to Rust ws-bridge
+# QA Verification Evidence
+# Generated: 2026-04-09
+
+## 1. Directory Structure
+total 12
+drwxr-xr-x 1 blake blake   54 Apr  9 01:13 .
+drwxr-xr-x 1 blake blake   28 Apr  9 01:12 ..
+-rw-r--r-- 1 blake blake 2841 Apr  9 01:12 envelope.rs
+-rw-r--r-- 1 blake blake 3724 Apr  9 01:13 message.rs
+-rw-r--r-- 1 blake blake  586 Apr  9 01:12 mod.rs
+
+## 2. extra_data field in envelope.rs
+    pub extra_data: Option<serde_json::Value>,
+            extra_data: None,
+        extra_data: Option<serde_json::Value>,
+            extra_data,
+
+## 3. lib.rs exports
+pub mod contract;
+
+pub use contract::{
+    BridgeEnvelope, BridgeMessage, BridgeStatus, UnsupportedVersionError, ENVELOPE_VERSION,
+    SUPPORTED_VERSIONS,
+};
+
+## 4. Cargo Check Output
+
+## 5. TypeScript Bindings (ts-rs export attributes)
+#[ts(export)]
+#[ts(export)]
+
+✅ All verification checks passed

@@ -1,0 +1,56 @@
+TASK 1: Create Rust ws-bridge crate directory structure
+=========================================================
+
+Date: 2026-04-09
+Task: Wave 1, Task 1
+
+VERIFICATION RESULTS
+===================
+
+1. Directory Structure:
+   ✓ crates/acp-ws-bridge/ exists
+   ✓ crates/acp-ws-bridge/src/ exists
+
+2. Cargo.toml Configuration:
+   ✓ File exists: crates/acp-ws-bridge/Cargo.toml
+   ✓ Package name: harms_haus_acp_ws_bridge
+   ✓ Version: 0.1.0
+   ✓ Edition: 2021
+   ✓ License: MIT
+
+3. Source Code:
+   ✓ src/lib.rs exists (empty)
+
+4. Build Verification:
+   ✓ cargo check passes
+     Output: "Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.68s"
+
+DEPENDENCIES VERIFIED
+=====================
+
+Required Dependencies (all present):
+- tokio = { version = "1", features = ["full"] }
+- tokio-tungstenite = "0.26"
+- futures-util = "0.3"
+- serde = { version = "1", features = ["derive"] }
+- serde_json = "1"
+- tracing = "0.1"
+- ts-rs = { version = "11", features = ["serde-json-impl"] }
+- thiserror = "2"
+
+Dev Dependencies:
+- tokio-test = "0.4"
+
+Excluded (as required):
+- ✓ No clap, which, tiktoken-rs, quick-xml, tracing-subscriber
+- ✓ No replay-related code
+
+EXPECTED OUTCOME STATUS
+=======================
+
+[✓] Directory crates/acp-ws-bridge/ exists
+[✓] File crates/acp-ws-bridge/Cargo.toml exists with package name harms_haus_acp_ws_bridge
+[✓] File crates/acp-ws-bridge/src/lib.rs exists (empty initially)
+[✓] cargo check -p harms_haus_acp_ws_bridge passes
+
+TASK STATUS: COMPLETE ✓

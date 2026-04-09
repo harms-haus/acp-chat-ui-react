@@ -1,0 +1,118 @@
+WAVE 1, TASK 2: Create TypeScript ws-bridge package directory structure
+============================================================================
+Date: Thu Apr 09 2026
+Status: COMPLETED
+
+VERIFICATION STEPS
+------------------
+
+1. Directory structure verification:
+   $ ls -la packages/acp-ws-bridge/
+   total 8
+   drwxr-xr-x 1 blake blake  56 Apr  9 01:05 .
+   drwxr-xr-x 1 blake blake 114 Apr  9 01:01 ..
+   -rw-r--r-- 1 blake blake 468 Apr  9 01:05 package.json
+   drwxr-xr-x 1 blake blake  26 Apr  9 01:05 src
+   -rw-r--r-- 1 blake blake 289 Apr  9 01:05 tsconfig.json
+
+   [✓] Directory packages/acp-ws-bridge/ exists
+   [✓] src/ subdirectory exists
+   [✓] types/ subdirectory exists (prepared for future use)
+
+2. Package.json verification:
+   $ cat packages/acp-ws-bridge/package.json | grep '"name"'
+     "name": "@harms-haus/acp-ws-bridge",
+
+   [✓] Package name is correct: @harms-haus/acp-ws-bridge
+   [✓] Version: 0.0.1
+   [✓] License: MIT
+   [✓] Type: module
+   [✓] Main: ./dist/index.js
+   [✓] Types: ./dist/index.d.ts
+   [✓] Exports configured for TypeScript module resolution
+   [✓] Scripts: build, test, check
+   [✓] DevDependencies: typescript ^5.7.0, vitest ^2.1.0
+
+3. TypeScript verification:
+   $ cd packages/acp-ws-bridge && tsc --noEmit
+   (no output - successful compilation)
+
+   [✓] tsc --noEmit passes without errors
+
+4. File contents:
+
+   package.json:
+   {
+     "name": "@harms-haus/acp-ws-bridge",
+     "version": "0.0.1",
+     "license": "MIT",
+     "type": "module",
+     "main": "./dist/index.js",
+     "types": "./dist/index.d.ts",
+     "exports": {
+       ".": {
+         "types": "./dist/index.d.ts",
+         "import": "./dist/index.js"
+       }
+     },
+     "scripts": {
+       "build": "tsc -p tsconfig.build.json",
+       "test": "vitest run",
+       "check": "tsc --noEmit"
+     },
+     "devDependencies": {
+       "typescript": "^5.7.0",
+       "vitest": "^2.1.0"
+     }
+   }
+
+   tsconfig.json:
+   {
+     "extends": "../../tsconfig.json",
+     "compilerOptions": {
+       "composite": true,
+       "declaration": true,
+       "declarationMap": true,
+       "rootDir": "./src",
+       "outDir": "./dist",
+       "lib": ["ES2022", "DOM"]
+     },
+     "include": ["src/**/*.ts"],
+     "exclude": ["node_modules", "dist"]
+   }
+
+   src/index.ts:
+   // Empty index.ts - placeholder for ws-bridge implementation
+
+COMPLIANCE WITH REQUIREMENTS
+-----------------------------
+
+[✓] Package name: @harms-haus/acp-ws-bridge (CORRECT)
+[✓] Version: 0.0.1 (CORRECT)
+[✓] License: MIT (CORRECT)
+[✓] Type: module (CORRECT)
+[✓] Main: ./dist/index.js (CORRECT)
+[✓] Types: ./dist/index.d.ts (CORRECT)
+[✓] Exports: proper TypeScript exports (CORRECT)
+[✓] Scripts: build, test, check (CORRECT)
+[✓] DevDependencies: typescript, vitest (CORRECT)
+[✓] tsconfig.json extends root tsconfig.json (CORRECT)
+[✓] Empty src/index.ts created (CORRECT)
+[✓] src/types/ directory created (CORRECT)
+[✓] tsc --noEmit passes (VERIFIED)
+
+MUST NOT DO - COMPLIANCE CHECK
+-----------------------------
+
+[✓] No chat-core dependency added (COMPLIED)
+[✓] No files copied from existing packages (COMPLIED)
+[✓] No source code added (just structure) (COMPLIED)
+
+NEXT STEPS (From Plan)
+-----------------------
+
+Task 3: Add ws-bridge core types
+- Create Message, BridgeConfig, BridgeConnection types
+- Add connection state enum
+- Add event types for ws-bridge
+- Export types from index.ts
