@@ -1,0 +1,114 @@
+TASK: Wave 2, Task 7 - Create Rust ws-bridge library exports
+DATE: Thu Apr 09 2026
+STATUS: ✓ COMPLETED
+
+================================================================================
+IMPLEMENTATION SUMMARY
+================================================================================
+
+Updated crates/acp-ws-bridge/src/lib.rs with:
+- Module-level documentation describing the crate's purpose
+- Documentation of all exported modules
+- Complete re-export list of public types
+- Structured doc following Rust conventions
+
+================================================================================
+MODULE EXPORTS
+================================================================================
+
+✓ pub mod contract;       - Exports contract module
+✓ pub mod server;         - Exports server module
+
+================================================================================
+RE-EXPORTED TYPES
+================================================================================
+
+From contract module:
+✓ BridgeEnvelope         - Versioned envelope for all bridge-to-browser messages
+✓ BridgeMessage          - Message variants for bridge communications
+✓ BridgeStatus           - Bridge lifecycle states
+✓ UnsupportedVersionError - Error for unsupported envelope versions
+✓ ENVELOPE_VERSION       - Current supported envelope version
+✓ SUPPORTED_VERSIONS     - Supported envelope versions for negotiation
+
+From server module:
+✓ ServerConfig           - Server configuration
+✓ run_server             - Start the WebSocket server
+✓ SessionState           - Session state tracking
+✓ InitMessage            - Init message structure from client
+✓ DisconnectMessage      - Disconnect message structure from client
+
+================================================================================
+VERIFICATION RESULTS
+================================================================================
+
+✓ cargo check --manifest-path ./crates/acp-ws-bridge/Cargo.toml
+  Result: Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
+
+✓ cargo test --manifest-path ./crates/acp-ws-bridge/Cargo.toml
+  Result: test result: ok. 4 passed; 0 failed; 0 ignored
+  Tests:
+    - contract::envelope::export_bindings_unsupportedversionerror ... ok
+    - contract::message::export_bindings_bridgestatus ... ok
+    - contract::message::export_bindings_bridgemessage ... ok
+    - contract::envelope::export_bindings_bridgeenvelope ... ok
+
+✓ cargo doc --manifest-path ./crates/acp-ws-bridge/Cargo.toml --no-deps
+  Result: Generated documentation at target/doc/harms_haus_acp_ws_bridge/index.html
+
+================================================================================
+FINAL lib.rs CONTENT
+================================================================================
+
+//! WebSocket bridge library for ACP Chat Core.
+//!
+//! This library provides a WebSocket-based bridge between Rust and TypeScript for
+//! real-time communication in the ACP Chat system. It defines versioned envelope formats
+//! for all bridge-to-browser messages and provides a generic WebSocket server for
+//! managing bridge connections.
+//!
+//! ## Modules
+//!
+//! - [`contract`]: Versioned envelope types and message formats
+//! - [`server`]: Generic WebSocket server for bridge connections
+//!
+//! ## Exports
+//!
+//! The library re-exports all public types from its modules:
+//!
+//! ### From contract module:
+//! - [`BridgeEnvelope`]: Versioned envelope for all bridge-to-browser messages
+//! - [`BridgeMessage`]: Message variants for bridge communications
+//! - [`BridgeStatus`]: Bridge lifecycle states
+//! - [`UnsupportedVersionError`]: Error for unsupported envelope versions
+//! - [`ENVELOPE_VERSION`]: Current supported envelope version
+//! - [`SUPPORTED_VERSIONS`]: Supported envelope versions for negotiation
+//!
+//! ### From server module:
+//! - [`ServerConfig`]: Server configuration
+//! - [`run_server`]: Start the WebSocket server
+//! - [`SessionState`]: Session state tracking
+//! - [`InitMessage`]: Init message structure from client
+//! - [`DisconnectMessage`]: Disconnect message structure from client
+
+pub mod contract;
+pub mod server;
+
+pub use contract::{
+    BridgeEnvelope, BridgeMessage, BridgeStatus, UnsupportedVersionError, ENVELOPE_VERSION,
+    SUPPORTED_VERSIONS,
+};
+pub use server::{ServerConfig, run_server, SessionState, InitMessage, DisconnectMessage};
+
+================================================================================
+TASK CHECKLIST
+================================================================================
+
+[✓] lib.rs exports contract module
+[✓] lib.rs exports server module
+[✓] All public types are accessible
+[✓] Documentation comments added
+[✓] cargo check passes
+[✓] cargo test passes
+
+================================================================================

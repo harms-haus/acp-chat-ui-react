@@ -1,0 +1,96 @@
+import type { BridgeStatus } from "./BridgeStatus";
+
+/**
+ * Versioned WebSocket envelope for all bridge-to-browser messages.
+ *
+ * This is the single source of truth for the wire format. The bridge never
+ * mutates ACP payload contents — it only wraps them in this envelope.
+ */
+export type BridgeEnvelope = {
+  /**
+   * Envelope format version. Must be one of SUPPORTED_VERSIONS.
+   */
+  version: number;
+  /**
+   * Sequence number for ordering messages in replay mode.
+   * Zero in live mode; monotonically increasing in replay mode.
+   */
+  seq: number;
+  /**
+   * Unix timestamp in milliseconds when the envelope was created.
+   */
+  timestamp_ms: number;
+  /**
+   * Optional free-form metadata. The ws-bridge treats this as opaque JSON.
+   * Specific interpretations (e.g., replay-speed) happen at the harness-server layer.
+   */
+  extraData?: Record<string, unknown>;
+} & (
+  | {
+      type: "acp_payload";
+      /**
+       * The raw JSON-RPC message as received from the ACP agent.
+       * This is an opaque value — the bridge does not interpret it.
+       */
+      payload: unknown;
+    }
+  | {
+      type: "bridge_status";
+      /**
+       * The new bridge state.
+       */
+      status: BridgeStatus;
+    }
+  | {
+      type: "stderr";
+      /**
+       * The stderr line content.
+       */
+      line: string;
+    }
+  | {
+      type: "process_exit";
+      /**
+       * The exit code, if available.
+       */
+      code: number | null;
+      /**
+       * Signal that terminated the process, if any.
+       */
+      signal: string | null;
+    }
+  | {
+      type: "replay_metadata";
+      /**
+       * Original capture timestamp in milliseconds.
+       */
+      captured_at_ms: number;
+      /**
+       * Total number of envelopes in the replay file.
+       */
+      total_envelopes: number;
+      /**
+       * Optional description of the captured session.
+       */
+      description: string | null;
+    }
+  | {
+      type: "start_agent";
+      /**
+       * Command to execute.
+       */
+      command: string;
+      /**
+       * Command arguments.
+       */
+      args: Array<string>;
+      /**
+       * Working directory for the process.
+       */
+      cwd: string | null;
+      /**
+       * Environment variables as key-value pairs.
+       */
+      env: Array<[string, string]>;
+    }
+);

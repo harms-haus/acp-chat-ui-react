@@ -1,0 +1,54 @@
+TASK 8 VERIFICATION EVIDENCE
+===========================
+
+Date: Thu Apr 09 2026
+
+1. TYPES DIRECTORY EXISTS
+-----------------------
+$ ls -la packages/acp-ws-bridge/src/types/
+total 16
+-rw-r--r-- 1 blake blake 2304 Apr  9 01:28 BridgeEnvelope.ts
+-rw-r--r-- 1 blake blake 1684 Apr  9 01:27 BridgeMessage.ts
+-rw-r--r-- 1 blake blake  133 Apr  9 01:26 BridgeStatus.ts
+-rw-r--r-- 1 blake blake  269 Apr  9 01:26 UnsupportedVersionError.ts
+-rw-r--r-- 1 blake blake  148 Apr  9 01:29 index.ts
+
+2. BRIDGEENVELOPE HAS EXTRADATA FIELD
+------------------------------------
+$ grep "extraData" packages/acp-ws-bridge/src/types/BridgeEnvelope.ts
+  extraData?: Record<string, unknown>;
+
+✓ Changed from: extra_data: JsonValue | null
+✓ Changed to:   extraData?: Record<string, unknown>
+
+3. TYPES EXPORTED IN INDEX.TS
+------------------------------
+$ cat packages/acp-ws-bridge/src/index.ts
+export type {
+  BridgeEnvelope,
+  BridgeMessage,
+  BridgeStatus,
+  UnsupportedVersionError,
+} from "./types";
+
+4. TYPES INDEX EXISTS
+--------------------
+$ cat packages/acp-ws-bridge/src/types/index.ts
+export type { BridgeEnvelope } from "./BridgeEnvelope";
+export type { BridgeMessage } from "./BridgeMessage";
+export type { BridgeStatus } from "./BridgeStatus";
+export type { UnsupportedVersionError } from "./UnsupportedVersionError";
+
+5. TYPESCRIPT CHECK PASSES
+---------------------------
+$ cd packages/acp-ws-bridge && tsc --noEmit
+(no output = success)
+
+SUMMARY
+=======
+✓ All type files created in packages/acp-ws-bridge/src/types/
+✓ BridgeEnvelope has extraData?: Record<string, unknown>
+✓ All types exported from index.ts
+✓ TypeScript compilation successful with no errors
+
+TASK COMPLETED SUCCESSFULLY

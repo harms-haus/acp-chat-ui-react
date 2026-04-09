@@ -1,0 +1,17 @@
+=== Task 6: Server Code Extraction Evidence ===
+
+1. Directory structure:
+total 12
+drwxr-xr-x 1 blake blake   12 Apr  9 01:19 .
+drwxr-xr-x 1 blake blake   40 Apr  9 01:19 ..
+-rw-r--r-- 1 blake blake 9006 Apr  9 01:20 mod.rs
+
+2. Replay references check:
+0
+
+3. lib.rs server exports:
+pub mod server;
+pub use server::{ServerConfig, run_server, SessionState, InitMessage, DisconnectMessage};
+
+4. Cargo check result:
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.02s

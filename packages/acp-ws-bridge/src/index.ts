@@ -1,1 +1,6 @@
-// Empty index.ts - placeholder for ws-bridge implementation
+export type {
+  BridgeEnvelope,
+  BridgeMessage,
+  BridgeStatus,
+  UnsupportedVersionError,
+} from "./types";
