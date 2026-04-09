@@ -694,7 +694,7 @@ Wave 4 (Verification - Depends on Wave 3):
 
 ---
 
-- [ ] **Task 10: Implement session-data.json and manifest.json generation**
+- [x] **Task 10: Implement session-data.json and manifest.json generation**
 
   **What to do**:
   1. Create `src/script/session_gen.rs` module
@@ -745,7 +745,7 @@ Wave 4 (Verification - Depends on Wave 3):
 
 ---
 
-- [ ] **Task 11: Create example scripts and test fixtures**
+- [x] **Task 11: Create example scripts and test fixtures**
 
   **What to do**:
   1. Create `fixtures/scripts/` directory

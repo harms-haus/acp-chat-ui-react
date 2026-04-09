@@ -13,10 +13,7 @@ mod writer;
 pub use chunker::{chunk_text, TextChunk};
 pub use event_gen::generate_events;
 pub use parser::{parse_script, ParseError, ParseResult};
-pub use session_gen::{
-    generate_manifest, generate_session_data, generate_session_data_all, Manifest, ManifestSession,
-    SessionData,
-};
+pub use session_gen::{generate_manifest, generate_session_data, generate_session_data_all};
 pub use writer::{write_json, write_replay_events};
 
 use serde::{Deserialize, Serialize};

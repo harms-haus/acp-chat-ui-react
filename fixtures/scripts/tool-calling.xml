@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Tool Calling Example
+  
+  This script demonstrates tool call and tool response events.
+  Tool calls/responses are emitted whole (not tokenized) during replay.
+-->
+<script>
+  <metadata>
+    <description>Tool calling with read and search operations</description>
+    <author>ACP Bridge Team</author>
+  </metadata>
+  <session id="tool-calling-1" cwd="/home/user/project">
+    <thought id="thought-1">
+      The user wants me to find all authentication-related files. I'll use the search tool to locate them.
+    </thought>
+    <tool-call id="tc-1" kind="search" title="Search for auth files">
+      {"pattern": "**/*auth*.{ts,js}", "path": "/home/user/project/src"}
+    </tool-call>
+    <tool-response id="tc-1" success="true">
+      Found 3 files:
+      - src/auth/authentication.ts
+      - src/auth/authorization.ts
+      - src/middleware/auth-middleware.ts
+    </tool-response>
+    <thought id="thought-2">
+      Good, I found the authentication files. Now let me read the main authentication module to understand the implementation.
+    </thought>
+    <tool-call id="tc-2" kind="read" title="Read authentication.ts">
+      {"path": "/home/user/project/src/auth/authentication.ts"}
+    </tool-call>
+    <tool-response id="tc-2" success="true">
+      // authentication.ts
+      import { User } from '../types/user';
+      
+      export async function authenticate(credentials: Credentials): Promise&lt;User&gt; {
+        const user = await db.users.findByEmail(credentials.email);
+        if (!user) throw new AuthenticationError('User not found');
+        
+        const valid = await verifyPassword(credentials.password, user.passwordHash);
+        if (!valid) throw new AuthenticationError('Invalid password');
+        
+        return user;
+      }
+    </tool-response>
+  </session>
+</script>

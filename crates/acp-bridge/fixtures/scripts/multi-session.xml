@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Script with multiple independent sessions -->
+<script>
+  <metadata>
+    <description>Multiple sessions demonstrating batch conversion</description>
+  </metadata>
+  <session id="session-1" cwd="/project1">
+    <thought id="t1">First session thought.</thought>
+    <message id="m1" role="user">Question 1</message>
+  </session>
+  <session id="session-2" cwd="/project2">
+    <thought id="t2">Second session thought.</thought>
+    <message id="m2" role="assistant">Answer 2</message>
+  </session>
+</script>

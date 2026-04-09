@@ -102,7 +102,7 @@ fn run_convert_script(
     output_dir: &str,
     force: bool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    use acp_bridge::{generate_events, parse_script, write_json, write_replay_events};
+    use acp_bridge::{generate_events, generate_manifest, generate_session_data_all, parse_script, write_json, write_replay_events};
 
     // Read script file
     let script_xml = fs::read_to_string(script_path)
@@ -138,8 +138,24 @@ fn run_convert_script(
         .map_err(|e| format!("Failed to write replay events: {}", e))?;
     tracing::info!("Wrote {}", replay_events_path.display());
 
-    // TODO: Write session-data.json and manifest.json (Task 10)
-    tracing::warn!("session-data.json and manifest.json generation not yet implemented");
+    // Generate and write session-data.json for each session
+    let session_data_list = generate_session_data_all(&script);
+    for (i, session_data) in session_data_list.iter().enumerate() {
+        let session_dir = output_path.join(&session_data.session_id);
+        fs::create_dir_all(&session_dir)?;
+        
+        let session_data_path = session_dir.join("session-data.json");
+        write_json(&session_data, &session_data_path)
+            .map_err(|e| format!("Failed to write session data: {}", e))?;
+        tracing::info!("Wrote {}", session_data_path.display());
+    }
+
+    // Generate and write manifest.json
+    let manifest = generate_manifest(&script);
+    let manifest_path = output_path.join("manifest.json");
+    write_json(&manifest, &manifest_path)
+        .map_err(|e| format!("Failed to write manifest: {}", e))?;
+    tracing::info!("Wrote {}", manifest_path.display());
 
     tracing::info!("Conversion complete!");
     Ok(())

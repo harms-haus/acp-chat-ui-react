@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Simple Thought Example
+  
+  This script demonstrates a single thought event that will be tokenized
+  into multiple 1-token chunks during replay.
+-->
+<script>
+  <metadata>
+    <description>Simple thought tokenization example</description>
+    <author>ACP Bridge Team</author>
+  </metadata>
+  <session id="simple-thought-1" cwd="/home/user/project">
+    <thought id="thought-1">
+      I need to analyze this codebase carefully. Let me start by understanding the overall architecture and then drill down into the specific components. First, I'll look at the main entry points, then trace through the data flow to identify potential bottlenecks.
+    </thought>
+  </session>
+</script>
