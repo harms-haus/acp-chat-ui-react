@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import type { AcpStore } from "../store/index.js";
-import type { SessionController } from "@acp/chat-core";
+import type { SessionController } from "@harms-haus/acp-chat-core";
 
 /**
  * Hook for responding to permission requests.

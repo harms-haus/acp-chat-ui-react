@@ -1,5 +1,5 @@
 import { memo, useCallback } from "react";
-import type { NormalizedPermissionRequest, NormalizedToolCall, ToolCallKind } from "@acp/chat-core";
+import type { NormalizedPermissionRequest, NormalizedToolCall, ToolCallKind } from "@harms-haus/acp-chat-core";
 
 export interface PermissionRequestCardProps {
   request: NormalizedPermissionRequest;

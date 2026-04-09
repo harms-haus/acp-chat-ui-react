@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { useRef, useMemo, useCallback } from "react";
 import { VirtualizedThread } from "./VirtualizedThread.js";
 import type { ThreadItem, VirtualizedThreadRef } from "./types.js";
-import type { NormalizedMessage } from "@acp/chat-core";
+import type { NormalizedMessage } from "@harms-haus/acp-chat-core";
 
 class MockResizeObserver {
   observe = vi.fn();

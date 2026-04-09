@@ -6,14 +6,14 @@
  * imported in SSR/Node.js environments.
  *
  * Usage:
- *   import { useAcpConnection, createSessionController } from '@acp/chat-react/client';
+ *   import { useAcpConnection, createSessionController } from '@harms-haus/acp-chat-react/client';
  */
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { SessionController } from "@acp/chat-core";
+import { SessionController } from "@harms-haus/acp-chat-core";
 import { AcpStore, createAcpStore, type AcpStoreConfig } from "../store/index.js";
 
-export { SessionController } from "@acp/chat-core";
+export { SessionController } from "@harms-haus/acp-chat-core";
 
 /**
  * Configuration for connecting to an ACP bridge.

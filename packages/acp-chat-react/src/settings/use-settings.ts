@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import type { SessionController } from "@acp/chat-core";
+import type { SessionController } from "@harms-haus/acp-chat-core";
 import type { AcpMode, AcpModel, SettingsPanelState, SettingsPanelActions } from "./types.js";
 import type { SessionItem } from "../session-list/types.js";
 import { DEFAULT_ACP_MODES, DEFAULT_ACP_MODELS } from "./types.js";

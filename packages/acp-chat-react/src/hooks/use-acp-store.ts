@@ -6,7 +6,7 @@ import type {
   NormalizedToolCall,
   NormalizedPermissionRequest,
   SessionControllerState,
-} from "@acp/chat-core";
+} from "@harms-haus/acp-chat-core";
 
 function useAcpStoreSnapshot(store: AcpStore): AcpStoreSnapshot {
   return useSyncExternalStore(

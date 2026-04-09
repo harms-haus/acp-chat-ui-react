@@ -1,4 +1,4 @@
-import type { NormalizedToolCall } from "@acp/chat-core";
+import type { NormalizedToolCall } from "@harms-haus/acp-chat-core";
 import type { Logger } from "../utils/logger.js";
 
 export interface ToolCallProps {

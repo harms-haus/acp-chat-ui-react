@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@base-ui-components/react/button";
-import type { CapturedSession } from "@acp/chat-core";
-import type { AcpStore } from "@acp/chat-react";
+import type { CapturedSession } from "@harms-haus/acp-chat-core";
+import type { AcpStore } from "@harms-haus/acp-chat-react";
 
 interface LivePanelProps {
   onConnect: (config: {

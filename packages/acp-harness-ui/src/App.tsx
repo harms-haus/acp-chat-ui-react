@@ -11,7 +11,7 @@ import {
   SessionList,
   type SettingsRowRenderProps,
   type SessionItem,
-} from "@acp/chat-react";
+} from "@harms-haus/acp-chat-react";
 import {
   PACKAGE_VERSION,
   SessionController,
@@ -20,7 +20,7 @@ import {
   ReplayController,
   type SessionCaptureInterceptor,
   type InitSuccess,
-} from "@acp/chat-core";
+} from "@harms-haus/acp-chat-core";
 import { SettingsRow } from "./SettingsRow.js";
 import { ReplayPanel } from "./components/ReplayPanel.js";
 import { LivePanel } from "./components/LivePanel.js";

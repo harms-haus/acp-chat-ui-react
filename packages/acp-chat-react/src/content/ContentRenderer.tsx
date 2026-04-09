@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react";
-import type { ContentBlock } from "@acp/chat-core";
+import type { ContentBlock } from "@harms-haus/acp-chat-core";
 import type { ContentRendererProps } from "./types.js";
 import { TextContent } from "./TextContent.js";
 import { ResourceContent } from "./ResourceContent.js";

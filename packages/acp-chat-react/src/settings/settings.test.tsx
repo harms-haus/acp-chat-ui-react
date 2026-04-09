@@ -6,7 +6,7 @@ import { render, screen, fireEvent, waitFor, act } from "@testing-library/react"
 import { SettingsPanel } from "./SettingsPanel.js";
 import { useSettings } from "./use-settings.js";
 import { DEFAULT_ACP_MODES, DEFAULT_ACP_MODELS } from "./types.js";
-import type { SessionController, SessionControllerState } from "@acp/chat-core";
+import type { SessionController, SessionControllerState } from "@harms-haus/acp-chat-core";
 import type { SessionItem } from "../session-list/types.js";
 import type { AcpMode, AcpModel } from "./types.js";
 

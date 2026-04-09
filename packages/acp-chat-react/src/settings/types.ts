@@ -1,4 +1,4 @@
-import type { SessionController } from "@acp/chat-core";
+import type { SessionController } from "@harms-haus/acp-chat-core";
 import type { SessionItem } from "../session-list/types.js";
 
 /**

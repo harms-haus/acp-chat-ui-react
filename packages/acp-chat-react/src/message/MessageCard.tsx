@@ -1,5 +1,5 @@
 import { memo, useMemo, useCallback } from "react";
-import type { NormalizedMessage } from "@acp/chat-core";
+import type { NormalizedMessage } from "@harms-haus/acp-chat-core";
 import type { MessageCardProps } from "./types.js";
 import type { Logger } from "../utils/logger.js";
 import { noOpLogger } from "../utils/logger.js";

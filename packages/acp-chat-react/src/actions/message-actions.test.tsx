@@ -4,7 +4,7 @@ import "@testing-library/jest-dom";
 import { MessageActionBar } from "./MessageActionBar.js";
 import { useMessageActions } from "./use-message-actions.js";
 import type { MessageAction } from "./types.js";
-import type { NormalizedMessage } from "@acp/chat-core";
+import type { NormalizedMessage } from "@harms-haus/acp-chat-core";
 
 const mockClipboard = {
   writeText: vi.fn().mockResolvedValue(undefined),

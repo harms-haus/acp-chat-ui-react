@@ -1,4 +1,4 @@
-import type { SessionController } from "@acp/chat-core";
+import type { SessionController } from "@harms-haus/acp-chat-core";
 
 /**
  * Represents a session item returned from SessionController.listSessions()

@@ -1,5 +1,5 @@
 import type { ReactNode, MouseEvent } from "react";
-import type { NormalizedMessage } from "@acp/chat-core";
+import type { NormalizedMessage } from "@harms-haus/acp-chat-core";
 import type { ClipboardAPI } from "../types/browser-apis.js";
 import { defaultClipboardWithFallback } from "../utils/clipboard.js";
 
@@ -24,7 +24,7 @@ export interface MessageActionBarProps {
    *
    * @example
    * ```tsx
-   * import { MessageActionBar, defaultClipboardWithFallback } from '@acp/chat-react';
+   * import { MessageActionBar, defaultClipboardWithFallback } from '@harms-haus/acp-chat-react';
    *
    * // Use default
    * <MessageActionBar message={message} />
@@ -34,7 +34,7 @@ export interface MessageActionBarProps {
    * <MessageActionBar message={message} clipboard={customClipboard} />
    *
    * // Use strict (no fallback)
-   * import { strictClipboard } from '@acp/chat-react';
+   * import { strictClipboard } from '@harms-haus/acp-chat-react';
    * <MessageActionBar message={message} clipboard={strictClipboard} />
    * ```
    */

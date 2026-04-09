@@ -146,7 +146,7 @@ Inline styles were embedded in the component.
 **After (v1.0 - CSS classes):**
 
 ```tsx
-import { Composer } from '@acp/chat-react';
+import { Composer } from '@harms-haus/acp-chat-react';
 
 // No changes to usage - styles now come from CSS
 <Composer
@@ -199,7 +199,7 @@ import {
   DEFAULT_HEIGHT_ESTIMATOR_CONFIG,
   createViewportObserverFactory,
   defaultScheduler,
-} from '@acp/chat-react';
+} from '@harms-haus/acp-chat-react';
 
 <VirtualizedThread
   items={items}
@@ -242,7 +242,7 @@ import {
 
 **After (v1.0):**
 ```tsx
-import { MessageCard, createClipboardAPI } from '@acp/chat-react';
+import { MessageCard, createClipboardAPI } from '@harms-haus/acp-chat-react';
 
 <MessageCard
   message={message}
@@ -395,7 +395,7 @@ Already using CSS classes (no inline styles).
 Custom height estimation for virtualized thread items.
 
 ```tsx
-import type { HeightEstimator, HeightEstimatorConfig } from '@acp/chat-react';
+import type { HeightEstimator, HeightEstimatorConfig } from '@harms-haus/acp-chat-react';
 
 const customEstimator: HeightEstimator = {
   estimate(item, width, config) {
@@ -420,7 +420,7 @@ const customEstimator: HeightEstimator = {
 Custom clipboard implementation for copy operations.
 
 ```tsx
-import type { ClipboardAPI } from '@acp/chat-react';
+import type { ClipboardAPI } from '@harms-haus/acp-chat-react';
 
 // Browser implementation
 const browserClipboard: ClipboardAPI = {
@@ -443,7 +443,7 @@ const noOpClipboard: ClipboardAPI = {
 Custom animation frame and timeout scheduling.
 
 ```tsx
-import type { Scheduler } from '@acp/chat-react';
+import type { Scheduler } from '@harms-haus/acp-chat-react';
 
 // Browser implementation
 const browserScheduler: Scheduler = {
@@ -467,7 +467,7 @@ const noOpScheduler: Scheduler = {
 Custom viewport resize observation.
 
 ```tsx
-import type { ViewportObserverFactory } from '@acp/chat-react';
+import type { ViewportObserverFactory } from '@harms-haus/acp-chat-react';
 
 const customFactory: ViewportObserverFactory = {
   create(callback, options) {
@@ -486,7 +486,7 @@ const customFactory: ViewportObserverFactory = {
 Custom logging for error and debug messages.
 
 ```tsx
-import type { Logger } from '@acp/chat-react';
+import type { Logger } from '@harms-haus/acp-chat-react';
 
 // Console logger (development)
 const consoleLogger: Logger = {
@@ -614,7 +614,7 @@ Define variables at appropriate scope:
 Customize height estimator config:
 
 ```tsx
-import { createPretextEstimator, DEFAULT_HEIGHT_ESTIMATOR_CONFIG } from '@acp/chat-react';
+import { createPretextEstimator, DEFAULT_HEIGHT_ESTIMATOR_CONFIG } from '@harms-haus/acp-chat-react';
 
 const estimator = createPretextEstimator({
   ...DEFAULT_HEIGHT_ESTIMATOR_CONFIG,

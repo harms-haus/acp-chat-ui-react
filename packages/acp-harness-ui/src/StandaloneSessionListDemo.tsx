@@ -8,8 +8,8 @@ import {
   SettingsSwitch,
   type SessionItem,
   type AcpMode,
-} from "@acp/chat-react";
-import type { SessionController } from "@acp/chat-core";
+} from "@harms-haus/acp-chat-react";
+import type { SessionController } from "@harms-haus/acp-chat-core";
 
 const DEMO_MODES: AcpMode[] = [
   { id: "all", name: "All Sessions", description: "Show all sessions" },

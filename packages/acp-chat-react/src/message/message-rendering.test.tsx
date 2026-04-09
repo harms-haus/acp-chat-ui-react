@@ -6,7 +6,7 @@ import { MessageStatusIndicator } from "./MessageStatusIndicator.js";
 import { MessageTimestamp } from "./MessageTimestamp.js";
 import { MessageEmptyState } from "./MessageEmptyState.js";
 import { ContentRenderer } from "../content/ContentRenderer.js";
-import type { NormalizedMessage, ContentBlock } from "@acp/chat-core";
+import type { NormalizedMessage, ContentBlock } from "@harms-haus/acp-chat-core";
 
 const mockUserMessage: NormalizedMessage = {
   id: "msg_1",

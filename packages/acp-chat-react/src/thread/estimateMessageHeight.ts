@@ -1,5 +1,5 @@
 import { prepare, layout } from '@chenglou/pretext';
-import type { NormalizedMessage } from '@acp/chat-core';
+import type { NormalizedMessage } from '@harms-haus/acp-chat-core';
 
 // System font stack to match actual rendered fonts (fixes documented Inter mismatch)
 const MESSAGE_FONT = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';

@@ -19,8 +19,8 @@ import {
   type PermissionRequestStatus,
   type TimelineItem,
   type SessionUpdateParams,
-} from "@acp/chat-core";
-import type { SessionController, SessionControllerState } from "@acp/chat-core";
+} from "@harms-haus/acp-chat-core";
+import type { SessionController, SessionControllerState } from "@harms-haus/acp-chat-core";
 
 /**
  * Configuration for the ACP store adapter.

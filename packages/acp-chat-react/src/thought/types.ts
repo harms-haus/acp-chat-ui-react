@@ -1,4 +1,4 @@
-import type { NormalizedThought, NormalizedToolCall, SessionController } from "@acp/chat-core";
+import type { NormalizedThought, NormalizedToolCall, SessionController } from "@harms-haus/acp-chat-core";
 import type { ReactNode } from "react";
 import type { Logger } from "../utils/logger.js";
 

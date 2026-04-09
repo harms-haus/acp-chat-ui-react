@@ -37,8 +37,8 @@ import type {
  *
  * @example
  * ```typescript
- * import { SimpleFixedHeightEstimator } from '@acp/chat-react';
- * import { DEFAULT_HEIGHT_ESTIMATOR_CONFIG } from '@acp/chat-react';
+ * import { SimpleFixedHeightEstimator } from '@harms-haus/acp-chat-react';
+ * import { DEFAULT_HEIGHT_ESTIMATOR_CONFIG } from '@harms-haus/acp-chat-react';
  *
  * // Use default fixed heights
  * const estimator = new SimpleFixedHeightEstimator();
@@ -137,8 +137,8 @@ export class SimpleFixedHeightEstimator implements HeightEstimator {
  *
  * @example
  * ```typescript
- * import { AsyncImageAwareEstimator } from '@acp/chat-react';
- * import { DEFAULT_HEIGHT_ESTIMATOR_CONFIG } from '@acp/chat-react';
+ * import { AsyncImageAwareEstimator } from '@harms-haus/acp-chat-react';
+ * import { DEFAULT_HEIGHT_ESTIMATOR_CONFIG } from '@harms-haus/acp-chat-react';
  *
  * // Create async estimator with default config
  * const estimator = new AsyncImageAwareEstimator(DEFAULT_HEIGHT_ESTIMATOR_CONFIG);

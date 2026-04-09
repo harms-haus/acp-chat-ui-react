@@ -1,6 +1,6 @@
 import { memo, useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { ThoughtStackProps, ThoughtItem } from "./types.js";
-import type { NormalizedThought, NormalizedToolCall, SessionController } from "@acp/chat-core";
+import type { NormalizedThought, NormalizedToolCall, SessionController } from "@harms-haus/acp-chat-core";
 import type { Logger } from "../utils/logger.js";
 import { noOpLogger } from "../utils/logger.js";
 

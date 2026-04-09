@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ThoughtStack } from "./ThoughtStack.js";
 import { ToolCall } from "../tool-call/ToolCall.js";
 import type { ThoughtGroup, ThoughtItem } from "./types.js";
-import type { NormalizedThought, NormalizedToolCall } from "@acp/chat-core";
+import type { NormalizedThought, NormalizedToolCall } from "@harms-haus/acp-chat-core";
 
 const createMockThought = (id: string, content: string): NormalizedThought => ({
   id,

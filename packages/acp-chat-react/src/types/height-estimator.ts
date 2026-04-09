@@ -32,7 +32,7 @@ import type { ThreadItem } from "../thread/types.js";
  *
  * @example
  * ```typescript
- * import { DEFAULT_HEIGHT_ESTIMATOR_CONFIG, HeightEstimatorConfig } from '@acp/chat-react';
+ * import { DEFAULT_HEIGHT_ESTIMATOR_CONFIG, HeightEstimatorConfig } from '@harms-haus/acp-chat-react';
  *
  * // Use default config as-is
  * const config: HeightEstimatorConfig = DEFAULT_HEIGHT_ESTIMATOR_CONFIG;

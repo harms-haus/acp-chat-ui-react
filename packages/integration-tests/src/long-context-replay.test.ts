@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { setupWebSocketPolyfill } from "./helpers/websocket-polyfill.js";
 import { spawnBridge, killBridge, findAvailablePort } from "./helpers/bridge.js";
-import type { ReplayController } from "@acp/chat-core";
+import type { ReplayController } from "@harms-haus/acp-chat-core";
 import type { ChildProcess } from "node:child_process";
 
 interface TrafficEntry {
@@ -30,7 +30,7 @@ describe("long-context replay", () => {
 
     await setupWebSocketPolyfill();
 
-    const { ReplayController: RC } = await import("@acp/chat-core");
+    const { ReplayController: RC } = await import("@harms-haus/acp-chat-core");
 
     port = await findAvailablePort(29876);
     bridgeProcess = await spawnBridge(port);

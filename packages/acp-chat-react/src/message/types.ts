@@ -3,7 +3,7 @@ import type {
   NormalizedMessage,
   MessageRole,
   MessageStatus,
-} from "@acp/chat-core";
+} from "@harms-haus/acp-chat-core";
 
 export interface MessageCardProps {
   message: NormalizedMessage;

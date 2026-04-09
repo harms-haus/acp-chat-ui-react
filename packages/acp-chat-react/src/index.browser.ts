@@ -10,7 +10,7 @@
  * 
  * @example
  * // In your client-side React app:
- * import { createBrowserAcpStore, useAcpConnection } from '@acp/chat-react/browser';
+ * import { createBrowserAcpStore, useAcpConnection } from '@harms-haus/acp-chat-react/browser';
  * 
  * // SSR-safe main index.ts is imported by default for server environments
  * import { AcpStore, useMessages } from '@acp/chat-react';
@@ -20,11 +20,11 @@ import { useEffect, useRef, useState } from "react";
 import {
   SessionController,
   type SessionControllerState,
-} from "@acp/chat-core";
+} from "@harms-haus/acp-chat-core";
 import { AcpStore, createAcpStore, type AcpStoreConfig } from "./store/index.js";
 
-export { SessionController } from "@acp/chat-core";
-export type { SessionControllerState } from "@acp/chat-core";
+export { SessionController } from "@harms-haus/acp-chat-core";
+export type { SessionControllerState } from "@harms-haus/acp-chat-core";
 
 /**
  * Configuration for browser ACP connection.

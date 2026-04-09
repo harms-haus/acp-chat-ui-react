@@ -31,7 +31,7 @@ import { createViewportObserverFactory } from "./browser-apis.js";
  *
  * @example
  * ```typescript
- * import { createViewportObserver } from '@acp/chat-react/utils';
+ * import { createViewportObserver } from '@harms-haus/acp-chat-react/utils';
  *
  * function Component() {
  *   const containerRef = useRef<HTMLDivElement>(null);

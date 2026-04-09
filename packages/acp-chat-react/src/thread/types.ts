@@ -1,5 +1,5 @@
 import type { ReactNode, RefObject } from "react";
-import type { NormalizedMessage, NormalizedPermissionRequest } from "@acp/chat-core";
+import type { NormalizedMessage, NormalizedPermissionRequest } from "@harms-haus/acp-chat-core";
 import type { ThoughtGroupWithState } from "../thought/types.js";
 import type { HeightEstimator } from "../types/height-estimator.js";
 import type { ViewportObserverFactory, Scheduler } from "../types/browser-apis.js";

@@ -15,7 +15,7 @@ import {
 } from "./composer-logic.js";
 import { Composer } from "./Composer.js";
 import type { AcpStore, AcpStoreSnapshot } from "../store/index.js";
-import type { SessionController, SessionControllerState } from "@acp/chat-core";
+import type { SessionController, SessionControllerState } from "@harms-haus/acp-chat-core";
 
 describe("composer-logic", () => {
   describe("shouldSendOnKeydown", () => {

@@ -5,7 +5,7 @@ import { useTimelineItems, useIsConnected, useActiveStreamingMessage, useToolCal
 import type { AcpStore } from "../store/index.js";
 import type { ThreadItem } from "./types.js";
 import type { ThoughtGroupWithState, ThoughtStackRenderContext } from "../thought/types.js";
-import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedThought, NormalizedToolCall, SessionController } from "@acp/chat-core";
+import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedThought, NormalizedToolCall, SessionController } from "@harms-haus/acp-chat-core";
 import type { MessageAction } from "../actions/types.js";
 import type { ReactNode } from "react";
 

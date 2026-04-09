@@ -1,6 +1,6 @@
 import { Combobox } from "@base-ui-components/react/combobox";
 import { Tooltip } from "@base-ui-components/react/tooltip";
-import type { AcpMode, AcpModel, SessionItem } from "@acp/chat-react";
+import type { AcpMode, AcpModel, SessionItem } from "@harms-haus/acp-chat-react";
 
 interface SettingsRowProps {
   modes: AcpMode[];

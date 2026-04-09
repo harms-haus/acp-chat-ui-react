@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { AcpStore, createAcpStore } from "./acp-store.js";
-import { SessionController } from "@acp/chat-core";
-import type { SessionControllerState } from "@acp/chat-core";
+import { SessionController } from "@harms-haus/acp-chat-core";
+import type { SessionControllerState } from "@harms-haus/acp-chat-core";
 
 describe("AcpStore", () => {
   describe("constructor and basic functionality", () => {

@@ -4,7 +4,7 @@ import type { ThoughtGroupWithState, ThoughtStackRenderContext, ThoughtStackProp
 import { MessageCard } from "../message/MessageCard.js";
 import { ThoughtStack } from "../thought/ThoughtStack.js";
 import { PermissionRequestCard } from "../permission-request/index.js";
-import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedToolCall, SessionController } from "@acp/chat-core";
+import type { NormalizedMessage, NormalizedPermissionRequest, NormalizedToolCall, SessionController } from "@harms-haus/acp-chat-core";
 import type { MessageAction } from "../actions/types.js";
 import type { ReactNode } from "react";
 

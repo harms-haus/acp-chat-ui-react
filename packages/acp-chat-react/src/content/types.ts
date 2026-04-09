@@ -2,7 +2,7 @@ import type {
   ContentBlock,
   ResourceContentBlock,
   ResourceLinkContentBlock,
-} from "@acp/chat-core";
+} from "@harms-haus/acp-chat-core";
 
 export interface ContentRendererProps {
   blocks: ContentBlock[];
