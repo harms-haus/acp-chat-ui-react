@@ -22,6 +22,6 @@
   "references": [
     { "path": "./packages/acp-chat-core" },
     { "path": "./packages/acp-chat-react" },
-    { "path": "./apps/harness" }
+    { "path": "./packages/acp-harness-ui" }
   ]
 }

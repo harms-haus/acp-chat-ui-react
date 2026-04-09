@@ -1,0 +1,136 @@
+# Evidence: Wave 6 Tasks 21-24 - Workspace and Build Configuration Updates
+
+## Date: 2026-04-09
+
+## Task Completion Summary
+
+### Task 21: Update all package.json dependencies to @harms-haus/*
+**Status:** ✅ COMPLETE - Already updated in previous wave
+**Evidence:**
+- grep -r '"@acp/' packages/*/package.json | wc -l → 0 (no @acp/ dependencies found)
+- All packages already using @harms-haus/* scope:
+  - @harms-haus/acp-chat-core
+  - @harms-haus/acp-chat-react
+  - @harms-haus/acp-harness-ui
+  - @harms-haus/acp-ws-bridge
+  - @harms-haus/integration-tests
+
+### Task 22: Update pnpm-workspace.yaml (remove apps/*)
+**Status:** ✅ COMPLETE
+**Before:**
+```yaml
+packages:
+  - "packages/*"
+  - "apps/*"
+```
+
+**After:**
+```yaml
+packages:
+  - "packages/*"
+```
+
+**Change:** Removed apps/* line from workspace configuration
+
+### Task 23: Update root package.json scripts
+**Status:** ✅ COMPLETE
+**Changes:**
+- Line 8: test:visual → pnpm --filter @harms-haus/acp-harness-ui test:visual
+- Line 9: test:visual:update → pnpm --filter @harms-haus/acp-harness-ui test:visual:update
+- Line 13: dev:harness → pnpm --filter @harms-haus/acp-harness-ui dev
+
+**Updated Scripts:**
+```json
+"test:visual": "pnpm --filter @harms-haus/acp-harness-ui test:visual",
+"test:visual:update": "pnpm --filter @harms-haus/acp-harness-ui test:visual:update",
+"dev:harness": "pnpm --filter @harms-haus/acp-harness-ui dev",
+```
+
+### Task 24: Update tsconfig.json references
+**Status:** ✅ COMPLETE
+**Before:**
+```json
+"references": [
+  { "path": "./packages/acp-chat-core" },
+  { "path": "./packages/acp-chat-react" },
+  { "path": "./apps/harness" }
+]
+```
+
+**After:**
+```json
+"references": [
+  { "path": "./packages/acp-chat-core" },
+  { "path": "./packages/acp-chat-react" },
+  { "path": "./packages/acp-harness-ui" }
+]
+```
+
+**Change:** Updated reference from ./apps/harness to ./packages/acp-harness-ui
+
+## Verification Results
+
+### QA Check 1: No remaining @acp/ dependencies
+```bash
+$ grep -r '"@acp/' packages/*/package.json | wc -l
+0
+```
+✅ PASSED: 0 @acp/ references found
+
+### QA Check 2: pnpm-workspace.yaml
+```bash
+$ cat pnpm-workspace.yaml
+packages:
+  - "packages/*"
+```
+✅ PASSED: Only packages/* in workspace
+
+### QA Check 3: Root package.json scripts
+```bash
+$ cat package.json | grep -E "(test:visual|dev:harness)"
+    "test:visual": "pnpm --filter @harms-haus/acp-harness-ui test:visual",
+    "test:visual:update": "pnpm --filter @harms-haus/acp-harness-ui test:visual:update",
+    "dev:harness": "pnpm --filter @harms-haus/acp-harness-ui dev",
+```
+✅ PASSED: All scripts use @harms-haus/acp-harness-ui
+
+### QA Check 4: tsconfig.json references
+```bash
+$ cat tsconfig.json | grep -A 3 "references"
+  "references": [
+    { "path": "./packages/acp-chat-core" },
+    { "path": "./packages/acp-chat-react" },
+    { "path": "./packages/acp-harness-ui" }
+  ]
+```
+✅ PASSED: Reference uses packages/acp-harness-ui
+
+### QA Check 5: pnpm install
+```bash
+$ pnpm install
+Scope: all 6 workspace projects
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 549ms using pnpm v10.33.0
+```
+✅ PASSED: pnpm install succeeded
+
+## Summary
+
+All configuration files have been successfully updated:
+- ✅ All package.json dependencies use @harms-haus/* scope
+- ✅ pnpm-workspace.yaml references only packages/*
+- ✅ Root package.json scripts reference @harms-haus/acp-harness-ui
+- ✅ tsconfig.json references packages/acp-harness-ui
+- ✅ pnpm install succeeds without errors
+
+## Files Modified
+
+1. /home/blake/Documents/software/acp-react-chat-ui/pnpm-workspace.yaml
+2. /home/blake/Documents/software/acp-react-chat-ui/package.json
+3. /home/blake/Documents/software/acp-react-chat-ui/tsconfig.json
+
+## No Changes Required
+
+All package.json files in packages/ already had @harms-haus/* dependencies from previous work.
