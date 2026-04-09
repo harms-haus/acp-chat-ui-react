@@ -113,3 +113,16 @@ export type {
   ThoughtGroup,
   GroupedTimelineItem,
 } from "./helpers/index.js";
+
+// Filesystem types
+export type {
+  FileReadRequest,
+  FileReadResponse,
+  FileWriteRequest,
+  FileWriteResponse,
+  FileReadHandler,
+  FileWriteHandler,
+  FileSystemSubscription,
+} from "./filesystem/types.js";
+
+export { FileSystemSubscriptionManager } from "./filesystem/subscription-manager.js";
