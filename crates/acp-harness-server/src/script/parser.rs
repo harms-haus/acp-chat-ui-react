@@ -155,6 +155,60 @@ fn validate_session(session: &ScriptSession) -> ParseResult<()> {
 
                 seen_tool_responses.insert(response.id.clone());
             }
+
+            ScriptEvent::FsReadRequest(request) => {
+                if request.id.is_empty() {
+                    return Err(ParseError::MissingAttribute(
+                        "id".to_string(),
+                        "fs-read-request".to_string(),
+                    ));
+                }
+                if request.path.is_empty() {
+                    return Err(ParseError::MissingAttribute(
+                        "path".to_string(),
+                        "fs-read-request".to_string(),
+                    ));
+                }
+            }
+
+            ScriptEvent::FsReadResponse(response) => {
+                if response.request_id.is_empty() {
+                    return Err(ParseError::MissingAttribute(
+                        "request-id".to_string(),
+                        "fs-read-response".to_string(),
+                    ));
+                }
+            }
+
+            ScriptEvent::FsWriteRequest(request) => {
+                if request.id.is_empty() {
+                    return Err(ParseError::MissingAttribute(
+                        "id".to_string(),
+                        "fs-write-request".to_string(),
+                    ));
+                }
+                if request.path.is_empty() {
+                    return Err(ParseError::MissingAttribute(
+                        "path".to_string(),
+                        "fs-write-request".to_string(),
+                    ));
+                }
+                if request.content.is_empty() {
+                    return Err(ParseError::MissingAttribute(
+                        "content".to_string(),
+                        "fs-write-request".to_string(),
+                    ));
+                }
+            }
+
+            ScriptEvent::FsWriteResponse(response) => {
+                if response.request_id.is_empty() {
+                    return Err(ParseError::MissingAttribute(
+                        "request-id".to_string(),
+                        "fs-write-response".to_string(),
+                    ));
+                }
+            }
         }
     }
 
@@ -341,5 +395,179 @@ mod tests {
         assert_eq!(script.sessions.len(), 2);
         assert_eq!(script.sessions[0].id, "session-1");
         assert_eq!(script.sessions[1].id, "session-2");
+    }
+
+    #[test]
+    fn test_parse_fs_read_request() {
+        let xml = r#"
+            <script>
+                <session id="test-session" cwd="/test">
+                    <fs-read-request id="fr1" path="src/main.rs" line="10" limit="20"/>
+                </session>
+            </script>
+        "#;
+
+        let result = parse_script(xml);
+        assert!(
+            result.is_ok(),
+            "Valid fs-read-request should parse: {:?}",
+            result.err()
+        );
+
+        let script = result.unwrap();
+        assert_eq!(script.sessions.len(), 1);
+        assert_eq!(script.sessions[0].events.len(), 1);
+
+        match &script.sessions[0].events[0] {
+            ScriptEvent::FsReadRequest(req) => {
+                assert_eq!(req.id, "fr1");
+                assert_eq!(req.path, "src/main.rs");
+                assert_eq!(req.line, Some(10));
+                assert_eq!(req.limit, Some(20));
+            }
+            _ => panic!("Expected FsReadRequest event"),
+        }
+    }
+
+    #[test]
+    fn test_parse_fs_read_response() {
+        let xml = r#"
+            <script>
+                <session id="test-session" cwd="/test">
+                    <fs-read-response request-id="fr1" content="file content here"/>
+                </session>
+            </script>
+        "#;
+
+        let result = parse_script(xml);
+        assert!(
+            result.is_ok(),
+            "Valid fs-read-response should parse: {:?}",
+            result.err()
+        );
+
+        let script = result.unwrap();
+        assert_eq!(script.sessions[0].events.len(), 1);
+
+        match &script.sessions[0].events[0] {
+            ScriptEvent::FsReadResponse(resp) => {
+                assert_eq!(resp.request_id, "fr1");
+                assert_eq!(resp.content, "file content here");
+            }
+            _ => panic!("Expected FsReadResponse event"),
+        }
+    }
+
+    #[test]
+    fn test_parse_fs_write_request() {
+        let xml = r#"
+            <script>
+                <session id="test-session" cwd="/test">
+                    <fs-write-request id="fw1" path="src/main.rs" content="new content"/>
+                </session>
+            </script>
+        "#;
+
+        let result = parse_script(xml);
+        assert!(
+            result.is_ok(),
+            "Valid fs-write-request should parse: {:?}",
+            result.err()
+        );
+
+        let script = result.unwrap();
+        assert_eq!(script.sessions[0].events.len(), 1);
+
+        match &script.sessions[0].events[0] {
+            ScriptEvent::FsWriteRequest(req) => {
+                assert_eq!(req.id, "fw1");
+                assert_eq!(req.path, "src/main.rs");
+                assert_eq!(req.content, "new content");
+            }
+            _ => panic!("Expected FsWriteRequest event"),
+        }
+    }
+
+    #[test]
+    fn test_parse_fs_write_response() {
+        let xml = r#"
+            <script>
+                <session id="test-session" cwd="/test">
+                    <fs-write-response request-id="fw1" success="true"/>
+                </session>
+            </script>
+        "#;
+
+        let result = parse_script(xml);
+        assert!(
+            result.is_ok(),
+            "Valid fs-write-response should parse: {:?}",
+            result.err()
+        );
+
+        let script = result.unwrap();
+        assert_eq!(script.sessions[0].events.len(), 1);
+
+        match &script.sessions[0].events[0] {
+            ScriptEvent::FsWriteResponse(resp) => {
+                assert_eq!(resp.request_id, "fw1");
+                assert_eq!(resp.success, true);
+            }
+            _ => panic!("Expected FsWriteResponse event"),
+        }
+    }
+
+    #[test]
+    fn test_parse_fs_read_request_missing_path() {
+        let xml = r#"
+            <script>
+                <session id="test-session" cwd="/test">
+                    <fs-read-request id="fr1" line="10" limit="20"/>
+                </session>
+            </script>
+        "#;
+
+        let result = parse_script(xml);
+        assert!(
+            result.is_err(),
+            "Missing path should cause parse error: {:?}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_parse_fs_write_request_missing_content() {
+        let xml = r#"
+            <script>
+                <session id="test-session" cwd="/test">
+                    <fs-write-request id="fw1" path="src/main.rs"/>
+                </session>
+            </script>
+        "#;
+
+        let result = parse_script(xml);
+        assert!(
+            result.is_err(),
+            "Missing content should cause parse error: {:?}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_parse_fs_read_request_missing_id() {
+        let xml = r#"
+            <script>
+                <session id="test-session" cwd="/test">
+                    <fs-read-request path="src/main.rs" line="10" limit="20"/>
+                </session>
+            </script>
+        "#;
+
+        let result = parse_script(xml);
+        assert!(
+            result.is_err(),
+            "Missing id should cause parse error: {:?}",
+            result
+        );
     }
 }

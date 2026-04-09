@@ -61,6 +61,10 @@ pub fn generate_session_data(session: &ScriptSession) -> SessionData {
             ScriptEvent::Thought(thought) => thoughts.push(thought.clone()),
             ScriptEvent::ToolCall(tool_call) => tool_calls.push(tool_call.clone()),
             ScriptEvent::ToolResponse(_) => {}
+            ScriptEvent::FsReadRequest(_) => {}
+            ScriptEvent::FsReadResponse(_) => {}
+            ScriptEvent::FsWriteRequest(_) => {}
+            ScriptEvent::FsWriteResponse(_) => {}
         }
     }
 
@@ -92,6 +96,10 @@ pub fn generate_manifest(script: &Script) -> Manifest {
                         crate::tokenizer::encode_to_tokens(&m.content).len() as i64
                     }
                     ScriptEvent::ToolCall(_) | ScriptEvent::ToolResponse(_) => 0,
+                    ScriptEvent::FsReadRequest(_)
+                    | ScriptEvent::FsReadResponse(_)
+                    | ScriptEvent::FsWriteRequest(_)
+                    | ScriptEvent::FsWriteResponse(_) => 0,
                 })
                 .sum::<i64>();
 
@@ -109,6 +117,10 @@ pub fn generate_manifest(script: &Script) -> Manifest {
                     )),
                     ScriptEvent::ToolCall(t) => Some(format!("Tool: {}", t.kind)),
                     ScriptEvent::ToolResponse(_) => None,
+                    ScriptEvent::FsReadRequest(_)
+                    | ScriptEvent::FsReadResponse(_)
+                    | ScriptEvent::FsWriteRequest(_)
+                    | ScriptEvent::FsWriteResponse(_) => None,
                 })
                 .unwrap_or_else(|| format!("Session {}", session.id));
 

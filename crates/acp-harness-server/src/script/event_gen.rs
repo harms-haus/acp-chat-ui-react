@@ -78,6 +78,32 @@ fn generate_session_events(session: &ScriptSession, base_timestamp: u64) -> Vec<
                 events.push(response_event);
                 seq += 1;
             }
+
+            ScriptEvent::FsReadRequest(request) => {
+                let request_event = generate_fs_read_request_event(&request, event_timestamp, seq);
+                events.push(request_event);
+                seq += 1;
+            }
+
+            ScriptEvent::FsReadResponse(response) => {
+                let response_event =
+                    generate_fs_read_response_event(&response, event_timestamp, seq);
+                events.push(response_event);
+                seq += 1;
+            }
+
+            ScriptEvent::FsWriteRequest(request) => {
+                let request_event = generate_fs_write_request_event(&request, event_timestamp, seq);
+                events.push(request_event);
+                seq += 1;
+            }
+
+            ScriptEvent::FsWriteResponse(response) => {
+                let response_event =
+                    generate_fs_write_response_event(&response, event_timestamp, seq);
+                events.push(response_event);
+                seq += 1;
+            }
         }
     }
 
@@ -231,6 +257,80 @@ fn generate_tool_response_event(
                 "rawOutput": raw_output,
                 "status": if response.success { "completed" } else { "failed" }
             }
+        }
+    });
+
+    BridgeEnvelope::new_replay(BridgeMessage::acp_payload(payload), timestamp, seq, None)
+}
+
+fn generate_fs_read_request_event(
+    request: &crate::script::FsReadRequest,
+    timestamp: u64,
+    seq: u64,
+) -> BridgeEnvelope {
+    let mut params = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": request.id,
+        "method": "fs/read_text_file",
+        "params": {
+            "path": request.path,
+        }
+    });
+
+    if let Some(line) = request.line {
+        params["params"]["line"] = serde_json::json!(line);
+    }
+    if let Some(limit) = request.limit {
+        params["params"]["limit"] = serde_json::json!(limit);
+    }
+
+    BridgeEnvelope::new_replay(BridgeMessage::acp_payload(params), timestamp, seq, None)
+}
+
+fn generate_fs_read_response_event(
+    response: &crate::script::FsReadResponse,
+    timestamp: u64,
+    seq: u64,
+) -> BridgeEnvelope {
+    let payload = json!({
+        "jsonrpc": "2.0",
+        "id": &response.request_id,
+        "result": {
+            "content": &response.content,
+        }
+    });
+
+    BridgeEnvelope::new_replay(BridgeMessage::acp_payload(payload), timestamp, seq, None)
+}
+
+fn generate_fs_write_request_event(
+    request: &crate::script::FsWriteRequest,
+    timestamp: u64,
+    seq: u64,
+) -> BridgeEnvelope {
+    let payload = json!({
+        "jsonrpc": "2.0",
+        "id": &request.id,
+        "method": "fs/write_text_file",
+        "params": {
+            "path": &request.path,
+            "content": &request.content,
+        }
+    });
+
+    BridgeEnvelope::new_replay(BridgeMessage::acp_payload(payload), timestamp, seq, None)
+}
+
+fn generate_fs_write_response_event(
+    response: &crate::script::FsWriteResponse,
+    timestamp: u64,
+    seq: u64,
+) -> BridgeEnvelope {
+    let payload = json!({
+        "jsonrpc": "2.0",
+        "id": &response.request_id,
+        "result": {
+            "success": response.success,
         }
     });
 
