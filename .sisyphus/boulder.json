@@ -1,71 +1,14 @@
 {
-  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/status-tracking-implementation.md",
-  "started_at": "2026-04-08T21:42:47.680Z",
+  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/script-replay-pipeline.md",
+  "started_at": "2026-04-09T03:20:19.790Z",
   "session_ids": [
-    "ses_290f3bddeffe0SoZ0CBHrfF8Bg",
-    "ses_290f23dc3ffe27VX0OAqpAmsxL",
-    "ses_290ef1b7effe77cXXYfdZLQeor",
-    "ses_290ebea6dffebMC4ZHASEs42Ja",
-    "ses_290e6a76bffeBj7ZpDRnBXHe14",
-    "ses_290df171cffedgXZa6dQCz0205",
-    "ses_290df1717ffeHID4m8bT8Xf6bl",
-    "ses_290df16f0ffe7XzKdV13tWqG5q",
-    "ses_290df1712ffeJgW8v3lm1nvynJ",
-    "ses_290daa31fffeB3VQelHUZ4ri91",
-    "ses_290d54e5effe03k5oGcXzSC99M",
-    "ses_290c45c8affesAGu920VUjXxpu",
-    "ses_29095e9caffeUY6UUuSnRc8YGG",
-    "ses_29095e9cdffe7LHi463CMC3CIg",
-    "ses_29097220affehZYjYtmbUfXQb4",
-    "ses_2905a4ca7ffe8vFBDoLzxIE5Tp"
+    "ses_28ff852b1ffe5pE3WAtHm7lM6b",
+    "ses_28fbd0da9ffekx2kOqNnCZZ3Tk",
+    "ses_28fb8c24bffex8RjLMENCXH0kI",
+    "ses_28fb4535effeCm3rvR39CipdXK",
+    "ses_28faf1e07ffekdTCpNoXg6ljRj"
   ],
-  "plan_name": "status-tracking-implementation",
+  "plan_name": "script-replay-pipeline",
   "agent": "atlas",
-  "task_sessions": {
-    "todo:1": {
-      "task_key": "todo:1",
-      "task_label": "1",
-      "task_title": "Define ThoughtStatus Type and Update NormalizedThought Interface",
-      "session_id": "ses_290f23dc3ffe27VX0OAqpAmsxL",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-04-08T21:45:32.210Z"
-    },
-    "todo:2": {
-      "task_key": "todo:2",
-      "task_label": "2",
-      "task_title": "Implement Status Inference in applyAgentThoughtChunk()",
-      "session_id": "ses_290ef1b7effe77cXXYfdZLQeor",
-      "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "updated_at": "2026-04-08T21:49:52.637Z"
-    },
-    "todo:3": {
-      "task_key": "todo:3",
-      "task_label": "3",
-      "task_title": "Enhance Tool Call Status Tracking",
-      "session_id": "ses_290ebea6dffebMC4ZHASEs42Ja",
-      "agent": "Sisyphus-Junior",
-      "category": "deep",
-      "updated_at": "2026-04-08T21:55:57.146Z"
-    },
-    "todo:4": {
-      "task_key": "todo:4",
-      "task_label": "4",
-      "task_title": "Update Wiki Documentation",
-      "session_id": "ses_290e6a76bffeBj7ZpDRnBXHe14",
-      "agent": "Sisyphus-Junior",
-      "category": "writing",
-      "updated_at": "2026-04-08T22:03:57.111Z"
-    },
-    "final-wave:f1": {
-      "task_key": "final-wave:f1",
-      "task_label": "F1",
-      "task_title": "**Plan Compliance Audit** — `oracle`",
-      "session_id": "ses_290daa31fffeB3VQelHUZ4ri91",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-04-08T22:10:45.101Z"
-    }
-  }
+  "task_sessions": {}
 }

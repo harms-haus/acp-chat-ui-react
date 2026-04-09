@@ -2,16 +2,37 @@
 
 use std::net::SocketAddr;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
 use acp_bridge::{ReplayV2Config, ServerConfig, run_server};
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Convert script file to replay JSONL
+    ConvertScript {
+        /// Path to input XML script file
+        #[arg(long)]
+        script: String,
+
+        /// Path to output directory
+        #[arg(long)]
+        output: String,
+
+        /// Overwrite existing files without asking
+        #[arg(long)]
+        force: bool,
+    },
+}
 
 #[derive(Parser)]
 #[command(name = "acp-bridge")]
 #[command(about = "WebSocket bridge for ACP stdio sessions")]
 #[command(version)]
 struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+
     /// Enable live mode capability (server will wait for WebSocket init to determine mode)
     #[arg(long)]
     live: bool,
@@ -32,9 +53,9 @@ struct Cli {
   #[arg(short = 'f', long)]
   file: Option<String>,
 
-  /// Base directory for replay data files (default: fixtures/replay-data)
-  #[arg(long, default_value = "fixtures/replay-data")]
-  replay_data_dir: String,
+    /// Base directory for replay data files (default: fixtures/replay-data)
+    #[arg(long, default_value = "fixtures/replay-data")]
+    replay_data_dir: String,
 }
 
 #[tokio::main]
