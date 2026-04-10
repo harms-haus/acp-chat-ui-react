@@ -358,31 +358,19 @@ export default function App() {
     storeRef.current = store;
 
     const unsubStatus = controller.on("statusChange", (state: SessionControllerState) => {
+      console.log('[App] statusChange:', state.connectionStatus, state.bridgeStatus);
       setConnectionStatus(state.connectionStatus as ConnectionStatus);
       setBridgeStatus(state.bridgeStatus);
       setIsInitialized(state.initialized);
 
-      if (state.connectionStatus === "connected") {
-        if (agentConfig) {
-          const startAgentConfig: { command: string; args: string[]; cwd?: string } = {
-            command: agentConfig.command,
-            args: agentConfig.args,
-          };
-          if (agentConfig.cwd) {
-            startAgentConfig.cwd = agentConfig.cwd;
-          }
-          controller.startAgent(startAgentConfig).catch((err: unknown) => {
-            console.error("Failed to start agent:", err);
-          });
-        }
-        if (shouldInitialize && !state.initialized) {
-          controller.initialize({
-            name: "acp-chat-harness",
-            version: "0.0.1",
-          }).catch((err: unknown) => {
-            console.error("Failed to initialize:", err);
-          });
-        }
+      if (state.connectionStatus === "connected" && state.bridgeStatus === "connected" && shouldInitialize && !state.initialized) {
+        console.log('[App] Calling initialize()...');
+        controller.initialize({
+          name: "acp-chat-harness",
+          version: "0.0.1",
+        }).catch((err: unknown) => {
+          console.error("Failed to initialize:", err);
+        });
       }
     });
 
@@ -392,6 +380,21 @@ export default function App() {
     });
 
     controller.connect();
+
+    // Send start_agent as soon as WebSocket connects (must be first message)
+    if (agentConfig) {
+      const startAgentConfig: { command: string; args: string[]; cwd?: string } = {
+        command: agentConfig.command,
+        args: agentConfig.args,
+      };
+      if (agentConfig.cwd) {
+        startAgentConfig.cwd = agentConfig.cwd;
+      }
+      controller.startAgent(startAgentConfig).catch((err: unknown) => {
+        console.error("Failed to send startAgent:", err);
+      });
+    }
+    
     setActiveStore(store);
 
     return () => {

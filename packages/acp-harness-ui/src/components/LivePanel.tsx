@@ -55,9 +55,22 @@ export function LivePanel({
 }: LivePanelProps) {
   const isLiveModeEnabled = import.meta.env.VITE_ENABLE_LIVE_MODE === "true";
 
-  const [bridgeUrl, setBridgeUrl] = useState("ws://127.0.0.1:8766");
+  const DEFAULT_BRIDGE_URL = "ws://127.0.0.1:8765";
 
   // Load saved config from localStorage on mount
+  const [bridgeUrl, setBridgeUrl] = useState(() => {
+    try {
+      const saved = localStorage.getItem("acp-harness-live-config");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.bridgeUrl || DEFAULT_BRIDGE_URL;
+      }
+    } catch (error) {
+      // Ignore parsing errors
+    }
+    return DEFAULT_BRIDGE_URL;
+  });
+
   const [command, setCommand] = useState(() => {
     try {
       const saved = localStorage.getItem("acp-harness-live-config");
@@ -107,9 +120,9 @@ export function LivePanel({
 
   // Persist connection config to localStorage on changes
   useEffect(() => {
-    const config = { command, args, cwd };
+    const config = { bridgeUrl, command, args, cwd };
     localStorage.setItem("acp-harness-live-config", JSON.stringify(config));
-  }, [command, args, cwd]);
+  }, [bridgeUrl, command, args, cwd]);
 
   const showToast = useCallback((message: string, type: "success" | "error" = "success") => {
     setToast({ message, visible: true, type });
@@ -301,7 +314,7 @@ export function LivePanel({
             type="text"
             value={bridgeUrl}
             onChange={(e) => setBridgeUrl(e.target.value)}
-            placeholder="ws://127.0.0.1:8766"
+            placeholder="ws://127.0.0.1:8765"
             disabled={isFormDisabled}
             style={{
               padding: "8px 12px",

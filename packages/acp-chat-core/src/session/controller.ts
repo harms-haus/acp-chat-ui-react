@@ -235,6 +235,25 @@ export class SessionController {
       env: config.env ?? [],
     };
     const json = JSON.stringify(envelope);
+    
+    // Wait for WebSocket to be connected before sending
+    if (this.transport.getStatus() !== "connected") {
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("Connection timeout")), 5000);
+        const unsubscribe = this.transport.on("statusChange", (status) => {
+          if (status === "connected") {
+            clearTimeout(timeout);
+            unsubscribe();
+            resolve();
+          } else if (status === "error") {
+            clearTimeout(timeout);
+            unsubscribe();
+            reject(new Error("Connection failed"));
+          }
+        });
+      });
+    }
+    
     this.transport.send(json);
     this.emitTraffic("out", envelope);
   }

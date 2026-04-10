@@ -1,4 +1,4 @@
-import { useMemo, memo, useCallback } from "react";
+import { useMemo, memo, useCallback, useEffect, useRef } from "react";
 import { VirtualizedThread } from "./VirtualizedThread.js";
 import { ThreadItemRenderer } from "./ThreadItemRenderer.js";
 import { useTimelineItems, useIsConnected, useActiveStreamingMessage, useToolCalls } from "../hooks/index.js";
@@ -77,6 +77,25 @@ export function Thread({
   const toolCalls = useMemo(() => {
     return new Map(toolCallsArray.map(call => [call.toolCallId, call]));
   }, [toolCallsArray]);
+
+  // Track thought group IDs that existed at initial load time
+  // New thought groups created after load will have follow behavior
+  const initialLoadedGroupIds = useRef<Set<string> | null>(null);
+
+  // Subscribe to session clearing to reset the initial loaded state
+  // This ensures follow behavior is disabled for historical thought groups
+  useEffect(() => {
+    if (!controller) return;
+
+    const unsubClearing = controller.on("sessionClearing", () => {
+      // Reset the initial loaded state - we'll capture new group IDs after load
+      initialLoadedGroupIds.current = null;
+    });
+
+    return () => {
+      unsubClearing();
+    };
+  }, [controller]);
 
   const threadItems: ThreadItem[] = useMemo(() => {
     const result: ThreadItem[] = [];
@@ -189,11 +208,36 @@ export function Thread({
     return result;
   }, [timelineItems]);
 
+  // Capture thought group IDs after initial load completes
+  // Only groups created after this capture will have follow behavior
+  useEffect(() => {
+    // Only capture if we haven't already and if there are thought groups
+    const thoughtGroupCount = threadItems.filter(item => item.type === "thought_group").length;
+    
+    if (initialLoadedGroupIds.current === null && thoughtGroupCount > 0) {
+      // Capture all current thought group IDs as "initially loaded"
+      initialLoadedGroupIds.current = new Set(
+        threadItems
+          .filter(item => item.type === "thought_group")
+          .map(item => item.id)
+      );
+    }
+  }, [threadItems]);
+
   const renderItem = useCallback(
     (item: ThreadItem, index: number, items: ThreadItem[]) => {
       // Check if a message appears after this thought group
       const messageAppearedAfter = item.type === "thought_group" && 
         items.slice(index + 1).some(i => i.type === "message");
+      
+      // Only apply follow behavior to thought groups created AFTER initial load
+      // Groups that existed at load time should not have follow behavior
+      const isThoughtGroupNew = item.type === "thought_group" && 
+        initialLoadedGroupIds.current !== null &&
+        !initialLoadedGroupIds.current.has(item.id);
+      
+      // Use follow only for new thought groups, or if it's not a thought group
+      const effectiveFollow = item.type !== "thought_group" ? follow : (follow && isThoughtGroupNew);
       
       return (
         <MemoizedThreadItemRenderer
@@ -211,7 +255,7 @@ export function Thread({
           {...(onToolCreated !== undefined ? { onToolCreated } : {})}
           {...(onToolCompleted !== undefined ? { onToolCompleted } : {})}
           {...(onThoughtGroupCompleted !== undefined ? { onThoughtGroupCompleted } : {})}
-          {...(follow !== undefined ? { follow } : {})}
+          {...(effectiveFollow !== undefined ? { follow: effectiveFollow } : {})}
           {...(controller ? { controller } : {})}
         />
       );
