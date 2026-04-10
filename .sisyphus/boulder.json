@@ -1,36 +1,21 @@
 {
-  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/extract-ws-bridge-and-rename-packages.md",
-  "started_at": "2026-04-09T06:00:01.559Z",
+  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/filesystem-acp-events.md",
+  "started_at": "2026-04-09T17:15:25.324Z",
   "session_ids": [
-    "ses_28f4f8183ffejMni3xZiaWXZJG",
-    "ses_28f2a77d2ffekN7UYRwFV0SCuW",
-    "ses_28f27e7b4ffeSWxZonFEXnL1zC",
-    "ses_28f25fe68ffe4QV7FhmdwBZ4Fk",
-    "ses_28f23b6f8ffe2vJfozWOWr5tVY",
-    "ses_28f215faaffe7yMx0tmvLvDVLC",
-    "ses_28f1bae9fffe0g1wiv7naRISsu",
-    "ses_28f182b6fffeH192mzD2wfPtrQ",
-    "ses_28f14dae6ffezP26jQy39Pxq2N",
-    "ses_28f0fddb2ffez1wo3iwbJ6AREA",
-    "ses_28f08ad7affekvVXz2FMNAAN0K",
-    "ses_28f00d220ffeXUZjr5PJhy5ZsK",
-    "ses_28ef51e82ffeKd2ajwWDP7AKCi",
-    "ses_28ee6b566ffeIxcaUltahBEnku",
-    "ses_28edc1a78ffe8Y7N1ghOWWGbD0",
-    "ses_28ec57234ffe7EHzDSCLOXACXw",
-    "ses_28ead56f1ffeTVZA7PUl3ZaBuo"
+    "ses_28cdc3d7affe1q17pyFJSh6PoW",
+    "ses_28cc0802dffeBS6vTe2cAbh16V"
   ],
-  "plan_name": "extract-ws-bridge-and-rename-packages",
+  "plan_name": "filesystem-acp-events",
   "agent": "atlas",
   "task_sessions": {
     "todo:1": {
       "task_key": "todo:1",
       "task_label": "1",
-      "task_title": "Create Rust ws-bridge crate directory structure",
-      "session_id": "ses_28ead56f1ffeTVZA7PUl3ZaBuo",
+      "task_title": "Create filesystem types and interfaces",
+      "session_id": "ses_28cc0802dffeBS6vTe2cAbh16V",
       "agent": "Sisyphus-Junior",
       "category": "quick",
-      "updated_at": "2026-04-09T08:47:12.390Z"
+      "updated_at": "2026-04-09T17:18:30.906Z"
     }
   }
 }

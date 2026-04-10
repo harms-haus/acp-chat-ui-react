@@ -1,6 +1,16 @@
 import type { BridgeEnvelope } from "../generated/index.js";
 import { TransportClient } from "../transport/client.js";
 import type { ConnectionStatus, InitSuccess } from "../transport/client.js";
+import { FileSystemSubscriptionManager } from "../filesystem/subscription-manager.js";
+import type {
+  FileReadRequest,
+  FileReadResponse,
+  FileWriteRequest,
+  FileWriteResponse,
+  FileReadHandler,
+  FileWriteHandler,
+  FileSystemSubscription,
+} from "../filesystem/types.js";
 
 export interface StartAgentConfig {
   command: string;
@@ -69,6 +79,7 @@ export class SessionController {
   private errorHandlers = new Set<ErrorHandler>();
   private sessionClearingHandlers = new Set<SessionClearingHandler>();
   private permissionRequestHandlers = new Set<PermissionRequestHandler>();
+  private fileSystemManager: FileSystemSubscriptionManager;
 
     constructor(bridgeUrl: string, requestTimeoutMs = 30000) {
         this.requestTimeoutMs = requestTimeoutMs;
@@ -80,6 +91,7 @@ export class SessionController {
             initialized: false,
             capabilities: null,
         };
+        this.fileSystemManager = new FileSystemSubscriptionManager();
 
         this.transport.on("statusChange", (status: ConnectionStatus) => this.handleTransportStatus(status));
         this.transport.on("envelope", (envelope: BridgeEnvelope) => this.handleEnvelope(envelope));
@@ -279,8 +291,16 @@ export class SessionController {
 
         if (envelope.type === "acp_payload") {
             this.handleAcpPayload(envelope.payload);
-        }
     }
+  }
+
+  public subscribeToFileReads(handler: FileReadHandler): FileSystemSubscription {
+    return this.fileSystemManager.subscribeToFileReads(handler);
+  }
+
+  public subscribeToFileWrites(handler: FileWriteHandler): FileSystemSubscription {
+    return this.fileSystemManager.subscribeToFileWrites(handler);
+  }
 
   private handleAcpPayload(payload: unknown): void {
     const obj = payload as Record<string, unknown>;
@@ -370,7 +390,111 @@ export class SessionController {
       if (params && typeof requestId === "number") {
         this.emitPermissionRequest(params, requestId);
       }
+    } else if ("method" in obj && obj.method === "fs/read_text_file") {
+      const requestId = obj.id as number | undefined;
+      const params = obj.params as Record<string, unknown> | undefined;
+      if (typeof requestId === "number" && params && typeof params.path === "string") {
+        this.handleFileReadRequest(requestId, params.path, params.line, params.limit);
+      }
+    } else if ("method" in obj && obj.method === "fs/write_text_file") {
+      const requestId = obj.id as number | undefined;
+      const params = obj.params as Record<string, unknown> | undefined;
+      if (typeof requestId === "number" && params && typeof params.path === "string" && typeof params.content === "string") {
+        this.handleFileWriteRequest(requestId, params.path, params.content);
+      }
     }
+    }
+
+  private validatePath(path: string): boolean {
+    if (path.includes("..")) {
+      console.log("[SessionController] Path rejected: contains '..':", path);
+      return false;
+    }
+    if (path.startsWith("/")) {
+      console.log("[SessionController] Path rejected: absolute path:", path);
+      return false;
+    }
+    return true;
+  }
+
+  private async handleFileReadRequest(requestId: number, path: string, line?: unknown, limit?: unknown): Promise<void> {
+    console.log("[SessionController] handleFileReadRequest:", { requestId, path, line, limit });
+
+    if (!this.validatePath(path)) {
+      console.log("[SessionController] File read request rejected due to invalid path:", path);
+      return;
+    }
+
+    const request: FileReadRequest = { path };
+    if (typeof line === "number") {
+      request.line = line;
+    }
+    if (typeof limit === "number") {
+      request.limit = limit;
+    }
+
+    const handlers = this.fileSystemManager.getReadHandlers();
+    if (handlers.length === 0) {
+      console.log("[SessionController] No file read handlers registered");
+      return;
+    }
+
+    console.log("[SessionController] Calling", handlers.length, "file read handlers");
+    const results = await Promise.allSettled(handlers.map(h => h(request)));
+
+    console.log("[SessionController] File read handler results:", results.map(r => r.status));
+    const successful = results.find(r => r.status === "fulfilled" && r.value !== null) as PromiseFulfilledResult<FileReadResponse> | undefined;
+
+    if (successful) {
+      console.log("[SessionController] File read successful, sending response");
+      await this.sendJsonRpcResponse(requestId, successful.value);
+    } else {
+      console.log("[SessionController] No successful file read response");
+    }
+  }
+
+  private async handleFileWriteRequest(requestId: number, path: string, content: string): Promise<void> {
+    console.log("[SessionController] handleFileWriteRequest:", { requestId, path, contentLength: content.length });
+
+    if (!this.validatePath(path)) {
+      console.log("[SessionController] File write request rejected due to invalid path:", path);
+      return;
+    }
+
+    const request: FileWriteRequest = {
+      path,
+      content,
+    };
+
+    const handlers = this.fileSystemManager.getWriteHandlers();
+    if (handlers.length === 0) {
+      console.log("[SessionController] No file write handlers registered");
+      return;
+    }
+
+    console.log("[SessionController] Calling", handlers.length, "file write handlers");
+    const results = await Promise.allSettled(handlers.map(h => h(request)));
+
+    console.log("[SessionController] File write handler results:", results.map(r => r.status));
+    const successful = results.find(r => r.status === "fulfilled" && r.value !== null) as PromiseFulfilledResult<FileWriteResponse> | undefined;
+
+    if (successful) {
+      console.log("[SessionController] File write successful, sending response");
+      await this.sendJsonRpcResponse(requestId, successful.value);
+    } else {
+      console.log("[SessionController] No successful file write response");
+    }
+  }
+
+  private async sendJsonRpcResponse(requestId: number, result: FileReadResponse | FileWriteResponse): Promise<void> {
+    const payload = {
+      jsonrpc: "2.0" as const,
+      id: requestId,
+      result,
+    };
+    console.log("[SessionController] Sending JSON-RPC response:", payload);
+    this.emitTraffic("out", payload);
+    this.transport.send(JSON.stringify(payload));
   }
 
     private handleError(error: Error): void {

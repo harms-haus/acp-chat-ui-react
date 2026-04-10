@@ -4,9 +4,10 @@ use serde_json::Value;
 use tokio::sync::broadcast;
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::Message;
-use crate::modes::replay_v2::{ReplayEvent, delay_for_tokens, BURST_THRESHOLD, CHUNK_TOKENS, to_text};
+use crate::modes::replay::{ReplayEvent, delay_for_tokens, BURST_THRESHOLD, CHUNK_TOKENS, to_text};
 
 pub async fn stream_events_with_text_streaming(
+    tps: f64,
     ws_tx: &mut futures_util::stream::SplitSink<
         WebSocketStream<tokio::net::TcpStream>,
         Message,
@@ -21,7 +22,7 @@ pub async fn stream_events_with_text_streaming(
 
         if let Some(text_content) = extract_text_content(&envelope_value) {
             if !text_content.is_empty() && text_content.len() > 1 {
-                stream_text_chunk(ws_tx, ws_rx, envelope_value, &text_content, token_count, shutdown_rx).await?;
+                stream_text_chunk(tps, ws_tx, ws_rx, envelope_value, &text_content, token_count, shutdown_rx).await?;
                 continue;
             }
         }
@@ -29,7 +30,7 @@ pub async fn stream_events_with_text_streaming(
         // Non-text events use normal timing
         if token_count > BURST_THRESHOLD {
             let num_chunks = (token_count + CHUNK_TOKENS - 1) / CHUNK_TOKENS;
-            let chunk_delay = Duration::from_millis(delay_for_tokens(CHUNK_TOKENS));
+            let chunk_delay = Duration::from_millis(delay_for_tokens(CHUNK_TOKENS, tps));
 
             for chunk_idx in 0..num_chunks {
                 tokio::select! {
@@ -53,7 +54,7 @@ pub async fn stream_events_with_text_streaming(
                 }
             }
         } else {
-            let delay = Duration::from_millis(delay_for_tokens(token_count));
+            let delay = Duration::from_millis(delay_for_tokens(token_count, tps));
             tokio::select! {
                 msg = ws_rx.next() => {
                     match msg {
@@ -107,6 +108,7 @@ fn extract_text_content(envelope: &Value) -> Option<String> {
 }
 
 async fn stream_text_chunk(
+    tps: f64,
     ws_tx: &mut futures_util::stream::SplitSink<WebSocketStream<tokio::net::TcpStream>, Message>,
     ws_rx: &mut futures_util::stream::SplitStream<WebSocketStream<tokio::net::TcpStream>>,
     mut envelope_template: Value,
@@ -121,7 +123,7 @@ async fn stream_text_chunk(
         return Ok(());
     }
     
-    let total_delay_ms = delay_for_tokens(token_count);
+    let total_delay_ms = delay_for_tokens(token_count, tps);
     let delay_per_char = Duration::from_millis((total_delay_ms / total_chars as u64).max(1));
     
     for i in 0..total_chars {

@@ -30,8 +30,9 @@ import {
 interface ThreadRowProps {
   virtualItem: VirtualItem;
   item: ThreadItem;
-  renderItem: (item: ThreadItem, index: number) => React.ReactNode;
+  renderItem: (item: ThreadItem, index: number, allItems: ThreadItem[]) => React.ReactNode;
   index: number;
+  allItems: ThreadItem[];
   measureRef: (el: HTMLElement | null) => void;
 }
 
@@ -40,6 +41,7 @@ const ThreadRow = memo(function ThreadRow({
   item,
   renderItem,
   index,
+  allItems,
   measureRef,
 }: ThreadRowProps) {
   return (
@@ -55,7 +57,7 @@ const ThreadRow = memo(function ThreadRow({
         paddingBottom: 'var(--acp-thread-row-gap, 8px)',
       }}
     >
-      {renderItem(item, index)}
+      {renderItem(item, index, allItems)}
     </div>
   );
 });
@@ -335,6 +337,7 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
                 item={item}
                 renderItem={renderItem}
                 index={virtualItem.index}
+                allItems={items}
                 measureRef={virtualizer.measureElement}
               />
             );

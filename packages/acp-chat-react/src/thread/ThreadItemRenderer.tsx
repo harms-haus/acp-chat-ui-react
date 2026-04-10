@@ -15,23 +15,15 @@ export interface ThreadItemRendererProps {
   renderThoughtOpen?: ((context: ThoughtStackRenderContext) => ReactNode) | undefined;
   onPermissionRespond?: (requestId: number, optionId: string) => void;
   toolCalls?: Map<string, NormalizedToolCall> | undefined;
-  /** Controlled expansion: set of item IDs that should be expanded */
+  messageAppearedAfter?: boolean | undefined;
   expandedItems?: Set<string> | undefined;
-  /** Callback when expansion state changes */
   onExpansionChange?: (expandedItems: Set<string>) => void;
-  /** Callback when a thought item is created */
   onThoughtCreated?: (thoughtId: string, groupId: string) => void;
-  /** Callback when a thought item is completed */
   onThoughtCompleted?: (thoughtId: string, groupId: string) => void;
-  /** Callback when a tool call item is created */
   onToolCreated?: (toolId: string, groupId: string) => void;
-  /** Callback when a tool call item is completed */
   onToolCompleted?: (toolId: string, groupId: string) => void;
-  /** Callback when the entire thought group is completed */
   onThoughtGroupCompleted?: (groupId: string) => void;
-  /** Auto-follow: auto-open thought stack and auto-expand items while active */
   follow?: boolean | undefined;
-  /** Session controller for event-based active state detection */
   controller?: SessionController | undefined;
 }
 
@@ -46,6 +38,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
   renderThoughtOpen,
   onPermissionRespond,
   toolCalls,
+  messageAppearedAfter,
   expandedItems,
   onExpansionChange,
   onThoughtCreated,
@@ -108,6 +101,9 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
         if (controller !== undefined) {
           thoughtStackProps.controller = controller;
         }
+        if (messageAppearedAfter !== undefined) {
+          thoughtStackProps.messageAppearedAfter = messageAppearedAfter;
+        }
 
         return <ThoughtStack {...thoughtStackProps} />;
       }
@@ -131,7 +127,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
           </div>
         );
     }
-  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls, expandedItems, onExpansionChange, onThoughtCreated, onThoughtCompleted, onToolCreated, onToolCompleted, onThoughtGroupCompleted, follow, controller]);
+  }, [item, messageActions, renderThoughtClosed, renderThoughtOpen, onPermissionRespond, toolCalls, messageAppearedAfter, expandedItems, onExpansionChange, onThoughtCreated, onThoughtCompleted, onToolCreated, onToolCompleted, onThoughtGroupCompleted, follow, controller]);
 
   return (
     <div

@@ -11,13 +11,13 @@ use tokio::net::TcpListener;
 use tokio::sync::broadcast;
 use tokio_tungstenite::accept_async;
 
-use crate::modes::{DynamicConfig, ReplayV2Config, run_dynamic_mode, run_replay_v2_mode};
+use crate::modes::{DynamicConfig, ReplayConfig, run_dynamic_mode, run_replay_mode};
 
 /// Server configuration
 pub struct ServerConfig {
     pub addr: SocketAddr,
     pub live_enabled: bool,
-    pub replay_config: ReplayV2Config,
+    pub replay_config: ReplayConfig,
 }
 
 /// Start the WebSocket server
@@ -50,7 +50,7 @@ pub async fn run_server(config: ServerConfig) -> Result<(), Box<dyn std::error::
             let result = if config.live_enabled {
                 run_dynamic_mode(dynamic_config, ws_stream, shutdown_rx).await
             } else {
-                run_replay_v2_mode(replay_config, ws_stream, shutdown_rx).await
+                run_replay_mode(replay_config, ws_stream, shutdown_rx).await
             };
 
             if let Err(e) = result {

@@ -30,13 +30,13 @@ use tokio_tungstenite::{WebSocketStream, tungstenite::Message};
 use harms_haus_acp_ws_bridge::{BridgeEnvelope, BridgeMessage, BridgeStatus};
 
 /// Sub-chunk size when splitting large bursts.
-const CHUNK_TOKENS: usize = 10;
+pub const CHUNK_TOKENS: usize = 10;
 
 /// Fixed delay (ms) for events with zero token count.
 const ZERO_TOKEN_DELAY_MS: u64 = 15;
 
 /// Token threshold above which events are split into sub-chunks.
-const BURST_THRESHOLD: usize = 100;
+pub const BURST_THRESHOLD: usize = 100;
 
 /// Bridge package version used for client version validation.
 const PACKAGE_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -75,7 +75,7 @@ impl From<PermissionResponseMessage> for PermissionResponse {
 
 /// Configuration for the v2 replay mode.
 #[derive(Debug, Clone, PartialEq)]
-pub struct ReplayV2Config {
+pub struct ReplayConfig {
   /// Demo type subdirectory under fixtures/replay-data/.
   pub demo_type: Option<String>,
   /// Session subdirectory (e.g. "session-1").
@@ -88,7 +88,7 @@ pub struct ReplayV2Config {
   pub tps: f64,
 }
 
-impl ReplayV2Config {
+impl ReplayConfig {
     /// Create a new config with TPS validation. Returns error if tps < 0.01.
     pub fn new(
         demo_type: Option<String>,
@@ -115,10 +115,10 @@ impl ReplayV2Config {
 /// 1. Flat: `{"version":1,"seq":N,...,"tokenCount":T}` — tokenCount extracted, rest is envelope
 /// 2. Wrapped: `{"envelope":{...},"tokenCount":T,...}` — envelope field contains the actual envelope
 #[derive(Debug, Deserialize)]
-struct ReplayEvent {
+pub struct ReplayEvent {
     /// Optional pre-computed token count for timing.
     #[serde(rename = "tokenCount", default)]
-    token_count: Option<usize>,
+    pub token_count: Option<usize>,
     /// The rest of the event is stored as the raw JSON.
     #[serde(flatten)]
     raw: serde_json::Value,
@@ -129,7 +129,7 @@ impl ReplayEvent {
     ///
     /// For flat format, `raw` IS the envelope (minus extracted tokenCount).
     /// For wrapped format, `raw` contains an `envelope` field with the actual envelope.
-    fn extract_envelope(&self) -> Result<serde_json::Value, serde_json::Error> {
+    pub fn extract_envelope(&self) -> Result<serde_json::Value, serde_json::Error> {
         if let Some(envelope_value) = self.raw.get("envelope") {
             Ok(envelope_value.clone())
         } else {
@@ -177,11 +177,11 @@ fn now_ms() -> u64 {
         .as_millis() as u64
 }
 
-fn to_text(s: String) -> Message {
+pub fn to_text(s: String) -> Message {
     Message::Text(s.into())
 }
 
-fn delay_for_tokens(token_count: usize, tps: f64) -> u64 {
+pub fn delay_for_tokens(token_count: usize, tps: f64) -> u64 {
     if token_count == 0 {
         return ZERO_TOKEN_DELAY_MS;
     }
@@ -268,10 +268,10 @@ async fn stream_events(
         let envelope_value = event.extract_envelope()?;
         
         let delay_ms = if token_count > 0 {
-            let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
+            let current_tps = tps.load(Ordering::Relaxed) as f64;
             delay_for_tokens(token_count, current_tps)
         } else {
-            let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
+            let current_tps = tps.load(Ordering::Relaxed) as f64;
             delay_for_tokens(1, current_tps)
         };
 
@@ -358,7 +358,7 @@ async fn stream_events(
                             .map(|s| s.to_string());
 
                         for (i, word) in words.iter().enumerate() {
-                            let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
+                            let current_tps = tps.load(Ordering::Relaxed) as f64;
                             let word_delay = if current_tps > 0.0 {
                                 ((1.0 / current_tps) * 1000.0) as u64
                             } else {
@@ -431,7 +431,7 @@ async fn stream_events(
 
     let burst_deadline = tokio::time::Instant::now();
     for chunk_idx in 0..num_chunks {
-      let current_tps = (tps.load(Ordering::Relaxed) as f64) / 100.0;
+      let current_tps = tps.load(Ordering::Relaxed) as f64;
       let chunk_deadline = burst_deadline + Duration::from_millis(delay_for_tokens(CHUNK_TOKENS, current_tps) * chunk_idx as u64);
 
       loop {
@@ -516,7 +516,7 @@ async fn send_envelope(
 /// bypassing the JSON-RPC layer and streaming events directly.
 /// Mid-replay speed changes are supported via the shared AtomicU64.
 pub async fn stream_replay_after_init(
-    config: ReplayV2Config,
+    config: ReplayConfig,
     mut ws_tx: futures_util::stream::SplitSink<
         WebSocketStream<tokio::net::TcpStream>,
         Message,
@@ -572,10 +572,34 @@ pub async fn stream_replay_after_init(
 /// 2. Client sends `session/new` with demoType + sessionId → bridge loads data, responds
 /// 3. Client sends `session/prompt` → bridge streams events at 65 TPS
 /// 4. Bridge keeps connection open after streaming completes
-pub async fn run_replay_v2_mode(
-    config: ReplayV2Config,
+///
+/// If `first_message` is provided, it will be processed as the first message from the client.
+/// This is useful for dynamic mode detection where the first message has already been read.
+pub async fn run_replay_mode(
+    config: ReplayConfig,
+    ws_stream: WebSocketStream<tokio::net::TcpStream>,
+    shutdown_rx: broadcast::Receiver<()>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    run_replay_mode_with_first_message(config, ws_stream, shutdown_rx, None).await
+}
+
+/// Run replay v2 mode with a pre-read first message (for dynamic mode).
+/// This allows dynamic mode to detect client type and delegate to replay handling.
+pub async fn run_replay_mode_with_message(
+    config: ReplayConfig,
+    ws_stream: WebSocketStream<tokio::net::TcpStream>,
+    shutdown_rx: broadcast::Receiver<()>,
+    first_message: String,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    run_replay_mode_with_first_message(config, ws_stream, shutdown_rx, Some(first_message)).await
+}
+
+/// Internal implementation that accepts an optional first message
+async fn run_replay_mode_with_first_message(
+    config: ReplayConfig,
     ws_stream: WebSocketStream<tokio::net::TcpStream>,
     mut shutdown_rx: broadcast::Receiver<()>,
+    first_message: Option<String>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let (mut ws_tx, mut ws_rx) = ws_stream.split();
 
@@ -587,6 +611,24 @@ pub async fn run_replay_v2_mode(
     let mut active_file_path: Option<String> = config.file_path.clone();
     let mut is_initialized = false;
     let tps = Arc::new(AtomicU64::new((config.tps * 100.0) as u64));
+
+    // Process first message if provided (for dynamic mode integration)
+    if let Some(first_msg) = first_message {
+        tracing::info!("Processing first message from dynamic mode");
+        if let Ok(request) = serde_json::from_str::<JsonRpcRequest>(&first_msg) {
+            let _ = handle_json_rpc_request(
+                &mut ws_tx,
+                &mut ws_rx,
+                &mut shutdown_rx,
+                request,
+                &mut active_demo_type,
+                &mut active_session_id,
+                &mut active_file_path,
+                &mut is_initialized,
+                &tps,
+            ).await;
+        }
+    }
 
     loop {
         tokio::select! {
@@ -825,8 +867,9 @@ async fn handle_json_rpc_request(
 
             match new_speed {
                 Some(speed) if speed > 0.0 => {
-                    tps.store((speed * 100.0) as u64, Ordering::Relaxed);
-                    tracing::info!("Replay speed updated to {} TPS", speed);
+                    // Speed is already in TPS (tokens per second), no conversion needed
+                    tps.store(speed as u64, Ordering::Relaxed);
+                    tracing::info!("Replay speed set to {} TPS", speed);
 
                     let response = json_rpc_response(request_id, serde_json::json!({
                         "replaySpeed": speed
@@ -841,7 +884,7 @@ async fn handle_json_rpc_request(
                     let error = json_rpc_error(
                         request_id,
                         -32602,
-                        "Missing or invalid replaySpeed parameter (must be positive number)",
+                        "Invalid replaySpeed: must be a positive number",
                     );
                     let envelope = BridgeEnvelope::new(
                         BridgeMessage::acp_payload(error),
@@ -907,7 +950,7 @@ mod tests {
 
     #[test]
     fn test_resolve_base_dir_default() {
-    let config = ReplayV2Config {
+    let config = ReplayConfig {
         demo_type: Some("tool-calling-thinking".into()),
         session_id: Some("session-1".into()),
         file_path: None,
@@ -927,7 +970,7 @@ mod tests {
 
     #[test]
     fn test_resolve_base_dir_override() {
-    let config = ReplayV2Config {
+    let config = ReplayConfig {
         demo_type: Some("demo".into()),
         session_id: Some("session-1".into()),
         file_path: Some("/custom/path".into()),

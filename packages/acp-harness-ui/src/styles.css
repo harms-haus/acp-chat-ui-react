@@ -615,9 +615,14 @@ Session List BEM Classes
    Thread Component
    ========================================================================== */
 
+:root {
+  --acp-thread-margin: 1rem 2rem;
+}
+
 .acp-thread {
   height: 100%;
   position: relative;
+  margin: var(--acp-thread-margin);
 }
 
 .acp-thread__item {
@@ -636,6 +641,46 @@ Session List BEM Classes
   overflow: auto;
   height: 100%;
   position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: var(--acp-scrollbar-thumb) transparent;
+}
+
+:root {
+  --acp-scrollbar-thumb: color-mix(in srgb, var(--acp-text-muted) 40%, transparent);
+  --acp-scrollbar-thumb-hover: color-mix(in srgb, var(--acp-text-muted) 60%, transparent);
+}
+
+/* Webkit Scrollbar Styling */
+.acp-thread__viewport::-webkit-scrollbar {
+  width: 3px;
+}
+
+.acp-thread__viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.acp-thread__viewport::-webkit-scrollbar-thumb {
+  background-color: var(--acp-scrollbar-thumb);
+  border-radius: 3px;
+}
+
+.acp-thread__viewport::-webkit-scrollbar-thumb:hover {
+  background-color: var(--acp-scrollbar-thumb-hover);
+}
+
+.acp-thread__viewport::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* Hide scrollbar when not actively scrolling */
+.acp-thread__viewport:not(.scrolling)::-webkit-scrollbar-thumb {
+  opacity: 0;
+  transition: opacity 1s ease 3s;
+}
+
+.acp-thread__viewport:not(.scrolling):hover::-webkit-scrollbar-thumb {
+  opacity: 1;
+  transition: opacity 0.2s ease;
 }
 
 .acp-thread__content {
@@ -1140,18 +1185,30 @@ MessageCard Component
   padding: var(--acp-spacing-lg);
   border-radius: var(--acp-radius-xl);
   transition: background-color var(--acp-transition-fast);
+  max-width: 80%;
+}
+
+.acp-message--user {
+  background-color: var(--acp-color-user-bg);
+  align-self: flex-end;
+  margin-left: auto;
+  border-radius: var(--acp-radius-xl) var(--acp-radius-xl) 0 var(--acp-radius-xl);
+}
+
+.acp-message--agent {
+  background-color: transparent;
+  align-self: flex-start;
+  max-width: 100%;
+  padding-left: 0;
 }
 
 .acp-message:hover {
   background-color: var(--acp-bg-hover);
 }
 
-.acp-message--user {
-  background-color: var(--acp-color-user-bg);
-}
-
-.acp-message--agent {
-  background-color: var(--acp-color-agent-bg);
+/* Override hover for agent messages - don't show background */
+.acp-message--agent:hover {
+  background-color: transparent;
 }
 
 .acp-message__header {
@@ -1313,11 +1370,15 @@ MessagePlaceholder Component
 .acp-message-placeholder--user {
   background-color: var(--acp-color-user-bg);
   align-self: flex-end;
+  margin-left: auto;
+  border-radius: var(--acp-radius-xl) var(--acp-radius-xl) 0 var(--acp-radius-xl);
 }
 
 .acp-message-placeholder--agent {
-  background-color: var(--acp-color-agent-bg);
+  background-color: transparent;
   align-self: flex-start;
+  max-width: 100%;
+  padding-left: 0;
 }
 
 .acp-message-placeholder__label {

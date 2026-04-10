@@ -69,18 +69,30 @@ pub struct ScriptSession {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum ScriptEvent {
-    /// An internal thought/reasoning step by the agent.
+    /// An internal thought/reasoning step by agent.
     #[serde(rename = "thought")]
     Thought(Thought),
     /// A message exchanged between user and agent.
     #[serde(rename = "message")]
     Message(Message),
-    /// A tool invocation by the agent.
+    /// A tool invocation by agent.
     #[serde(rename = "tool-call")]
     ToolCall(ToolCall),
     /// The response from a tool invocation.
     #[serde(rename = "tool-response")]
     ToolResponse(ToolResponse),
+    /// A filesystem read request.
+    #[serde(rename = "fs-read-request")]
+    FsReadRequest(FsReadRequest),
+    /// A filesystem read response.
+    #[serde(rename = "fs-read-response")]
+    FsReadResponse(FsReadResponse),
+    /// A filesystem write request.
+    #[serde(rename = "fs-write-request")]
+    FsWriteRequest(FsWriteRequest),
+    /// A filesystem write response.
+    #[serde(rename = "fs-write-response")]
+    FsWriteResponse(FsWriteResponse),
 }
 
 /// An internal thought/reasoning step by the agent.
@@ -148,6 +160,61 @@ pub struct ToolResponse {
     /// The response content.
     #[serde(rename = "$text")]
     pub content: String,
+}
+
+/// A filesystem read request.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct FsReadRequest {
+    /// Unique identifier for this request.
+    #[serde(rename = "@id")]
+    pub id: String,
+    /// Path to file to read.
+    #[serde(rename = "@path")]
+    pub path: String,
+    /// Optional line number to read from.
+    #[serde(rename = "@line", default)]
+    pub line: Option<u32>,
+    /// Optional limit on number of lines to read.
+    #[serde(rename = "@limit", default)]
+    pub limit: Option<u32>,
+}
+
+/// A filesystem read response.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct FsReadResponse {
+    /// The ID of the read request this response is for.
+    #[serde(rename = "@request-id")]
+    pub request_id: String,
+    /// The file content that was read.
+    #[serde(rename = "@content")]
+    pub content: String,
+}
+
+/// Content fields use XML attributes for simplicity (small string content).
+/// For larger content, would use text nodes instead of attributes.
+/// A filesystem write request.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct FsWriteRequest {
+    /// Unique identifier for this request.
+    #[serde(rename = "@id")]
+    pub id: String,
+    /// Path to file to write.
+    #[serde(rename = "@path")]
+    pub path: String,
+    /// Content to write to file.
+    #[serde(rename = "@content")]
+    pub content: String,
+}
+
+/// A filesystem write response.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct FsWriteResponse {
+    /// The ID of the write request this response is for.
+    #[serde(rename = "@request-id")]
+    pub request_id: String,
+    /// Whether the write was successful.
+    #[serde(rename = "@success")]
+    pub success: bool,
 }
 
 /// Session data for replay, matching session-data.json format.

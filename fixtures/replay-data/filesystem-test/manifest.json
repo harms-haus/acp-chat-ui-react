@@ -1,0 +1,17 @@
+{
+  "demoType": "script-replay",
+  "sessions": [
+    {
+      "demoType": "script-replay",
+      "sessionId": "fs-test-session",
+      "modes": [
+        "script-replay"
+      ],
+      "models": [],
+      "capturedAt": 1775757102555,
+      "tokenCount": 9,
+      "eventCount": 6,
+      "description": "Message: Read the config file"
+    }
+  ]
+}

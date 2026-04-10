@@ -1,4 +1,4 @@
-//! Dynamic proxy mode: wait for StartAgent message then spawn and proxy ACP process.
+//! Dynamic mode: wait for client message and auto-detect mode (live or replay).
 
 use std::os::unix::process::ExitStatusExt;
 use std::process::Stdio;
@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use futures_util::{SinkExt, StreamExt};
+use serde_json::Value;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::{broadcast, mpsc};
@@ -50,30 +51,48 @@ pub async fn run_dynamic_mode(
 
     send_envelope(&out_tx, BridgeMessage::bridge_status(BridgeStatus::Starting))?;
 
-    // Wait for StartAgent message from client
-    let start_agent = loop {
+    let first_message = loop {
         tokio::select! {
             msg = ws_rx.next() => {
                 match msg {
                     Some(Ok(Message::Text(text))) => {
-                        if let Ok(envelope) = serde_json::from_str::<BridgeEnvelope>(&text) {
-                            if let BridgeMessage::StartAgent { command, args, cwd, env } = envelope.message {
-                                break Some((command, args, cwd, env));
-                            }
-                        }
+                        break text.to_string();
                     }
                     Some(Ok(Message::Close(_))) | None => {
-                        tracing::info!("Client disconnected before StartAgent");
+                        tracing::info!("Client disconnected before mode selection");
                         return Ok(());
                     }
                     _ => {}
                 }
             }
             _ = shutdown_rx.recv() => {
-                tracing::info!("Shutdown signal received while waiting for StartAgent");
+                tracing::info!("Shutdown signal received while waiting for client");
                 return Ok(());
             }
         }
+    };
+
+    // Detect mode: JSON-RPC for replay, BridgeEnvelope for live
+    if let Ok(json) = serde_json::from_str::<Value>(&first_message) {
+        if json.get("jsonrpc").is_some() && json.get("method").is_some() {
+            let method = json.get("method").and_then(|m| m.as_str()).unwrap_or("");
+            
+            if method == "initialize" || method == "session/new" {
+                tracing::warn!("Replay detected in --live mode. Use server without --live for replay.");
+                // TODO: Implement proper replay by reuniting split stream
+                return Ok(());
+            }
+        }
+    }
+    
+    let start_agent = if let Ok(envelope) = serde_json::from_str::<BridgeEnvelope>(&first_message) {
+        if let BridgeMessage::StartAgent { command, args, cwd, env } = envelope.message {
+            Some((command, args, cwd, env))
+        } else {
+            None
+        }
+    } else {
+        None
     };
 
     let (command, args, cwd, env) = match start_agent {
