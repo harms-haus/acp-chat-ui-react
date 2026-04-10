@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
-use harms_haus_acp_harness_server::{ReplayV2Config, ServerConfig, run_server};
+use harms_haus_acp_harness_server::{ReplayConfig, ServerConfig, run_server};
 
 #[derive(Subcommand)]
 enum Commands {
@@ -76,7 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let server_config = ServerConfig {
         addr: cli.addr,
         live_enabled: cli.live,
-        replay_config: ReplayV2Config {
+        replay_config: ReplayConfig {
             demo_type: cli.demo_type,
             session_id: cli.session_id,
             file_path: cli.file,

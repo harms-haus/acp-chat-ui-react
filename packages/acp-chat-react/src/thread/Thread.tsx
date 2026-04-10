@@ -190,11 +190,16 @@ export function Thread({
   }, [timelineItems]);
 
   const renderItem = useCallback(
-    (item: ThreadItem) => {
+    (item: ThreadItem, index: number, items: ThreadItem[]) => {
+      // Check if a message appears after this thought group
+      const messageAppearedAfter = item.type === "thought_group" && 
+        items.slice(index + 1).some(i => i.type === "message");
+      
       return (
         <MemoizedThreadItemRenderer
           item={item}
           toolCalls={toolCalls}
+          messageAppearedAfter={messageAppearedAfter}
           {...(messageActions ? { messageActions } : {})}
           {...(renderThoughtClosed ? { renderThoughtClosed } : {})}
           {...(renderThoughtOpen ? { renderThoughtOpen } : {})}

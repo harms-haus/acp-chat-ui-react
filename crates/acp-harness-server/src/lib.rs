@@ -14,7 +14,7 @@ pub use harms_haus_acp_ws_bridge::{
     SUPPORTED_VERSIONS,
 };
 
-pub use modes::{BridgeModeHandle, ReplayV2Config};
+pub use modes::{BridgeModeHandle, ReplayConfig};
 pub use script::{chunk_text, generate_events, generate_manifest, generate_session_data, generate_session_data_all, parse_script, write_json, write_replay_events, Manifest, ManifestSession, MessageRole, ParseError, Script, ScriptEvent, ScriptSession, SessionData, TextChunk, Thought, ToolCall, ToolResponse};
 pub use server::{ServerConfig, run_server};
 pub use tokenizer::encode_to_tokens;

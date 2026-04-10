@@ -106,14 +106,25 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
         models: [],
       });
 
+      // Track previous status to avoid stale closures
+      let prevStatus: ConnectionStatus = "connecting";
+
       newController.on("statusChange", (state: ReplayControllerState) => {
+        console.log('[ReplayPanel] statusChange:', state);
         if (state.connectionStatus === "connected") {
-          setConnectionStatus("replaying");
+          // Only update to replaying if we're currently connecting or in error state
+          if (prevStatus === "connecting" || prevStatus === "error") {
+            setConnectionStatus("replaying");
+            prevStatus = "replaying";
+          }
         } else if (state.connectionStatus === "disconnected") {
           setConnectionStatus("disconnected");
+          prevStatus = "disconnected";
         }
-        if (state.bridgeStatus === "disconnected" && state.connectionStatus === "connected") {
+        // Mark as complete only when bridge disconnects after being in replaying state
+        if (state.bridgeStatus === "disconnected" && prevStatus === "replaying") {
           setConnectionStatus("complete");
+          prevStatus = "complete";
         }
       });
 
@@ -150,7 +161,19 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
         checkConnection();
       });
 
-      await newController.initReplay(selectedDemoType, SESSION_ID, replaySpeed);
+      await newController.initialize({
+        name: "acp-harness-ui",
+        version: "0.0.1",
+      });
+
+      const sessionResult = await newController.createSession("/", [], selectedDemoType, SESSION_ID);
+      
+      // Set replay speed before starting
+      await newController.setReplaySpeed(replaySpeed);
+      
+      // Start replay by sending a dummy prompt - the bridge will stream replay events
+      const sessionId = (sessionResult as { sessionId: string }).sessionId;
+      await newController.sendPrompt(sessionId, "");
 
       setController(newController);
       setConnectionStatus("replaying");

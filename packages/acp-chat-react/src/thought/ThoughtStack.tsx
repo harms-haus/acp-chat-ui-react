@@ -429,6 +429,7 @@ export const ThoughtStack = memo(function ThoughtStack({
   onThoughtGroupCompleted,
   follow = false,
   controller,
+  messageAppearedAfter = false,
 }: ThoughtStackProps & { controller?: SessionController }) {
   const isActive = useMemo(() => {
     return group.items.some(item => {
@@ -446,13 +447,11 @@ export const ThoughtStack = memo(function ThoughtStack({
   const [hasBeenActive, setHasBeenActive] = useState(() => isActive);
   const userHasToggled = useRef(false);
   const [isOpen, setIsOpen] = useState(() => {
-    if (isActive) return defaultOpenWhenActive;
+    if (follow) {
+      return defaultOpenWhenActive;
+    }
     return defaultOpen;
   });
-
-  const seenItemsRef = useRef<Set<string>>(new Set());
-  const completedItemsRef = useRef<Set<string>>(new Set());
-  const lastGroupIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isActive && !hasBeenActive) {
@@ -460,84 +459,11 @@ export const ThoughtStack = memo(function ThoughtStack({
     }
   }, [isActive, hasBeenActive]);
 
-  // Auto-open when follow=true and group has items
   useEffect(() => {
-    if (follow && group.items.length > 0 && !userHasToggled.current && !isOpen) {
-      console.log('[ThoughtStack] Auto-opening container (follow mode, has items):', { 
-        groupId: group.id, 
-        itemCount: group.items.length,
-        follow, 
-        userHasToggled: userHasToggled.current 
-      });
-      setIsOpen(true);
+    if (follow && messageAppearedAfter && !userHasToggled.current && isOpen) {
+      setIsOpen(false);
     }
-  }, [follow, group.items.length, isOpen, group.id]);
-
-  useEffect(() => {
-    if (follow && isActive && !userHasToggled.current && !isOpen) {
-      console.log('[ThoughtStack] Auto-opening from isActive effect');
-      setIsOpen(true);
-    } else if (!follow && isActive && !isOpen) {
-      console.log('[ThoughtStack] Setting open state (non-follow mode): true');
-      setIsOpen(true);
-    }
-  }, [isActive, isOpen, follow]);
-
-  // Detect item creation and completion
-  useEffect(() => {
-    const currentItems = group.items;
-    
-    // Clear refs when group changes
-    if (lastGroupIdRef.current !== group.id) {
-      seenItemsRef.current.clear();
-      completedItemsRef.current.clear();
-      lastGroupIdRef.current = group.id;
-    }
-    
-    // Check for new items (creation)
-    for (const item of currentItems) {
-      if (!seenItemsRef.current.has(item.id)) {
-        seenItemsRef.current.add(item.id);
-        if (isThoughtItem(item)) {
-          onThoughtCreated?.(item.id, group.id);
-        } else if (isToolCallItem(item)) {
-          onToolCreated?.(item.id, group.id);
-        }
-      }
-    }
-
-    // Check for completed items
-    for (const item of currentItems) {
-        if (!completedItemsRef.current.has(item.id)) {
-          let isCompleted = false;
-          if (isToolCallItem(item)) {
-            const status = (item.data as any).status;
-            isCompleted = status === "completed";
-          } else if (isThoughtItem(item)) {
-            const itemIndex = currentItems.findIndex(i => i.id === item.id);
-            isCompleted = itemIndex < currentItems.length - 1;
-          }
-
-          if (isCompleted) {
-            completedItemsRef.current.add(item.id);
-            if (isThoughtItem(item)) {
-              onThoughtCompleted?.(item.id, group.id);
-            } else if (isToolCallItem(item)) {
-              onToolCompleted?.(item.id, group.id);
-            }
-          }
-        }
-    }
-
-    // Check if entire group is completed
-    const allItemsCompleted = currentItems.length > 0 && 
-      currentItems.every(item => completedItemsRef.current.has(item.id));
-    
-    if (allItemsCompleted && !completedItemsRef.current.has(`group-${group.id}`)) {
-      completedItemsRef.current.add(`group-${group.id}`);
-      onThoughtGroupCompleted?.(group.id);
-    }
-  }, [group.items, group.id, onThoughtCreated, onThoughtCompleted, onToolCreated, onToolCompleted, onThoughtGroupCompleted]);
+  }, [follow, messageAppearedAfter, isOpen]);
 
   const toggle = useCallback(() => {
     userHasToggled.current = true;

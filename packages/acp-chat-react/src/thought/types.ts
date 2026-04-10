@@ -45,6 +45,7 @@ export interface ThoughtStackProps {
   onToolCompleted?: (toolId: string, groupId: string) => void;
   onThoughtGroupCompleted?: (groupId: string) => void;
   follow?: boolean;
+  messageAppearedAfter?: boolean;
 }
 
 export interface ThoughtItemProps {

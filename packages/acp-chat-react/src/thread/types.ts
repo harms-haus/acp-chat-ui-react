@@ -22,31 +22,18 @@ export interface ThreadItem {
  * Props for the VirtualizedThread component
  */
 export interface VirtualizedThreadProps {
-  /** Array of thread items to render */
   items: ThreadItem[];
-  /** Render function for each item - MUST be memoized by caller */
-  renderItem: (item: ThreadItem, index: number) => ReactNode;
-  /** Optional CSS class for the thread container */
+  renderItem: (item: ThreadItem, index: number, allItems: ThreadItem[]) => ReactNode;
   className?: string | undefined;
-  /** Layout mode - centered (max-width) or expanded (full width) */
   layout?: "centered" | "expanded" | undefined;
-  /** Whether to automatically scroll to bottom on new items */
   followScroll?: boolean | undefined;
-  /** Distance from bottom (in px) to consider "at bottom" for follow-scroll */
   scrollThreshold?: number | undefined;
-  /** Default scroll animation behavior for scrollToBottom/scrollToItem */
   scrollBehavior?: 'auto' | 'smooth' | undefined;
-  /** Empty state content when no items */
   emptyState?: ReactNode | undefined;
-  /** Ref to access imperative thread methods */
   ref?: RefObject<VirtualizedThreadRef | null> | undefined;
-  /** Estimated height for each row (used before measurement) */
   estimatedRowHeight?: number | undefined;
-  /** Gap between rows in pixels */
   rowGap?: number | undefined;
-  /** Padding at top and bottom of the list */
   padding?: number | undefined;
-  /** Height estimator for calculating item heights before actual measurement. Defaults to pretext-based estimator. */
   heightEstimator?: HeightEstimator | undefined;
   /** Callback called after item heights are recalculated. Receives a Map of item IDs to heights. */
   onHeightRecalculated?: ((heights: Map<string, number>) => void) | undefined;
