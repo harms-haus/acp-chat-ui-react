@@ -1,21 +1,43 @@
 {
-  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/filesystem-acp-events.md",
-  "started_at": "2026-04-09T17:15:25.324Z",
+  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/acp-chat-core-testing-cleanup.md",
+  "started_at": "2026-04-11T04:57:32.823Z",
   "session_ids": [
-    "ses_28cdc3d7affe1q17pyFJSh6PoW",
-    "ses_28cc0802dffeBS6vTe2cAbh16V"
+    "ses_28518fe91ffeS48B13hrtCraOF",
+    "ses_28517f726ffeZyIAxEAj4RSAjV",
+    "ses_28517f729ffezE9zHsaxQz6MFb",
+    "ses_285176c0fffe7OpvioxOa2jwxF",
+    "ses_28511bcf6ffeEVXNc67mDBsMRT",
+    "ses_2850dbcecffeSlSno6q8Wmf8FE",
+    "ses_2850867ecffe6e3W87p7rn0L5l",
+    "ses_284f1c3beffev0aFYFlmeopdFI",
+    "ses_284ecd0adffeEhaFN9MpSAer5i",
+    "ses_283e8d623ffe6U08LFT5SGjhxL",
+    "ses_283d7fca4ffeIuCe65N4JLlfcE",
+    "ses_283c99523ffeIA8DT3lfiw8fNj",
+    "ses_283c5aa37ffe6SDYRBcikRWiac",
+    "ses_283c2dbcdffeV0QmpGAKlQtu1G",
+    "ses_283bf64e4ffeIl60R1MFKvKu9n",
+    "ses_283b899e5ffe8j70ogxK9lXkOT",
+    "ses_283b2aa15ffeUrvZxe3kDb274e",
+    "ses_28355bbf1ffeF32nZkMSrG3www",
+    "ses_2834104c9ffezuBxRALklEYwx5",
+    "ses_2833cb3e3ffecUezEOfvS368Vb",
+    "ses_283325992ffe7jE9KpUr9Xc2l7",
+    "ses_2832b781bffeiyEUTudIdUQ5C0",
+    "ses_28320a872ffeGuZG6F4DU8m8Si",
+    "ses_2831db188ffeoBpEzNLy9AZGEN",
+    "ses_28319725cffeAeqV849vq0TgrB",
+    "ses_2831558c0ffejirVwtfHIpI8C7",
+    "ses_28312bb7affeMEW5wy3osCbeml",
+    "ses_2830f68cfffenBqexYR2WKpyZI",
+    "ses_2830ba48bffePKzRcuH1EdjKbs",
+    "ses_2830ba214ffeS2817ek1iYyJuP",
+    "ses_2830af06fffewFubpcNyskdI7k",
+    "ses_2830ba351ffeVn33ZqtWcFBqhD",
+    "ses_28288e490ffeAbalW4lHyhDLXW",
+    "ses_28254c009ffe6PthLCklAriBE2"
   ],
-  "plan_name": "filesystem-acp-events",
+  "plan_name": "acp-chat-core-testing-cleanup",
   "agent": "atlas",
-  "task_sessions": {
-    "todo:1": {
-      "task_key": "todo:1",
-      "task_label": "1",
-      "task_title": "Create filesystem types and interfaces",
-      "session_id": "ses_28cc0802dffeBS6vTe2cAbh16V",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-04-09T17:18:30.906Z"
-    }
-  }
+  "task_sessions": {}
 }

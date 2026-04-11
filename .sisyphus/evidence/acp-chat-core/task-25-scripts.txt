@@ -1,0 +1,55 @@
+# Task 25: Update package.json scripts
+
+## Changes Made
+
+### 1. Root package.json
+Added two new scripts to the root package.json:
+- `test-core`: Runs tests for acp-chat-core package
+- `test-core:coverage`: Runs tests with coverage for acp-chat-core package
+
+### 2. packages/acp-chat-core/package.json
+Added one new script:
+- `test:coverage`: Runs vitest with coverage enabled
+
+## Script Commands Added
+
+### Root package.json scripts:
+```json
+"test-core": "pnpm -F @harms-haus/acp-chat-core test",
+"test-core:coverage": "pnpm -F @harms-haus/acp-chat-core test:coverage"
+```
+
+### packages/acp-chat-core/package.json scripts:
+```json
+"test:coverage": "vitest run --coverage"
+```
+
+## Verification Results
+
+### Test 1: pnpm test-core
+Status: ✅ SUCCESS
+- Command executes correctly from root directory
+- Runs all tests in acp-chat-core package
+- Test output shows proper execution
+
+### Test 2: pnpm test-core:coverage
+Status: ✅ SUCCESS
+- Command executes correctly from root directory
+- Runs tests with coverage enabled using v8 provider
+- Coverage collection is active
+
+## Files Modified
+
+1. `/home/blake/Documents/software/acp-react-chat-ui/package.json`
+   - Added test-core script
+   - Added test-core:coverage script
+
+2. `/home/blake/Documents/software/acp-react-chat-ui/packages/acp-chat-core/package.json`
+   - Added test:coverage script
+
+## Notes
+
+- Both commands work from the root directory
+- No existing scripts were broken
+- Test failures observed are pre-existing issues, not related to script changes
+- Coverage provider is v8 (as indicated by "Coverage enabled with v8")

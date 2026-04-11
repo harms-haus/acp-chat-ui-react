@@ -1,0 +1,84 @@
+Task 2: Fix Vitest Test Discovery Configuration for acp-chat-core
+=====================================================================
+
+Date: 2026-04-11
+Status: COMPLETED
+
+## Problem Identified
+
+The root vitest.config.ts uses patterns relative to the monorepo root:
+  include: ["packages/*/src/**/*.test.ts", ...]
+
+When running `cd packages/acp-chat-core && pnpm vitest run`, these patterns
+don't match any files because:
+  - Working directory: packages/acp-chat-core
+  - Pattern expects: packages/*/src/**/*.test.ts
+  - Actual path: src/**/*.test.ts (relative to package directory)
+
+This caused vitest to report: "No test files found, exiting with code 1"
+
+## Solution Implemented
+
+Created package-specific vitest configuration:
+  File: packages/acp-chat-core/vitest.config.ts
+
+Configuration:
+  - include: ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.spec.ts", "src/**/*.spec.tsx"]
+  - globals: true
+  - environment: "node"
+  - setupFiles: ["../../vitest.setup.ts"] (reference to root setup file)
+
+## Verification Results
+
+### Before Fix (from packages/acp-chat-core directory)
+```
+RUN  v2.1.9 /home/blake/Documents/software/acp-react-chat-ui/packages/acp-chat-core
+
+include: packages/*/src/**/*.test.ts, packages/*/src/**/*.test.tsx, packages/*/src/**/*.spec.ts, packages/*/src/**/*.spec.tsx
+exclude:  **/node_modules/**, **/dist/**, **/cypress/**, **/.{idea,git,cache,output,temp}/**, **/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*
+
+No test files found, exiting with code 1
+```
+
+### After Fix (from packages/acp-chat-core directory)
+```
+Test Files  2 failed | 7 passed (9)
+```
+
+### Test Files Discovered (all 9 files)
+1. ✓ src/__tests__/token-timing.test.ts (43 tests)
+2. ✓ src/__tests__/filesystem-subscription.test.ts (8 tests)
+3. ✓ src/normalization/store.test.ts (25 tests)
+4. ✓ src/normalization/thread-view.test.ts (16 tests)
+5. ✗ src/__tests__/capture-interceptor.test.ts (15 tests | 2 failed)
+6. ✓ src/session/session-controller.test.ts (4 tests)
+7. ✓ src/index.test.ts (4 tests)
+8. ✓ src/bridge-contract.test.ts (20 tests)
+9. ✗ src/__tests__/replay-controller.test.ts (31 tests | 7 failed)
+
+Total: 166 tests (157 passed, 9 failed)
+
+Note: Failed tests are test assertion failures, NOT discovery issues.
+
+## Files Modified
+
+1. Created: packages/acp-chat-core/vitest.config.ts
+
+## Impact
+
+- ✓ Tests can now be discovered when running from package directory
+- ✓ `pnpm test` in packages/acp-chat-core works correctly
+- ✓ Root-level test execution still works (root vitest.config.ts unchanged)
+- ✓ No breaking changes to existing workflows
+
+## Test Execution Verification
+
+Command: cd packages/acp-chat-core && pnpm vitest run
+Result: All 9 test files discovered and executed (some tests fail due to assertions)
+
+## Notes
+
+- The root vitest.config.ts remains unchanged for root-level test execution
+- Package-specific config allows independent test execution per package
+- Failed tests are unrelated to discovery (assertion failures, timeouts)
+- Some tests in replay-controller.test.ts timeout after 5000ms (may need timeout config)

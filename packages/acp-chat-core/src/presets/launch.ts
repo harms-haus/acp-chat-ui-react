@@ -17,19 +17,31 @@ function getEnvVar(key: string, fallback: string | null = null): string | null {
             return env[key] ?? fallback;
         }
     } catch {
-        // import.meta.env not available
+        // import.meta.env not available (Node.js context)
     }
+
+    try {
+        const processEnv = typeof process !== 'undefined' && process.env;
+        if (processEnv && processEnv[key] !== undefined) {
+            return processEnv[key] ?? fallback;
+        }
+    } catch {
+        // process not available
+    }
+
     return fallback;
 }
 
-export function parseLaunchPreset(): LaunchPreset {
-    const launchCmd = getEnvVar("ACP_LAUNCH_CMD");
-    const sessionId = getEnvVar("ACP_SESSION_ID");
-    const cwd = getEnvVar("ACP_CWD");
-    const bridgeModeRaw = getEnvVar("ACP_BRIDGE_MODE");
-    const autoConnectRaw = getEnvVar("ACP_AUTO_CONNECT");
-    const bridgeUrl = getEnvVar("ACP_BRIDGE_URL", BRIDGE_URL_DEFAULT) ?? BRIDGE_URL_DEFAULT;
-    const replayFile = getEnvVar("ACP_REPLAY_FILE");
+export function parseLaunchPreset(envOverride?: Record<string, string | undefined>): LaunchPreset {
+    const env = envOverride ?? getEnvVarAsRecord();
+    
+    const launchCmd = env.ACP_LAUNCH_CMD ?? null;
+    const sessionId = env.ACP_SESSION_ID ?? null;
+    const cwd = env.ACP_CWD ?? null;
+    const bridgeModeRaw = env.ACP_BRIDGE_MODE ?? null;
+    const autoConnectRaw = env.ACP_AUTO_CONNECT ?? null;
+    const bridgeUrl = env.ACP_BRIDGE_URL ?? BRIDGE_URL_DEFAULT;
+    const replayFile = env.ACP_REPLAY_FILE ?? null;
 
     let bridgeMode: "proxy" | "replay" | null = null;
     if (bridgeModeRaw === "proxy" || bridgeModeRaw === "replay") {
@@ -47,6 +59,28 @@ export function parseLaunchPreset(): LaunchPreset {
         bridgeUrl,
         replayFile,
     };
+}
+
+function getEnvVarAsRecord(): Record<string, string | undefined> {
+    try {
+        const env = (import.meta as { env?: Record<string, string | undefined> }).env;
+        if (env) {
+            return env;
+        }
+    } catch {
+        // import.meta.env not available
+    }
+
+    try {
+        const processEnv = typeof process !== 'undefined' && process.env;
+        if (processEnv) {
+            return processEnv as Record<string, string | undefined>;
+        }
+    } catch {
+        // process not available
+    }
+
+    return {};
 }
 
 export function isPresetValid(preset: LaunchPreset): { valid: boolean; reason?: string } {

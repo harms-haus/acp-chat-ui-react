@@ -302,6 +302,12 @@ export class SessionController {
     private handleEnvelope(envelope: BridgeEnvelope): void {
         this.emitTraffic("in", envelope);
 
+        // Validate envelope has required fields
+        if (!envelope.type) {
+            this.emitError(new Error("Invalid envelope: missing type field"));
+            return;
+        }
+
         if (envelope.type === "bridge_status") {
             this.state.bridgeStatus = envelope.status;
             this.emitStatusChange();
@@ -322,11 +328,97 @@ export class SessionController {
   }
 
   private handleAcpPayload(payload: unknown): void {
+    // Validate payload is a non-null object before casting
+    if (payload === null || typeof payload !== 'object') {
+      this.emitError(new Error("Invalid ACP payload: not an object"));
+      return;
+    }
+    
     const obj = payload as Record<string, unknown>;
-    console.log("[SessionController] handleAcpPayload:", Object.keys(obj), "id:", obj.id, "method:", obj.method);
+    
+    // Validate envelope has required fields
+    const hasValidStructure = 
+      ("id" in obj && typeof obj.id === "number") ||
+      ("method" in obj && typeof obj.method === "string");
+    
+    if (!hasValidStructure) {
+      this.emitError(new Error("Invalid ACP payload: missing required fields (id or method)"));
+      return;
+    }
+    
+    // Check for JSON-RPC notifications (method-based) first
+    if ("method" in obj && typeof obj.method === "string") {
+      if (obj.method === "session/update") {
+        const params = obj.params as Record<string, unknown> | undefined;
+        if (params && params.batched === true && Array.isArray(params.updates)) {
+          const updates = params.updates as Record<string, unknown>[];
+          for (let i = 0; i < updates.length; i++) {
+            const item = updates[i]!;
+            const itemParams = item.params as Record<string, unknown> | undefined;
+            if (itemParams && typeof itemParams.update === "object" && itemParams.update !== null) {
+              this.emitSessionUpdate({ sessionId: itemParams.sessionId, update: itemParams.update });
+            } else if (typeof item.update === "object" && item.update !== null) {
+              this.emitSessionUpdate({ sessionId: item.sessionId, update: item.update });
+            }
+          }
+        } else {
+          this.emitSessionUpdate(obj.params);
+        }
+      } else if (obj.method === "session/request_permission") {
+        const params = obj.params as PermissionRequestParams & { requestId?: number } | undefined;
+        const requestId = (obj.id as number | undefined) ?? params?.requestId;
+        if (params && typeof requestId === "number") {
+          this.emitPermissionRequest(params, requestId);
+        }
+      } else if (obj.method === "fs/read_text_file") {
+        const requestId = obj.id as number | undefined;
+        const params = obj.params as Record<string, unknown> | undefined;
+        if (typeof requestId !== "number") {
+          this.emitError(new Error("fs/read_text_file: missing or invalid request id"));
+          return;
+        }
+        if (!params || typeof params.path !== "string") {
+          this.sendJsonRpcErrorResponse(requestId, { code: -32602, message: "Invalid params: path required" });
+          return;
+        }
+        this.handleFileReadRequest(requestId, params.path, params.line, params.limit);
+      } else if (obj.method === "fs/write_text_file") {
+        const requestId = obj.id as number | undefined;
+        const params = obj.params as Record<string, unknown> | undefined;
+        if (typeof requestId !== "number") {
+          this.emitError(new Error("fs/write_text_file: missing or invalid request id"));
+          return;
+        }
+        if (!params || typeof params.path !== "string" || typeof params.content !== "string") {
+          this.sendJsonRpcErrorResponse(requestId, { code: -32602, message: "Invalid params: path and content required" });
+          return;
+        }
+        this.handleFileWriteRequest(requestId, params.path, params.content);
+      }
+      // Don't return - let JSON-RPC responses also be processed if they have both method and id
+    }
+    
+    // Check for JSON-RPC responses (id-based)
     if ("id" in obj && typeof obj.id === "number") {
       const pending = this.pendingRequests.get(obj.id);
-      console.log("[SessionController] Found pending request:", pending ? "yes" : "no", "for id:", obj.id);
+      
+      // Emit session updates for result messages even if there's no pending request
+      // (e.g., server-initiated results from replay/capture)
+      if (obj.result) {
+        const result = obj.result as Record<string, unknown>;
+
+        if (Array.isArray(result.messages)) {
+          for (const msg of result.messages) {
+            this.emitSessionUpdate({ sessionId: result.sessionId, update: msg });
+          }
+        }
+        if (Array.isArray(result.thoughts)) {
+          for (const thought of result.thoughts) {
+            this.emitSessionUpdate({ sessionId: result.sessionId, update: thought });
+          }
+        }
+      }
+      
       if (pending) {
         clearTimeout(pending.timeout);
         this.pendingRequests.delete(obj.id);
@@ -335,112 +427,25 @@ export class SessionController {
           const err = obj.error as { message: string };
           pending.reject(new Error(err.message));
         } else {
-          if (obj.result) {
-            const result = obj.result as Record<string, unknown>;
-            console.log("[SessionController] Response result keys:", Object.keys(result));
-
-            try {
-              const w = globalThis as Record<string, unknown>;
-              if (!w.__ACP_DEBUG) w.__ACP_DEBUG = { loads: [] as unknown[] };
-              const debug = w.__ACP_DEBUG as { loads: unknown[] };
-              debug.loads.push({
-                timestamp: new Date().toISOString(),
-                result: JSON.parse(JSON.stringify(result)),
-              });
-              console.log("[SessionController] Raw result dumped to window.__ACP_DEBUG.loads");
-            } catch (e) {
-              console.warn("[SessionController] Failed to dump debug result:", e);
-            }
-
-            if (Array.isArray(result.messages)) {
-              console.log("[SessionController] result.messages count:", result.messages.length);
-              if (result.messages.length > 0) {
-                console.log("[SessionController] First message keys:", Object.keys(result.messages[0] as object));
-                console.log("[SessionController] First message sample:", JSON.stringify(result.messages[0]).slice(0, 500));
-              }
-              for (const msg of result.messages) {
-                console.log("[SessionController] Emitting message update, type:", (msg as Record<string, unknown>).type ?? (msg as Record<string, unknown>).sessionUpdate);
-                this.emitSessionUpdate({ sessionId: result.sessionId, update: msg });
-              }
-            } else {
-              console.log("[SessionController] result.messages is NOT an array:", typeof result.messages);
-            }
-            if (Array.isArray(result.thoughts)) {
-              console.log("[SessionController] result.thoughts count:", result.thoughts.length);
-              for (const thought of result.thoughts) {
-                console.log("[SessionController] Emitting thought update, type:", (thought as Record<string, unknown>).type ?? (thought as Record<string, unknown>).sessionUpdate);
-                this.emitSessionUpdate({ sessionId: result.sessionId, update: thought });
-              }
-            }
-            if (!Array.isArray(result.messages) && !Array.isArray(result.thoughts)) {
-              console.log("[SessionController] No messages or thoughts arrays found in result. Full result:", JSON.stringify(result).slice(0, 1000));
-            }
-          } else {
-            console.log("[SessionController] Response has no result field");
-          }
           pending.resolve(obj.result);
         }
-      }
-    } else if ("method" in obj && obj.method === "session/update") {
-      const params = obj.params as Record<string, unknown> | undefined;
-      if (params && params.batched === true && Array.isArray(params.updates)) {
-        const updates = params.updates as Record<string, unknown>[];
-        console.log("[SessionController] Batched session/update with", updates.length, "items");
-        for (let i = 0; i < updates.length; i++) {
-          const item = updates[i]!;
-          const itemParams = item.params as Record<string, unknown> | undefined;
-          if (itemParams && typeof itemParams.update === "object" && itemParams.update !== null) {
-            console.log("[SessionController] Batched item", i, "type:", (itemParams.update as Record<string, unknown>).type ?? (itemParams.update as Record<string, unknown>).sessionUpdate);
-            this.emitSessionUpdate({ sessionId: itemParams.sessionId, update: itemParams.update });
-          } else if (typeof item.update === "object" && item.update !== null) {
-            console.log("[SessionController] Batched item", i, "flat type:", (item.update as Record<string, unknown>).type ?? (item.update as Record<string, unknown>).sessionUpdate);
-            this.emitSessionUpdate({ sessionId: item.sessionId, update: item.update });
-          } else {
-            console.log("[SessionController] Batched item", i, "unrecognized shape, keys:", Object.keys(item));
-          }
-        }
-      } else {
-        console.log("[SessionController] Non-batched session/update, update keys:", params?.update ? Object.keys(params.update as object) : "no update");
-        this.emitSessionUpdate(obj.params);
-      }
-    } else if ("method" in obj && obj.method === "session/request_permission") {
-      const params = obj.params as PermissionRequestParams | undefined;
-      const requestId = obj.id as number | undefined;
-      if (params && typeof requestId === "number") {
-        this.emitPermissionRequest(params, requestId);
-      }
-    } else if ("method" in obj && obj.method === "fs/read_text_file") {
-      const requestId = obj.id as number | undefined;
-      const params = obj.params as Record<string, unknown> | undefined;
-      if (typeof requestId === "number" && params && typeof params.path === "string") {
-        this.handleFileReadRequest(requestId, params.path, params.line, params.limit);
-      }
-    } else if ("method" in obj && obj.method === "fs/write_text_file") {
-      const requestId = obj.id as number | undefined;
-      const params = obj.params as Record<string, unknown> | undefined;
-      if (typeof requestId === "number" && params && typeof params.path === "string" && typeof params.content === "string") {
-        this.handleFileWriteRequest(requestId, params.path, params.content);
       }
     }
     }
 
   private validatePath(path: string): boolean {
     if (path.includes("..")) {
-      console.log("[SessionController] Path rejected: contains '..':", path);
       return false;
     }
     if (path.startsWith("/")) {
-      console.log("[SessionController] Path rejected: absolute path:", path);
       return false;
     }
     return true;
   }
 
   private async handleFileReadRequest(requestId: number, path: string, line?: unknown, limit?: unknown): Promise<void> {
-    console.log("[SessionController] handleFileReadRequest:", { requestId, path, line, limit });
-
     if (!this.validatePath(path)) {
-      console.log("[SessionController] File read request rejected due to invalid path:", path);
+      this.sendJsonRpcErrorResponse(requestId, { code: -32602, message: "Invalid path" });
       return;
     }
 
@@ -454,29 +459,24 @@ export class SessionController {
 
     const handlers = this.fileSystemManager.getReadHandlers();
     if (handlers.length === 0) {
-      console.log("[SessionController] No file read handlers registered");
+      this.sendJsonRpcErrorResponse(requestId, { code: -32601, message: "No file read handlers available" });
       return;
     }
 
-    console.log("[SessionController] Calling", handlers.length, "file read handlers");
     const results = await Promise.allSettled(handlers.map(h => h(request)));
 
-    console.log("[SessionController] File read handler results:", results.map(r => r.status));
     const successful = results.find(r => r.status === "fulfilled" && r.value !== null) as PromiseFulfilledResult<FileReadResponse> | undefined;
 
     if (successful) {
-      console.log("[SessionController] File read successful, sending response");
       await this.sendJsonRpcResponse(requestId, successful.value);
     } else {
-      console.log("[SessionController] No successful file read response");
+      this.sendJsonRpcErrorResponse(requestId, { code: -32000, message: "Failed to read file" });
     }
   }
 
   private async handleFileWriteRequest(requestId: number, path: string, content: string): Promise<void> {
-    console.log("[SessionController] handleFileWriteRequest:", { requestId, path, contentLength: content.length });
-
     if (!this.validatePath(path)) {
-      console.log("[SessionController] File write request rejected due to invalid path:", path);
+      this.sendJsonRpcErrorResponse(requestId, { code: -32602, message: "Invalid path" });
       return;
     }
 
@@ -487,22 +487,29 @@ export class SessionController {
 
     const handlers = this.fileSystemManager.getWriteHandlers();
     if (handlers.length === 0) {
-      console.log("[SessionController] No file write handlers registered");
+      this.sendJsonRpcErrorResponse(requestId, { code: -32601, message: "No file write handlers available" });
       return;
     }
 
-    console.log("[SessionController] Calling", handlers.length, "file write handlers");
     const results = await Promise.allSettled(handlers.map(h => h(request)));
 
-    console.log("[SessionController] File write handler results:", results.map(r => r.status));
     const successful = results.find(r => r.status === "fulfilled" && r.value !== null) as PromiseFulfilledResult<FileWriteResponse> | undefined;
 
     if (successful) {
-      console.log("[SessionController] File write successful, sending response");
       await this.sendJsonRpcResponse(requestId, successful.value);
     } else {
-      console.log("[SessionController] No successful file write response");
+      this.sendJsonRpcErrorResponse(requestId, { code: -32000, message: "Failed to write file" });
     }
+  }
+
+  private async sendJsonRpcErrorResponse(requestId: number, error: { code: number; message: string }): Promise<void> {
+    const payload = {
+      jsonrpc: "2.0" as const,
+      id: requestId,
+      error,
+    };
+    this.emitTraffic("out", payload);
+    this.transport.send(JSON.stringify(payload));
   }
 
   private async sendJsonRpcResponse(requestId: number, result: FileReadResponse | FileWriteResponse): Promise<void> {
@@ -511,7 +518,6 @@ export class SessionController {
       id: requestId,
       result,
     };
-    console.log("[SessionController] Sending JSON-RPC response:", payload);
     this.emitTraffic("out", payload);
     this.transport.send(JSON.stringify(payload));
   }

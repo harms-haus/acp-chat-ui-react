@@ -212,14 +212,11 @@ export class TransportClient {
 
   private handleMessage(event: MessageEvent): void {
     try {
-      console.log('[TransportClient] handleMessage called, data:', event.data);
       // First, check if this is an init response (not wrapped in BridgeEnvelope)
       const data = JSON.parse(event.data as string);
-      console.log('[TransportClient] Parsed data:', data);
 
       // Handle init responses (success or error)
       if (data.type === "init" && data.initId && this.pendingInitResolves.has(data.initId)) {
-        console.log('[TransportClient] This is an init response, resolving...');
         const resolve = this.pendingInitResolves.get(data.initId)!;
         this.pendingInitResolves.delete(data.initId);
         resolve(data);
@@ -228,8 +225,6 @@ export class TransportClient {
 
     // Handle error responses from server (e.g., "script not found", "live mode not enabled")
     if (data.error) {
-      console.log('[TransportClient] Server error response:', data.error);
-      
       // Clean up any pending init promise if this error includes an initId
       if (data.initId) {
         const resolve = this.pendingInitResolves.get(data.initId);
@@ -238,12 +233,11 @@ export class TransportClient {
           resolve({ status: "error", message: data.error });
         }
       }
-      
+
       this.emitError(new Error(data.error));
       return;
     }
 
-      console.log('[TransportClient] Parsing as BridgeEnvelope...');
       // For all other messages, parse as BridgeEnvelope
       const result = parseEnvelopeSafe(event.data as string);
 

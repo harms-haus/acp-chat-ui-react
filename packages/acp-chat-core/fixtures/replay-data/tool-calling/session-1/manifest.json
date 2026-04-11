@@ -1,0 +1,10 @@
+{
+  "demoType": "script-replay",
+  "sessions": [
+    {
+      "sessionId": "session-1",
+      "cwd": "/test/workspace",
+      "title": "Tool Calling Session 1"
+    }
+  ]
+}

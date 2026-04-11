@@ -1,0 +1,108 @@
+# Task 9: Bridge Parser Tests - Evidence
+
+## Summary
+Created comprehensive edge case tests for the Bridge parser module.
+
+## File Created
+- **Location**: `packages/acp-chat-core/src/bridge/parser.test.ts`
+- **Test Count**: 50 test cases
+- **Coverage**: 100% for parser.ts (58 lines)
+
+## Test Coverage Areas
+
+### 1. Malformed JSON Handling (5 tests)
+- Invalid JSON strings
+- Truncated JSON
+- JSON with trailing commas
+- Empty strings
+- Non-version errors in parseEnvelopeSafe
+
+### 2. Missing Required Fields (4 tests)
+- Missing version field
+- Missing seq field
+- Missing timestamp_ms field
+- Missing type field
+
+### 3. Invalid Field Types (4 tests)
+- Version as string (rejected)
+- Seq as string (parsed but type-unsafe)
+- Null envelope (TypeError)
+- Array instead of object (BridgeVersionError)
+
+### 4. Version Validation Edge Cases (7 tests)
+- Version 0 (rejected)
+- Version 2 (rejected)
+- Negative versions (rejected)
+- Very large versions (rejected)
+- Floating point versions (rejected)
+- NaN, Infinity edge cases
+
+### 5. All 6 Message Type Variants (14 tests)
+- **acp_payload**: JSON-RPC request, response, error
+- **bridge_status**: All 5 status variants (starting, connected, reconnecting, disconnected, error)
+- **stderr**: Empty line, multiline content
+- **process_exit**: Code 0, signal only, both code and signal
+- **replay_metadata**: Null description, large total_envelopes
+- **start_agent**: Minimal config, full config, special characters
+
+### 6. Extra Data Field (4 tests)
+- With extra_data
+- Without extra_data
+- Null extra_data
+- Complex nested extra_data
+
+### 7. Boundary and Numeric Edge Cases (5 tests)
+- Seq = 0
+- Very large seq (MAX_SAFE_INTEGER)
+- Timestamp_ms = 0
+- Very large timestamp_ms
+- Negative seq
+
+### 8. validateEnvelope Function (2 tests)
+- Throws for invalid version
+- Does not throw for valid version
+
+### 9. createUnsupportedVersionError Function (2 tests)
+- Correct structure
+- Spread supported versions
+
+### 10. parseEnvelopeSafe Comprehensive Error Handling (4 tests)
+- Returns BridgeVersionError for version 0
+- Returns BridgeVersionError for version 2
+- Throws SyntaxError for invalid JSON (not caught)
+- Returns valid envelope for correct input
+
+## Test Results
+```
+✓ packages/acp-chat-core/src/bridge/parser.test.ts (50 tests) 7ms
+
+Test Files  1 passed (1)
+     Tests  50 passed (50)
+  Start at  06:06:33
+  Duration  243ms
+```
+
+## Coverage Report
+```
+File               | % Stmts | % Branch | % Funcs | % Lines
+-------------------|---------|----------|---------|---------
+parser.ts          |     100 |      100 |     100 |     100
+```
+
+## Key Test Patterns Used
+1. **Test-utils factories**: createBridgeEnvelope(), createACPPayload(), createACPPayloadError()
+2. **Type guards**: Runtime type checking for discriminated unions
+3. **Error assertions**: Testing both thrown errors and returned errors
+4. **Boundary testing**: Edge values (0, MAX_SAFE_INTEGER, negative, null)
+5. **Type variants**: All 6 message types with different field combinations
+
+## Complementary to Existing Tests
+These tests complement bridge-contract.test.ts (346 lines) by focusing on:
+- Edge cases not covered by happy-path tests
+- Error handling scenarios
+- Malformed input handling
+- All message type variants including start_agent
+- parseEnvelopeSafe behavior with non-version errors
+
+## Date
+April 11, 2026

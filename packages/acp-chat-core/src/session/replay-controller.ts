@@ -354,31 +354,12 @@ export class ReplayController {
     requestId: number,
     optionId: string,
   ): Promise<void> {
-    console.log('[ReplayController] respondToPermission called', { requestId, optionId });
-    // Send permission_response message to server
-    const response = {
-      type: "permission_response",
-      requestId,
-      action: "approve",
-      optionId,
-    };
-    console.log('[ReplayController] Sending permission response:', response);
-    const json = JSON.stringify(response);
-    this.transport.send(json);
-    console.log('[ReplayController] Message sent via transport.send()');
+    this.sendResponse(requestId, { outcome: { outcome: "selected", optionId } });
   }
 
   /** Cancel a pending permission request (send deny response). */
   async cancelPermission(requestId: number): Promise<void> {
-    console.log('[ReplayController] cancelPermission called', { requestId });
-    const response = {
-      type: "permission_response",
-      requestId,
-      action: "deny",
-    };
-    const json = JSON.stringify(response);
-    this.transport.send(json);
-    console.log('[ReplayController] cancelPermission sent via transport.send()');
+    this.sendResponse(requestId, { outcome: { outcome: "cancelled" } });
   }
 
   setReplaySpeed(speed: number): void {
@@ -516,6 +497,70 @@ export class ReplayController {
   private handleAcpPayload(payload: unknown): void {
     const obj = payload as Record<string, unknown>;
 
+    // Check for JSON-RPC notifications (method-based) first
+    if ("method" in obj && typeof obj.method === "string") {
+      // --- JSON-RPC notification: session/update ---
+      if (obj.method === "session/update") {
+        const params = obj.params as Record<string, unknown> | undefined;
+        if (params && params.batched === true && Array.isArray(params.updates)) {
+          const updates = params.updates as Record<string, unknown>[];
+          for (const item of updates) {
+            const itemParams = item.params as
+              | Record<string, unknown>
+              | undefined;
+            if (
+              itemParams &&
+              typeof itemParams.update === "object" &&
+              itemParams.update !== null
+            ) {
+              this.emitSessionUpdate({
+                sessionId: itemParams.sessionId,
+                update: itemParams.update,
+              });
+            } else if (typeof item.update === "object" && item.update !== null) {
+              this.emitSessionUpdate({
+                sessionId: item.sessionId,
+                update: item.update,
+              });
+            }
+          }
+        } else {
+          this.emitSessionUpdate(obj.params);
+        }
+        return;
+      }
+
+      // --- JSON-RPC notification: session/request_permission ---
+      if (obj.method === "session/request_permission") {
+        const params = obj.params as PermissionRequestParams | undefined;
+        const requestId = obj.id as number | undefined;
+        if (params && typeof requestId === "number") {
+          this.emitPermissionRequest(params, requestId);
+        }
+        return;
+      }
+      
+      // --- Permission request from replay stream (session/update with permission_request) ---
+      if (obj.method === "session/update") {
+        const params = obj.params as Record<string, unknown> | undefined;
+        if (params && typeof params.update === "object" && params.update !== null) {
+          const update = params.update as Record<string, unknown>;
+          if (update.sessionUpdate === "permission_request" && update.status === "pending") {
+            const permissionRequest = {
+              sessionId: update.sessionId as string,
+              toolCall: {
+                toolCallId: update.toolCallId as string,
+              },
+              options: update.options as PermissionOption[],
+              requestId: update.requestId as number,
+            };
+            this.emitPermissionRequest(permissionRequest, update.requestId as number);
+          }
+        }
+        return;
+      }
+    }
+
     // --- JSON-RPC response (has numeric id) ---
     if ("id" in obj && typeof obj.id === "number") {
       const pending = this.pendingRequests.get(obj.id);
@@ -550,68 +595,6 @@ export class ReplayController {
           pending.resolve(obj.result);
         } else {
           pending.resolve(obj.result);
-        }
-      }
-      return;
-    }
-
-    // --- JSON-RPC notification: session/update ---
-    if ("method" in obj && obj.method === "session/update") {
-      const params = obj.params as Record<string, unknown> | undefined;
-      if (params && params.batched === true && Array.isArray(params.updates)) {
-        const updates = params.updates as Record<string, unknown>[];
-        for (const item of updates) {
-          const itemParams = item.params as
-            | Record<string, unknown>
-            | undefined;
-          if (
-            itemParams &&
-            typeof itemParams.update === "object" &&
-            itemParams.update !== null
-          ) {
-            this.emitSessionUpdate({
-              sessionId: itemParams.sessionId,
-              update: itemParams.update,
-            });
-          } else if (typeof item.update === "object" && item.update !== null) {
-            this.emitSessionUpdate({
-              sessionId: item.sessionId,
-              update: item.update,
-            });
-          }
-        }
-      } else {
-        this.emitSessionUpdate(obj.params);
-      }
-      return;
-    }
-
-    // --- JSON-RPC notification: session/request_permission ---
-    if ("method" in obj && obj.method === "session/request_permission") {
-      const params = obj.params as PermissionRequestParams | undefined;
-      const requestId = obj.id as number | undefined;
-      if (params && typeof requestId === "number") {
-        this.emitPermissionRequest(params, requestId);
-      }
-      return;
-    }
-    
-    // --- Permission request from replay stream (session/update with permission_request) ---
-    if ("method" in obj && obj.method === "session/update") {
-      const params = obj.params as Record<string, unknown> | undefined;
-      if (params && typeof params.update === "object" && params.update !== null) {
-        const update = params.update as Record<string, unknown>;
-        if (update.sessionUpdate === "permission_request" && update.status === "pending") {
-          // Extract permission request data and emit as permissionRequest event
-          const permissionRequest = {
-            sessionId: update.sessionId as string,
-            toolCall: {
-              toolCallId: update.toolCallId as string,
-            },
-            options: update.options as PermissionOption[],
-            requestId: update.requestId as number,
-          };
-          this.emitPermissionRequest(permissionRequest, update.requestId as number);
         }
       }
       return;

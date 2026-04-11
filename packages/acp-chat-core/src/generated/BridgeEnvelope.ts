@@ -21,7 +21,12 @@ seq: number,
 /**
  * Unix timestamp in milliseconds when the envelope was created.
  */
-timestamp_ms: number, } & ({ "type": "acp_payload",
+timestamp_ms: number,
+/**
+ * Optional free-form metadata. The ws-bridge treats this as opaque JSON.
+ * Specific interpretations (e.g., replay-speed) happen at the harness-server layer.
+ */
+extra_data?: JsonValue | null, } & ({ "type": "acp_payload",
 /**
  * The raw JSON-RPC message as received from the ACP agent.
  * This is an opaque value — the bridge does not interpret it.

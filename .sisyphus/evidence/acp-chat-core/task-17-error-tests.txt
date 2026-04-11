@@ -1,0 +1,84 @@
+Task 17: Error Handling Integration Tests
+==========================================
+
+COMPLETED: Error handling integration tests for ACP Chat Core
+
+Test File Created:
+- packages/acp-chat-core/src/__tests__/integration/error-handling.test.ts (772 lines)
+
+Test Coverage:
+==============
+
+1. Network Errors (4 tests)
+   - Emits error event on WebSocket connection failure
+   - Emits error event on unexpected disconnection
+   - Rejects pending requests on disconnect
+   - Updates connectionStatus to disconnected on error
+
+2. Parse Errors (4 tests)
+   - Emits error event on malformed JSON
+   - Emits error event on invalid BridgeEnvelope
+   - Handles missing required fields in envelope
+   - Emits error on JSON-RPC parse error
+
+3. Timeout Errors (3 tests)
+   - Rejects request after timeout (100ms timeout test)
+   - Clears timeout on successful response
+   - Rejects multiple pending requests on timeout
+
+4. Recovery Mechanisms (3 tests)
+   - Can reconnect after disconnection
+   - Maintains state after reconnection
+   - Emits statusChange events during reconnection
+
+5. Error Event Emission (3 tests)
+   - Emits error event with error details
+   - Supports multiple error handlers
+   - Error handler can be unsubscribed
+
+6. State Transitions on Error (3 tests)
+   - Transitions to error state on connection failure
+   - Preserves sessionId on transient error
+   - Clears pending requests on disconnect
+
+7. Permission Denied Scenarios (4 tests)
+   - Handles permission denial gracefully
+   - Emits permission request event
+   - Can respond to permission request
+   - Can cancel permission request
+
+8. Invalid Session State Errors (4 tests)
+   - Handles request without active session
+   - Handles invalid session ID format
+   - Handles session not found error
+   - Handles method not found error
+
+9. Error Recovery Patterns (2 tests)
+   - Continues functioning after error event
+   - Can handle multiple consecutive errors
+
+Total: 30 tests, all passing
+
+Code Changes:
+=============
+- Fixed controller.ts to support requestId in params for permission requests
+  (line 370-371): Extracts requestId from params when obj.id is not present
+
+Test Results:
+============
+✓ packages/acp-chat-core/src/__tests__/integration/error-handling.test.ts (30 tests) 532ms
+
+Test Files  1 passed (1)
+Tests  30 passed (30)
+Duration  756ms
+
+All requirements from the plan have been met:
+✓ Various error types tested
+✓ Recovery mechanisms verified
+✓ Error events emitted correctly
+✓ State transitions on error tested
+✓ Permission denied scenarios tested
+✓ Invalid session state errors tested
+✓ Uses test-utils mocks and factories
+✓ All tests pass
+✓ Evidence saved

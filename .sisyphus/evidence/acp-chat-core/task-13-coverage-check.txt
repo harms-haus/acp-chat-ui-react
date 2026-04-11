@@ -1,0 +1,43 @@
+
+ RUN  v2.1.9 /home/blake/Documents/software/acp-react-chat-ui/packages/acp-chat-core
+      Coverage enabled with v8
+
+ ✓ src/__tests__/capture-interceptor.test.ts (22 tests) 7ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  06:25:44
+   Duration  363ms (transform 30ms, setup 38ms, collect 21ms, tests 7ms, environment 0ms, prepare 46ms)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+capture-interceptor.ts |   97.74 |    82.22 |     100 |   97.74 | 273,285-286       
+-------------------|---------|----------|---------|---------|-------------------
+
+================================================================================
+COVERAGE VERIFICATION RESULTS
+================================================================================
+
+Target: 80%+ coverage for capture-interceptor.ts
+Result: ✓ ACHIEVED
+
+Coverage Metrics:
+- Statements: 97.74% (target: 80%) ✓
+- Branch: 82.22% (target: 75%) ✓
+- Functions: 100% (target: 80%) ✓
+- Lines: 97.74% (target: 80%) ✓
+
+Tests Summary:
+- Total tests: 22 (added 7 new tests)
+- All tests passing: ✓
+
+Uncovered Lines (273, 285-286):
+- Line 273: Empty catch block in extractMetadata() - defensive error handling
+- Lines 285-286: Catch block in writeToFiles() for non-Node.js environments
+  These are edge cases representing defensive programming, not testable in 
+  JSDOM test environment.
+
+CONCLUSION: Coverage exceeds 80% target. Tests are comprehensive and complete.
+================================================================================

@@ -1,0 +1,139 @@
+ACP Protocol Compliance Tests - Evidence Report
+================================================
+
+Task: Write ACP protocol compliance tests
+Date: April 11, 2026
+Test File: packages/acp-chat-core/src/__tests__/integration/acp-protocol.test.ts
+
+TEST RESULTS
+============
+✅ All 38 tests PASSED
+
+Test Categories
+---------------
+
+1. JSON-RPC Format (6 tests)
+   ✅ JSON-RPC request has required fields (jsonrpc, id, method)
+   ✅ JSON-RPC response has required fields (jsonrpc, id, result)
+   ✅ JSON-RPC error has required fields (jsonrpc, id, error)
+   ✅ JSON-RPC notification has required fields (jsonrpc, method) and no id
+   ✅ Bridge envelope wraps ACP payload correctly
+   ✅ JSON-RPC 2.0 version is always '2.0' string
+
+2. ACP Methods (12 tests)
+   initialize:
+   ✅ sends initialize request with correct structure
+   ✅ initialize response includes capabilities
+
+   session/new:
+   ✅ sends session/new request with cwd and mcpServers
+   ✅ session/new response includes sessionId
+
+   session/load:
+   ✅ sends session/load request with sessionId and cwd
+   ✅ session/load emits sessionClearing event before loading
+
+   session/list:
+   ✅ sends session/list request with optional cursor and cwd
+   ✅ session/list works without optional parameters
+
+   session/prompt:
+   ✅ sends session/prompt request with sessionId and prompt array
+   ✅ session/prompt formats prompt as TextContent array
+
+   session/cancel:
+   ✅ sends session/cancel notification with sessionId
+   ✅ session/cancel is a notification (no response expected)
+
+3. Error Handling (10 tests)
+   Standard JSON-RPC Error Codes:
+   ✅ JSON-RPC error code -32700 (Parse error)
+   ✅ JSON-RPC error code -32600 (Invalid Request)
+   ✅ JSON-RPC error code -32601 (Method not found)
+   ✅ JSON-RPC error code -32602 (Invalid params)
+   ✅ JSON-RPC error code -32603 (Internal error)
+
+   ACP-Specific Error Codes:
+   ✅ ACP-specific error code -1 (Session not found)
+   ✅ ACP-specific error code -2 (Invalid session state)
+   ✅ ACP-specific error code -3 (Permission denied)
+   ✅ ACP-specific error code -4 (Tool execution failed)
+   ✅ Error response can include optional data field
+
+4. Capability Negotiation (3 tests)
+   ✅ client sends capabilities during initialize
+   ✅ agent returns capabilities in initialize response
+   ✅ supports experimental capabilities
+
+5. Version Compliance (4 tests)
+   ✅ initialize request includes protocolVersion
+   ✅ bridge envelope uses version 1
+   ✅ all envelopes have timestamp_ms field
+   ✅ all envelopes have seq field for ordering
+
+6. Invalid Params Handling (3 tests)
+   ✅ handles session/new with missing cwd parameter
+   ✅ handles session/load with invalid sessionId
+   ✅ handles session/prompt with empty prompt
+
+PROTOCOL COVERAGE
+=================
+
+ACP Methods Tested:
+- ✅ initialize - Connection initialization with capabilities
+- ✅ session/new - Create new session
+- ✅ session/load - Load existing session
+- ✅ session/list - List sessions with pagination
+- ✅ session/prompt - Send prompt to agent
+- ✅ session/cancel - Cancel current prompt
+
+JSON-RPC 2.0 Compliance:
+- ✅ Request format: { jsonrpc: "2.0", id, method, params }
+- ✅ Response format: { jsonrpc: "2.0", id, result }
+- ✅ Error format: { jsonrpc: "2.0", id, error: { code, message, data? } }
+- ✅ Notification format: { jsonrpc: "2.0", method, params } (no id)
+
+Error Codes Tested:
+- ✅ -32700: Parse error
+- ✅ -32600: Invalid Request
+- ✅ -32601: Method not found
+- ✅ -32602: Invalid params
+- ✅ -32603: Internal error
+- ✅ -1: Session not found
+- ✅ -2: Invalid session state
+- ✅ -3: Permission denied
+- ✅ -4: Tool execution failed
+
+Capability Negotiation:
+- ✅ Client capabilities sent in initialize
+- ✅ Agent capabilities returned in response
+- ✅ Experimental capabilities supported
+
+TEST UTILITIES USED
+===================
+- createACPPayload() - Create JSON-RPC requests
+- createACPPayloadResult() - Create JSON-RPC responses
+- createACPPayloadError() - Create JSON-RPC errors
+- createACPPayloadNotification() - Create JSON-RPC notifications
+- createBridgeEnvelope() - Wrap ACP payloads in bridge envelopes
+- createInitializeResult() - Create initialize response
+- createCreateSessionResult() - Create session/new response
+- createListSessionsResult() - Create session/list response
+- createLoadSessionResult() - Create session/load response
+
+TEST APPROACH
+=============
+- Used MockTransportClient to simulate WebSocket communication
+- Captured outgoing requests via spy on send() method
+- Responded with matching request IDs to prevent timeouts
+- Verified message structure matches ACP protocol specification
+- Tested both valid and invalid parameter scenarios
+- Verified error code ranges (-32700 to -32000 and ACP-specific)
+
+VERIFICATION
+============
+Test command: npm test -- packages/acp-chat-core/src/__tests__/integration/acp-protocol.test.ts
+Result: ✓ 38 tests passed (173ms)
+Test File: packages/acp-chat-core/src/__tests__/integration/acp-protocol.test.ts
+
+All ACP protocol compliance requirements from the plan have been satisfied.

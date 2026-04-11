@@ -1,0 +1,48 @@
+TASK 3: Coverage Collection Setup
+Date: 2026-04-11
+Package: acp-chat-core
+
+CONFIGURATION ADDED:
+- Provider: v8 (faster than istanbul)
+- Reporters: text, json, html, lcov
+- Thresholds:
+  - Lines: 80%
+  - Branches: 75%
+  - Functions: 80%
+- Include: src/**/*.ts
+- Exclude: src/**/*.test.ts, src/**/*.test.tsx, src/**/*.spec.ts, src/**/*.spec.tsx
+
+VERIFICATION:
+Command: cd packages/acp-chat-core && pnpm vitest run --coverage
+
+Coverage Report Summary (subset of passing tests):
+----------------------------------------------------------------
+| % Stmts | % Branch | % Funcs | % Lines |
+|---------|----------|---------|---------|
+|  15.39  |   84.09  |  15.88  |  15.39  |
+
+Generated Reports:
+- coverage-final.json: JSON format for programmatic access
+- lcov.info: LCOV format for CI/CD integration
+- lcov-report/: HTML reports for browser viewing
+- index.html: Main HTML report entry point
+
+Threshold Warnings:
+- Coverage for lines (15.39%) does not meet global threshold (80%)
+- Coverage for functions (15.88%) does not meet global threshold (80%)
+- Branch coverage (84.09%) exceeds threshold (75%)
+
+Note: Coverage percentages are from a subset of passing tests. Full suite coverage
+would be higher but some tests currently fail (9 failures out of 166 tests).
+
+COVERAGE REPORTS LOCATION:
+packages/acp-chat-core/coverage/
+
+DEPENDENCIES INSTALLED:
+- @vitest/coverage-v8@^2.1.9 (matching vitest@^2.1.0)
+
+STATUS: ✅ Coverage configuration successfully added and verified
+- v8 provider working correctly
+- All reporters (text, json, html, lcov) generating reports
+- Thresholds enforced (with appropriate warnings)
+- Compatible with monorepo structure
