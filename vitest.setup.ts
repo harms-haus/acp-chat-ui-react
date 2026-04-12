@@ -3,8 +3,8 @@ import { vi } from "vitest";
 import { existsSync, rmSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-// Mock WebSocket for Node.js environment
-// WebSocket is not available in Node.js by default, but our tests use it
+// Mock WebSocket and CloseEvent for Node.js environment
+// WebSocket and CloseEvent are not available in Node.js by default, but our tests use them
 if (typeof WebSocket === "undefined") {
   global.WebSocket = vi.fn().mockImplementation(() => ({
     send: vi.fn(),
@@ -14,6 +14,13 @@ if (typeof WebSocket === "undefined") {
     onmessage: null,
     onerror: null,
     onclose: null,
+  }));
+}
+
+if (typeof CloseEvent === "undefined") {
+  global.CloseEvent = vi.fn().mockImplementation((type, eventInitDict) => ({
+    type,
+    ...eventInitDict,
   }));
 }
 
