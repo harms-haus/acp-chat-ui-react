@@ -1,7 +1,6 @@
 import { memo, useState, useMemo, useCallback, useEffect, useRef } from "react";
 import type { ThoughtStackProps, ThoughtItem } from "./types.js";
 import type { NormalizedThought, NormalizedToolCall, SessionController } from "@harms-haus/acp-chat-core";
-import type { Logger } from "../utils/logger.js";
 import { noOpLogger } from "../utils/logger.js";
 
 function isThoughtItem(item: ThoughtItem): item is { type: "thought"; id: string; data: NormalizedThought } {
@@ -77,7 +76,7 @@ function ThoughtContent({
   onCreated,
   onCompleted,
   follow = false,
-  controller,
+  controller: _controller,
 }: {
   thought: NormalizedThought;
   isExpanded: boolean;
@@ -196,7 +195,7 @@ function ToolCallContent({
   onCreated,
   onCompleted,
   follow = false,
-  controller,
+  controller: _controller,
 }: {
   toolCall: NormalizedToolCall;
   isExpanded: boolean;
@@ -415,18 +414,18 @@ export const ThoughtStack = memo(function ThoughtStack({
   group,
   defaultOpen = false,
   defaultOpenWhenActive = true,
-  defaultOpenWhenIdle = false,
+  defaultOpenWhenIdle: _defaultOpenWhenIdle = false,
   className = "",
   renderClosed,
   renderOpen,
-  logger = noOpLogger,
+  logger: _logger = noOpLogger,
   expandedItems,
   onExpansionChange,
   onThoughtCreated,
   onThoughtCompleted,
   onToolCreated,
   onToolCompleted,
-  onThoughtGroupCompleted,
+  onThoughtGroupCompleted: _onThoughtGroupCompleted,
   follow = false,
   controller,
   messageAppearedAfter = false,

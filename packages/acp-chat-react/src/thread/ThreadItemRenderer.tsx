@@ -27,10 +27,6 @@ export interface ThreadItemRendererProps {
   controller?: SessionController | undefined;
 }
 
-function isThoughtGroup(data: NormalizedMessage | ThoughtGroupWithState | NormalizedPermissionRequest): data is ThoughtGroupWithState {
-  return "items" in data && "startTime" in data;
-}
-
 export const ThreadItemRenderer = memo(function ThreadItemRenderer({
   item,
   messageActions,

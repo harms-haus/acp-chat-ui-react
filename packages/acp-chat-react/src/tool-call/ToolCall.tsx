@@ -1,7 +1,6 @@
 import { memo, useState, useCallback } from "react";
 import { Collapsible } from "@base-ui-components/react/collapsible";
 import type { ToolCallProps } from "./types.js";
-import type { Logger } from "../utils/logger.js";
 import { noOpLogger } from "../utils/logger.js";
 
 const ToolCallHeader = memo(function ToolCallHeader({
@@ -74,7 +73,7 @@ export const ToolCall = memo(function ToolCall({
   isExpanded: controlledExpanded,
   onToggle,
   className = "",
-  logger = noOpLogger,
+  logger: _logger = noOpLogger,
 }: ToolCallProps) {
   const [internalExpanded, setInternalExpanded] = useState(false);
   const isExpanded = controlledExpanded ?? internalExpanded;

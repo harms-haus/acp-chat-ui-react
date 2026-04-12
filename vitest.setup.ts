@@ -89,7 +89,7 @@ if (existsSync(replayCaptureDir)) {
         rmSync(dirPath, { recursive: true, force: true });
       }
     }
-  } catch (error) {
+  } catch (_error) {
     // Silently fail if cleanup encounters issues
   }
 }
@@ -144,7 +144,7 @@ vi.mock("@tanstack/react-virtual", async () => {
           key,
           size,
           start: index * (size + gap),
-          measureRef: (el: HTMLElement | null) => {
+          measureRef: (_el: HTMLElement | null) => {
             // No-op in tests, but allows the ref to be attached
           },
           get element() {

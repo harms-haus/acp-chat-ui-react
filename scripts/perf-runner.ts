@@ -54,7 +54,7 @@ function parseReplayFixture(fixturePath: string): ReplayEnvelope[] {
   return lines.map((line, index) => {
     try {
       return JSON.parse(line) as ReplayEnvelope;
-    } catch (e) {
+    } catch (_e) {
       throw new Error(`Failed to parse line ${index + 1} in ${fixturePath}: ${line.substring(0, 50)}...`);
     }
   });
@@ -191,8 +191,8 @@ function runStreamingCadenceTest(envelopes: ReplayEnvelope[]): PerfResult {
   for (const envelope of acpPayloads) {
     const start = performance.now();
     processEnvelope(envelope, state);
-    const elapsed = performance.now() - start;
-    processingTimes.push(elapsed);
+    const _elapsed = performance.now() - start;
+    processingTimes.push(_elapsed);
   }
 
   const avgCadence = processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length;
@@ -225,7 +225,7 @@ function runFirstInteractiveTest(envelopes: ReplayEnvelope[]): PerfResult {
     }
   }
   
-  const elapsed = performance.now() - start;
+  const _elapsed = performance.now() - start;
   
   return {
     name: 'First Interactive',
@@ -343,7 +343,7 @@ export function runStreamingStoreScenario(): PerfResult {
   const mockSubscribers: Array<() => void> = [];
   let notificationCount = 0;
   let pendingNotification = false;
-  const notificationCadenceMs = 16;
+  const _notificationCadenceMs = 16;
   
   const subscribe = (callback: () => void) => {
     mockSubscribers.push(callback);
@@ -384,8 +384,8 @@ export function runStreamingStoreScenario(): PerfResult {
     
     updateCount++;
     
-    const elapsed = performance.now() - start;
-    updateProcessingTimes.push(elapsed);
+    const _elapsed = performance.now() - start;
+    updateProcessingTimes.push(_elapsed);
     
     scheduleNotification();
   };
@@ -455,12 +455,11 @@ export function runVirtualizedThreadScenario(): PerfResult {
     }
   }
 
-  const elapsed = performance.now() - start;
+  const _elapsed = performance.now() - start;
 
   // Calculate metrics
   const avgItemTime = elapsed / itemCount * 1000; // microseconds per item
   const windowRatio = totalVirtualItems / itemCount;
-  const memoryEfficiency = 1 - windowRatio;
 
   // Budget: 150ms for first interactive with 10k items
   const passed = elapsed <= 150 && stableKeys.every(k => k.includes("_stable"));
@@ -499,7 +498,7 @@ export function runMessageStreamingScenario(): PerfResult {
       updateProcessingTimes.push(performance.now() - chunkStart);
     }
 
-    const renderStart = performance.now();
+    const _renderStart = performance.now();
     messages.set(messageId, {
       id: messageId,
       content: messageContent,
@@ -508,7 +507,7 @@ export function runMessageStreamingScenario(): PerfResult {
     renderTimes.push(performance.now() - renderStart);
   }
 
-  const elapsed = performance.now() - start;
+  const _elapsed = performance.now() - start;
   const avgUpdateTime = updateProcessingTimes.reduce((a, b) => a + b, 0) / updateProcessingTimes.length;
   const avgRenderTime = renderTimes.reduce((a, b) => a + b, 0) / renderTimes.length;
 
@@ -546,7 +545,7 @@ export function runComposerActionsScenario(): PerfResult {
     });
     updateProcessingTimes.push(performance.now() - updateStart);
 
-    const renderStart = performance.now();
+    const _renderStart = performance.now();
     for (let a = 0; a < actionsPerMessage; a++) {
       const actionOpenStart = performance.now();
       const msg = messages.get(messageId);
@@ -564,7 +563,7 @@ export function runComposerActionsScenario(): PerfResult {
     }
   }
 
-  const elapsed = performance.now() - start;
+  const _elapsed = performance.now() - start;
   const avgUpdateTime = updateProcessingTimes.reduce((a, b) => a + b, 0) / updateProcessingTimes.length;
   const avgRenderTime = renderTimes.reduce((a, b) => a + b, 0) / renderTimes.length;
 
@@ -627,7 +626,7 @@ export function runThoughtUpdatesScenario(): PerfResult {
       groupItems.push(toolCallId);
     }
 
-    const renderStart = performance.now();
+    const _renderStart = performance.now();
     thoughtGroups.push({
       id: groupId,
       items: groupItems,
@@ -637,7 +636,7 @@ export function runThoughtUpdatesScenario(): PerfResult {
     renderTimes.push(performance.now() - renderStart);
   }
 
-  const elapsed = performance.now() - start;
+  const _elapsed = performance.now() - start;
   const avgUpdateTime = updateProcessingTimes.reduce((a, b) => a + b, 0) / updateProcessingTimes.length;
   const avgRenderTime = renderTimes.reduce((a, b) => a + b, 0) / renderTimes.length;
   const totalItems = thoughts.size + toolCalls.size;

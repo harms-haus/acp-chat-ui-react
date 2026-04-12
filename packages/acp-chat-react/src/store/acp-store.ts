@@ -16,10 +16,9 @@ import {
   type NormalizedThought,
   type NormalizedToolCall,
   type NormalizedPermissionRequest,
-  type PermissionRequestStatus,
   type TimelineItem,
   type SessionUpdateParams,
-} from "@harms-haus/acp-chat-core";
+  } from "@harms-haus/acp-chat-core";
 import type { SessionController, SessionControllerState } from "@harms-haus/acp-chat-core";
 
 /**

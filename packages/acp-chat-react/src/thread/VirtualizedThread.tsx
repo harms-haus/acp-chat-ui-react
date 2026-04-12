@@ -19,7 +19,9 @@ import { DEFAULT_VIRTUALIZATION_CONFIG } from "./types.js";
 import { createPretextEstimator } from "./pretext-estimator.js";
 import { DEFAULT_HEIGHT_ESTIMATOR_CONFIG } from "../types/height-estimator.js";
 import type {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ViewportObserverFactory,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Scheduler,
 } from "../types/browser-apis.js";
 import {
@@ -104,7 +106,7 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
     const previousItemCountRef = useRef(items.length);
     const previousItemsRef = useRef<ThreadItem[]>(items);
     const [recalcTrigger, setRecalcTrigger] = useState(0);
-    const recalculateIdsRef = useRef<Set<string>>(new Set());
+    const _recalculateIdsRef = useRef<Set<string>>(new Set());
 
     const injectedViewportObserverFactory = viewportObserverFactory ?? createViewportObserverFactory();
     const injectedScheduler = scheduler ?? defaultScheduler;
@@ -225,7 +227,7 @@ export const VirtualizedThread = forwardRef<VirtualizedThreadRef, VirtualizedThr
       setFollowScrollEnabled(enabled);
     }, []);
 
-    const recalculateHeights = useCallback((messageIds?: string[]) => {
+    const recalculateHeights = useCallback((_messageIds?: string[]) => {
       setRecalcTrigger((prev) => prev + 1);
     }, []);
 

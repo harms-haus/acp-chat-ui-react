@@ -88,7 +88,10 @@ vi.mock("../../transport/client.js", () => {
 });
 
 import { SessionController } from "../../session/controller.js";
-import type { ConnectionStatus } from "../../transport/client.js";
+import type {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  ConnectionStatus,
+} from "../../transport/client.js";
 import {
   createACPPayloadError,
   createBridgeEnvelope,

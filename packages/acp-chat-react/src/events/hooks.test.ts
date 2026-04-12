@@ -3,7 +3,7 @@
  * @fileoverview Tests for chat event hooks
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act, cleanup } from "@testing-library/react";
 import type { SessionController } from "@harms-haus/acp-chat-core";
 import { useChatEvent, useThoughtEvents, useToolCallEvents } from "./hooks";

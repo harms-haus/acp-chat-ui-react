@@ -10,7 +10,7 @@
  * 6. Test with various session types
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import { DefaultSessionCaptureInterceptor } from "../../session/capture-interceptor.js";
 import { ReplayController } from "../../session/replay-controller.js";
@@ -73,7 +73,7 @@ vi.mock("../../transport/client.js", () => {
       this.setStatus("disconnected");
     }
 
-    send(data: string) {}
+    send(_data: string) {}
 
     emitEnvelope(envelope: any) {
       this.handlers.envelope.forEach((h) => { h(envelope); });
@@ -83,9 +83,9 @@ vi.mock("../../transport/client.js", () => {
       this.handlers.error.forEach((h) => { h(error); });
     }
 
-    async initReplay(script: string, sessionId: string, replaySpeed?: number) {
-      return Promise.resolve({ status: "success" as const, mode: "replay" as const });
-    }
+  async initReplay(_script: string, _sessionId: string, _replaySpeed?: number) {
+    return Promise.resolve({ status: "success" as const, mode: "replay" as const });
+  }
   }
 
   return { TransportClient: MockTransportClient };
@@ -189,7 +189,7 @@ class MockSessionController {
 describe("Capture/Replay Flow Integration", () => {
   let controller: MockSessionController;
   let interceptor: DefaultSessionCaptureInterceptor;
-  let replayController: ReplayController;
+  let _replayController: ReplayController;
 
   beforeEach(() => {
     vi.clearAllMocks();

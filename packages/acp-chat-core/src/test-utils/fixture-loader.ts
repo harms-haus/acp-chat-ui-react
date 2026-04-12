@@ -228,7 +228,7 @@ function loadStructuredFixture(fixturePath: string): LoadedFixture {
   const fixturesDir = getFixturesDir();
   const fullPath = join(fixturesDir, fixturePath);
 
-  const [demoType, sessionName] = fixturePath.split('/');
+  const [demoType, _sessionName] = fixturePath.split('/');
   const eventsPath = join(fullPath, 'replay-events.jsonl');
   const manifestPath = join(fullPath, 'manifest.json');
 
@@ -277,11 +277,11 @@ function loadStructuredFixture(fixturePath: string): LoadedFixture {
       eventCount: sessionMetadata.eventCount || events.length,
       description: sessionMetadata.description || '',
     };
-  } else {
-    // Create minimal metadata
-    metadata = {
-      demoType,
-      sessionId: sessionId || 'unknown',
+} else {
+  // Create minimal metadata
+  metadata = {
+    demoType: demoType ?? 'unknown',
+    sessionId: sessionId || 'unknown',
       modes: [],
       models: [],
       capturedAt: Date.now(),
@@ -292,7 +292,7 @@ function loadStructuredFixture(fixturePath: string): LoadedFixture {
   }
 
   return {
-    demoType,
+    demoType: demoType ?? 'unknown',
     sessionId: sessionId || 'unknown',
     metadata,
     sessionData,

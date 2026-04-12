@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   // Fixture loaders
   listFixtures,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   loadReplayFixture,
   loadReplayFixtureMetadata,
   // Mock implementations
@@ -21,7 +22,7 @@ import {
   createSessionUpdateEnvelope,
   createInitializeResult,
   createCreateSessionResult,
-  createPermissionRequestParams,
+  createPermissionRequestParams as _createPermissionRequestParams,
   createPermissionRequestEnvelope,
   createListSessionsResult,
   createLoadSessionResult,

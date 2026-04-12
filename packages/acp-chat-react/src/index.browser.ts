@@ -21,7 +21,8 @@ import {
   SessionController,
   type SessionControllerState,
 } from "@harms-haus/acp-chat-core";
-import { AcpStore, createAcpStore, type AcpStoreConfig } from "./store/index.js";
+import { createAcpStore, type AcpStoreConfig } from "./store/index.js";
+import type { AcpStore } from "./store/index.js";
 
 export { SessionController } from "@harms-haus/acp-chat-core";
 export type { SessionControllerState } from "@harms-haus/acp-chat-core";

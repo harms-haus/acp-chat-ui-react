@@ -69,11 +69,10 @@ export function Thread({
   follow,
   controller,
 }: ThreadProps) {
-  const timelineItems = useTimelineItems(store);
-  const isConnected = useIsConnected(store);
-  const streamingMessage = useActiveStreamingMessage(store);
-  const isAgentTyping = !!streamingMessage;
-  const toolCallsArray = useToolCalls(store);
+const timelineItems = useTimelineItems(store);
+const isConnected = useIsConnected(store);
+const _streamingMessage = useActiveStreamingMessage(store);
+const toolCallsArray = useToolCalls(store);
   const toolCalls = useMemo(() => {
     return new Map(toolCallsArray.map(call => [call.toolCallId, call]));
   }, [toolCallsArray]);

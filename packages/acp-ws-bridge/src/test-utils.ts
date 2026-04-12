@@ -169,7 +169,7 @@ export class MockWebSocket extends EventTarget {
 
   /** Dispatch event and call appropriate handler if set */
   private _dispatchEvent(event: Event): void {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+     
     super.dispatchEvent(event);
 
     switch (event.type) {

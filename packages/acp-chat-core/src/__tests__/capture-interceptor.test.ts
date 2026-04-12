@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   DefaultSessionCaptureInterceptor,
-  type CapturedSession,
 } from "../session/capture-interceptor.js";
 import type { BridgeEnvelope } from "../generated/index.js";
 import type { ReplaySessionData } from "../replay/types.js";

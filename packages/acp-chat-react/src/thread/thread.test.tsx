@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import { screen, fireEvent, act, waitFor } from "@testing-library/react";
 import { Thread } from "./Thread.js";
 import { customRender } from "../test-utils/render.js";
 import { mockChatCore } from "../test-utils/mocks.js";
@@ -213,7 +213,7 @@ describe("Thread", () => {
         initialized: true,
       });
 
-      const { store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
+      const { store: _store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
 
       const userMessage = createMockMessage({
         role: "user",
@@ -234,7 +234,7 @@ describe("Thread", () => {
         }
       });
 
-      const timeline = store.getTimeline();
+      const _timeline = store.getTimeline();
 
       await waitFor(() => {
         expect(screen.getByText("Hello from user")).toBeTruthy();
@@ -248,7 +248,7 @@ describe("Thread", () => {
         initialized: true,
       });
 
-      const { store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
+      const { store: _store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
 
       const agentMessage = createMockMessage({
         role: "agent",
@@ -271,7 +271,7 @@ describe("Thread", () => {
         initialized: true,
       });
 
-      const { store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
+      const { store: _store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
 
       const messages: NormalizedMessage[] = [
         createMockMessage({ role: "user", content: "First message" }),
@@ -299,7 +299,7 @@ describe("Thread", () => {
         initialized: true,
       });
 
-      const { store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
+      const { store: _store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
 
       const thought = createMockThought({
         content: "Thinking about the solution...",
@@ -311,7 +311,7 @@ describe("Thread", () => {
         });
       });
 
-      const timeline = store.getTimeline();
+      const _timeline = store.getTimeline();
 
       await waitFor(() => {
         const thoughtElement = document.querySelector("[data-acp-thought-root]");

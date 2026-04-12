@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, renderHook, act } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, fireEvent, renderHook, act, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { MessageActionBar } from "./MessageActionBar.js";
 import { useMessageActions } from "./use-message-actions.js";

@@ -13,7 +13,7 @@
  * - README.md included
  */
 
-import { readFileSync, readdirSync, existsSync, statSync } from 'fs';
+import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { execSync } from 'child_process';
 
@@ -118,7 +118,7 @@ function log(message: string, level: 'info' | 'warn' | 'error' = 'info') {
   console.log(`[${timestamp}] ${prefix} ${message}`);
 }
 
-function logVerbose(message: string) {
+function _logVerbose(message: string) {
   if (verbose) {
     log(message, 'info');
   }
@@ -149,7 +149,7 @@ function getAllFiles(dir: string, basePath: string = dir): string[] {
 
 function getPackagePaths(): string[] {
   const workspaceYaml = readFileSync('pnpm-workspace.yaml', 'utf-8');
-  const match = workspaceYaml.match(/packages:\s*-\s*"(.*)"/);
+  const _match = workspaceYaml.match(/packages:\s*-\s*"(.*)"/);
 
   if (!match) {
     throw new Error('Could not parse pnpm-workspace.yaml');
@@ -212,7 +212,7 @@ function parseNpmPackDryRun(output: string): {
 // Check Functions
 // ============================================================================
 
-function checkSourceMaps(packagePath: string, packageJson: PackageJson): CheckResult {
+function checkSourceMaps(packagePath: string, _packageJson: PackageJson): CheckResult {
   const distPath = join(packagePath, 'dist');
 
   if (!existsSync(distPath)) {
@@ -241,7 +241,7 @@ function checkSourceMaps(packagePath: string, packageJson: PackageJson): CheckRe
   };
 }
 
-function checkTestFiles(packagePath: string, packageJson: PackageJson): CheckResult {
+function checkTestFiles(packagePath: string, _packageJson: PackageJson): CheckResult {
   const distPath = join(packagePath, 'dist');
 
   if (!existsSync(distPath)) {
@@ -277,7 +277,7 @@ function checkTestFiles(packagePath: string, packageJson: PackageJson): CheckRes
   };
 }
 
-function checkDebugCode(packagePath: string, packageJson: PackageJson): CheckResult {
+function checkDebugCode(packagePath: string, _packageJson: PackageJson): CheckResult {
   const distPath = join(packagePath, 'dist');
 
   if (!existsSync(distPath)) {
@@ -297,13 +297,13 @@ function checkDebugCode(packagePath: string, packageJson: PackageJson): CheckRes
 
     // Check for console.log
     const consoleLogMatches = content.matchAll(/console\.log\(/g);
-    for (const match of consoleLogMatches) {
+    for (const _match of consoleLogMatches) {
       issues.push(`console.log in dist/${file}`);
     }
 
     // Check for debugger statements
     const debuggerMatches = content.matchAll(/debugger;?/g);
-    for (const match of debuggerMatches) {
+    for (const _match of debuggerMatches) {
       issues.push(`debugger statement in dist/${file}`);
     }
   }
@@ -323,7 +323,7 @@ function checkDebugCode(packagePath: string, packageJson: PackageJson): CheckRes
   };
 }
 
-function checkDevCode(packagePath: string, packageJson: PackageJson): CheckResult {
+function checkDevCode(packagePath: string, _packageJson: PackageJson): CheckResult {
   const distPath = join(packagePath, 'dist');
 
   if (!existsSync(distPath)) {
@@ -362,7 +362,7 @@ function checkDevCode(packagePath: string, packageJson: PackageJson): CheckResul
   };
 }
 
-function checkExports(packagePath: string, packageJson: PackageJson): CheckResult {
+function checkExports(_packagePath: string, _packageJson: PackageJson): CheckResult {
   const exports = packageJson.exports;
   const issues: string[] = [];
 
@@ -415,7 +415,7 @@ function checkExports(packagePath: string, packageJson: PackageJson): CheckResul
   };
 }
 
-function checkWorkspaceDeps(packagePath: string, packageJson: PackageJson): CheckResult {
+function checkWorkspaceDeps(_packagePath: string, _packageJson: PackageJson): CheckResult {
   const issues: string[] = [];
   const allDeps = {
     ...packageJson.dependencies,
@@ -443,8 +443,8 @@ function checkWorkspaceDeps(packagePath: string, packageJson: PackageJson): Chec
   };
 }
 
-function checkLicense(packagePath: string, packageJson: PackageJson, tarballContents: string[]): CheckResult {
-  const hasLicense = tarballContents.some(c => c.endsWith('/LICENSE'));
+function checkLicense(_packagePath: string, _packageJson: PackageJson, _tarballContents: string[]): CheckResult {
+  const hasLicense = _tarballContents.some(c => c.endsWith('/LICENSE'));
 
   if (!hasLicense) {
     return {
@@ -461,8 +461,8 @@ function checkLicense(packagePath: string, packageJson: PackageJson, tarballCont
   };
 }
 
-function checkReadme(packagePath: string, packageJson: PackageJson, tarballContents: string[]): CheckResult {
-  const hasReadme = tarballContents.some(c =>
+function checkReadme(_packagePath: string, _packageJson: PackageJson, _tarballContents: string[]): CheckResult {
+  const hasReadme = _tarballContents.some(c =>
     c.endsWith('/README.md') ||
     c.endsWith('/README') ||
     c.endsWith('/readme.md')

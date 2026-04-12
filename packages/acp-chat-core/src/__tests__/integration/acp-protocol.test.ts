@@ -21,9 +21,13 @@ import {
   createLoadSessionResult,
 } from "../../test-utils/index.js";
 import type {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   JsonRpcRequest,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   JsonRpcResponse,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   JsonRpcError,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   JsonRpcNotification,
 } from "../../test-utils/index.js";
 
@@ -97,9 +101,9 @@ vi.mock("../../transport/client.js", () => {
       this.handlers.error.forEach((h) => { h(error); });
     }
 
-    async initReplay(script: string, sessionId: string, replaySpeed?: number) {
-      return Promise.resolve({ status: "success" as const, mode: "replay" as const });
-    }
+  async initReplay(_script: string, _sessionId: string, _replaySpeed?: number) {
+    return Promise.resolve({ status: "success" as const, mode: "replay" as const });
+  }
   }
 
   return { TransportClient: MockTransportClient };

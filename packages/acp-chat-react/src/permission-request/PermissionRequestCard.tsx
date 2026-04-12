@@ -113,7 +113,6 @@ export const PermissionRequestCard = memo(function PermissionRequestCard({
 
   const hasToolCall = toolCall !== undefined;
   const kind = hasToolCall ? toolCall.kind : undefined;
-  const title = hasToolCall ? toolCall.title : undefined;
   const details = hasToolCall ? getToolCallDetails(toolCall) : null;
 
   return (

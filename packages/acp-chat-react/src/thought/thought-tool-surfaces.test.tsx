@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi as _vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ThoughtStack } from "./ThoughtStack.js";
 import { ToolCall } from "../tool-call/ToolCall.js";

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { AcpStore, createAcpStore } from "./acp-store.js";
-import { SessionController } from "@harms-haus/acp-chat-core";
+import { type SessionController } from "@harms-haus/acp-chat-core";
 import type { SessionControllerState } from "@harms-haus/acp-chat-core";
 
 describe("AcpStore", () => {
@@ -177,9 +177,9 @@ describe("AcpStore", () => {
   });
 
   describe("ACP update processing", () => {
-    it("processes sessionUpdate events immediately", () => {
-      let statusHandler: ((state: SessionControllerState) => void) | null = null;
-      let updateHandler: ((params: unknown) => void) | null = null;
+  it("processes sessionUpdate events immediately", () => {
+    let _statusHandler: ((state: SessionControllerState) => void) | null = null;
+    let updateHandler: ((params: unknown) => void) | null = null;
 
       const mockController = {
         getState: vi.fn(() => ({

@@ -12,6 +12,9 @@ export default tseslint.config(
       '**/*.config.*',
       '**/coverage/**',
       '**/crates/**',
+      '**/.sisyphus/**',
+      'old-acp-svelte-chat-ui/**',
+      'packages/acp-harness-ui/tests/visual/**',
     ],
   },
   {
@@ -54,7 +57,23 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    files: [
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/__tests__/**/*.ts',
+      '**/__tests__/**/*.tsx',
+      '**/__mocks__/**/*.ts',
+      '**/__mocks__/**/*.tsx',
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: [
+          'tsconfig.eslint.json',
+          'packages/*/tsconfig.eslint.json',
+        ],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',

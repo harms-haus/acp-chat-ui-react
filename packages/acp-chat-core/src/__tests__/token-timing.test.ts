@@ -87,11 +87,11 @@ describe("token timing utilities", () => {
     const TPS = 65;
     const ZERO_TOKEN_DELAY_MS = 15;
 
-    it("calculates delay for 0 tokens as 15ms", () => {
-      const tokenCount = 0;
-      const delay = ZERO_TOKEN_DELAY_MS;
-      expect(delay).toBe(15);
-    });
+  it("calculates delay for 0 tokens as 15ms", () => {
+    const tokenCount = 0;
+    const delay = (tokenCount / TPS) * 1000;
+    expect(delay).toBe(ZERO_TOKEN_DELAY_MS);
+  });
 
     it("calculates delay for 1 token at 65 TPS", () => {
       const tokenCount = 1;

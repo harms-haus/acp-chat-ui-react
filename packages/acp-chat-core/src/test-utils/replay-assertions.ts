@@ -24,7 +24,11 @@
  * ```
  */
 
-import type { ReplayOutcome, RecordedSessionUpdate, RecordedPermissionRequest } from './replay-runner.js';
+import type { ReplayOutcome, RecordedSessionUpdate } from './replay-runner.js';
+import type {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  RecordedPermissionRequest,
+} from './replay-runner.js';
 import type { PermissionOption } from '../session/controller.js';
 
 /**

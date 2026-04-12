@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { Button } from "@base-ui-components/react/button";
 import { Separator } from "@base-ui-components/react/separator";
 import {
   SessionList,

@@ -4,9 +4,7 @@ import {
   createGroupedTimeline,
   isThoughtGroupActive,
   shouldThoughtGroupBeOpen,
-  type ThoughtItem,
   type ThoughtGroup,
-  type GroupedTimelineItem,
 } from "./thought-stack-logic.js";
 import type { TimelineItem, NormalizedThought, NormalizedToolCall, NormalizedMessage } from "../normalization/index.js";
 

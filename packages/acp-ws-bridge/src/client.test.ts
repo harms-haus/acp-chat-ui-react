@@ -33,7 +33,7 @@ describe("TransportClient", () => {
     // Save original WebSocket
     originalWebSocket = global.WebSocket;
     // Mock WebSocket constructor to use MockWebSocket
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     global.WebSocket = MockWebSocket as any;
     // Reset timers
     vi.useFakeTimers();
@@ -136,7 +136,7 @@ describe("TransportClient", () => {
       client.on("statusChange", statusHandler);
 
       // Mock WebSocket constructor to throw
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       global.WebSocket = vi.fn(() => {
         throw new Error("WebSocket constructor failed");
       }) as any;
@@ -352,7 +352,7 @@ describe("TransportClient", () => {
       client.on("error", errorHandler);
 
       // Mock WebSocket to throw
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       global.WebSocket = vi.fn(() => {
         throw new TypeError("TypeError: Failed to construct 'WebSocket'");
       }) as any;

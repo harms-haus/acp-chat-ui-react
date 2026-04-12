@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { PermissionRequestCard } from "./PermissionRequestCard.js";
 import { createMockPermissionRequest, createMockToolCall } from "../test-utils/factories.js";
@@ -395,17 +395,17 @@ describe("PermissionRequestCard", () => {
       const request = createMockRequest();
       const toolCall = createMockTool({
         kind: "read",
-        title: "Read file",
-        rawInput: {},
-      });
+  title: "Read file",
+  rawInput: {},
+});
 
-      const { container } = render(
-        <PermissionRequestCard
-          request={request}
-          toolCall={toolCall}
-          onRespond={vi.fn()}
-        />
-      );
+render(
+  <PermissionRequestCard
+    request={request}
+    toolCall={toolCall}
+    onRespond={vi.fn()}
+  />
+);
 
       expect(screen.queryByRole("img")).not.toBeInTheDocument();
     });
@@ -454,7 +454,7 @@ describe("PermissionRequestCard", () => {
         const request = createMockRequest();
         const toolCall = createMockTool({ kind, title: "Test" });
 
-        const { container } = render(
+render(
           <PermissionRequestCard
             request={request}
             toolCall={toolCall}

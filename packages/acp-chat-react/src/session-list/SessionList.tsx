@@ -73,7 +73,7 @@ const SessionRow = memo(function SessionRow({
 
 SessionRow.displayName = "SessionRow";
 
-function DefaultSessionItemRender({
+function _DefaultSessionItemRender({
   session,
   isSelected,
   isLoading,

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { SessionList } from "./SessionList.js";
 import type { SessionController, SessionControllerState } from "@harms-haus/acp-chat-core";
-import type { SessionItem } from "./types.js";
 
 const createMockController = (
   overrides: Partial<SessionController> = {}

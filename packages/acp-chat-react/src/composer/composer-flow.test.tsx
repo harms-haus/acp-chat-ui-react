@@ -372,7 +372,7 @@ describe("Composer disabled states", () => {
 
   describe("settings row", () => {
     it("should not render settings row by default", () => {
-      const store = createMockStore();
+      const _store = createMockStore();
       const mockController = createMockController();
 
       const { container } = render(<Composer store={store} controller={mockController} />);
@@ -382,7 +382,7 @@ describe("Composer disabled states", () => {
     });
 
     it("should render settings row when renderSettingsRow is provided", () => {
-      const store = createMockStore();
+      const _store = createMockStore();
       const mockController = createMockController();
       const customSettingsRow = vi.fn(() => <div data-testid="custom-settings">Custom Settings</div>);
 
@@ -392,7 +392,7 @@ describe("Composer disabled states", () => {
     });
 
     it("should pass settings data to renderSettingsRow", async () => {
-      const store = createMockStore();
+      const _store = createMockStore();
       const mockController = createMockController();
       const customSettingsRow = vi.fn(() => <div data-testid="custom-settings">Custom Settings</div>);
 
@@ -416,9 +416,9 @@ describe("Composer disabled states", () => {
     });
 
     it("should call onModeChange when mode is selected", async () => {
-      const store = createMockStore();
+      const _store = createMockStore();
       const mockController = createMockController();
-      const onModeChange = vi.fn();
+      const _onModeChange = vi.fn();
 
       const customSettingsRow = vi.fn(({ onModeChange: onChange }) => (
         <button
@@ -440,7 +440,7 @@ describe("Composer disabled states", () => {
     });
 
     it("should call onModelChange when model is selected", async () => {
-      const store = createMockStore();
+      const _store = createMockStore();
       const mockController = createMockController();
 
       const customSettingsRow = vi.fn(({ onModelChange: onChange }) => (
@@ -463,7 +463,7 @@ describe("Composer disabled states", () => {
     });
 
     it("should call onSessionChange when session is selected", async () => {
-      const store = createMockStore();
+      const _store = createMockStore();
       const mockController = createMockController();
 
       const customSettingsRow = vi.fn(({ onSessionChange: onChange }) => (
@@ -486,7 +486,7 @@ describe("Composer disabled states", () => {
     });
 
     it("should have data-acp-composer-has-settings attribute when settings row is provided", () => {
-      const store = createMockStore();
+      const _store = createMockStore();
       const mockController = createMockController();
       const customSettingsRow = vi.fn(() => <div>Settings</div>);
 

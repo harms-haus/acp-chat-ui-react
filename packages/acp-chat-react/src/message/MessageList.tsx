@@ -9,7 +9,7 @@ export const MessageList = memo(function MessageList({
   gap = 8,
 }: MessageListProps) {
   const defaultRenderMessage = useCallback(
-    (message: typeof messages[0], index: number) => (
+    (message: typeof messages[0], _index: number) => (
       <MessageCard
         key={message.id}
         message={message}

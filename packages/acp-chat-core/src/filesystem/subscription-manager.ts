@@ -2,10 +2,6 @@ import type {
   FileReadHandler,
   FileWriteHandler,
   FileSystemSubscription,
-  FileReadRequest,
-  FileWriteRequest,
-  FileReadResponse,
-  FileWriteResponse,
 } from "./types.js";
 
 export class FileSystemSubscriptionManager {

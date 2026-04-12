@@ -7,7 +7,8 @@
 import React from 'react';
 import { render as rtlRender, type RenderOptions, type RenderResult } from '@testing-library/react';
 import { EventProvider } from '../events/EventProvider.js';
-import { AcpStore, createAcpStore } from '../store/index.js';
+import { createAcpStore } from '../store/index.js';
+import type { AcpStore } from '../store/index.js';
 import type { SessionController } from '@harms-haus/acp-chat-core';
 
 /**

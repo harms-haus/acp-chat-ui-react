@@ -34,7 +34,10 @@
  */
 
 import type { ReplayController } from '../session/replay-controller.js';
-import type { BridgeEnvelope } from '../generated/index.js';
+import type {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  BridgeEnvelope,
+} from '../generated/index.js';
 import type { PermissionOption } from '../session/controller.js';
 import type { LoadedFixture, LoadedReplayEvent } from './fixture-loader.js';
 
@@ -343,7 +346,7 @@ export class ReplayRunner {
    * Process all events from the fixture.
    */
   private async processEvents(): Promise<void> {
-    const { fixture, controller } = this.config;
+    const { fixture, controller: _controller } = this.config;
     const events = fixture.events;
 
     if (events.length === 0) {
@@ -389,19 +392,22 @@ export class ReplayRunner {
     }
   }
 
-  /**
-   * Build the replay outcome.
-   */
-  private buildOutcome(success: boolean, error?: Error): ReplayOutcome {
-    return {
-      success,
-      error: error?.message,
-      sessionUpdates: this.getSessionUpdates(),
-      permissionRequests: this.getPermissionRequests(),
-      statistics: this.getStatistics(),
-      fixture: this.config.fixture,
-    };
+/**
+ * Build the replay outcome.
+ */
+private buildOutcome(success: boolean, error?: Error): ReplayOutcome {
+  const outcome: ReplayOutcome = {
+    success,
+    sessionUpdates: this.getSessionUpdates(),
+    permissionRequests: this.getPermissionRequests(),
+    statistics: this.getStatistics(),
+    fixture: this.config.fixture,
+  };
+  if (error) {
+    outcome.error = error.message;
   }
+  return outcome;
+}
 
   /**
    * Clean up resources.
@@ -422,8 +428,8 @@ export class ReplayRunner {
  * @returns A configured ReplayRunner instance
  */
 export function createReplayRunner(
-  controller: ReplayController,
-  fixturePath: string
+  _controller: ReplayController,
+  _fixturePath: string
 ): ReplayRunner {
   // This would require dynamic import of fixture-loader
   // For now, the caller should load the fixture themselves

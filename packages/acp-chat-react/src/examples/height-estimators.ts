@@ -320,16 +320,16 @@ export class AsyncImageAwareEstimator implements HeightEstimator {
           continue;
         }
 
-        // Load image dimensions
-        try {
-          const dimensions = await this.loadImageDimensionsFromUri(uri);
-          this.imageDimensionCache.set(uri, dimensions);
-          const scaledHeight = this.scaleImageToWidth(dimensions.width, dimensions.height, effectiveWidth);
-          blockHeights.push(scaledHeight);
-        } catch (error) {
-          // Fall back to default block height if loading fails
-          blockHeights.push(config.richContentBlockHeight || 100);
-        }
+    // Load image dimensions
+    try {
+      const dimensions = await this.loadImageDimensionsFromUri(uri);
+      this.imageDimensionCache.set(uri, dimensions);
+      const scaledHeight = this.scaleImageToWidth(dimensions.width, dimensions.height, effectiveWidth);
+      blockHeights.push(scaledHeight);
+    } catch (_error) {
+      // Fall back to default block height if loading fails
+      blockHeights.push(config.richContentBlockHeight || 100);
+    }
       }
     }
 

@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "packages/acp-chat-core/src/**/*.ts",
+    "packages/acp-chat-core/src/**/*.tsx",
+    "packages/acp-chat-core/src/**/*.test.ts",
+    "packages/acp-chat-core/src/**/*.test.tsx",
+    "packages/acp-chat-core/src/**/*.spec.ts",
+    "packages/acp-chat-core/src/**/*.spec.tsx",
+    "packages/acp-chat-core/src/*/fixtures/**/*.ts",
+    "packages/acp-chat-core/src/*/mocks/**/*.ts",
+    "packages/acp-chat-react/src/**/*.ts",
+    "packages/acp-chat-react/src/**/*.tsx",
+    "packages/acp-chat-react/src/**/*.test.ts",
+    "packages/acp-chat-react/src/**/*.test.tsx",
+    "packages/acp-chat-react/src/**/*.spec.ts",
+    "packages/acp-chat-react/src/**/*.spec.tsx",
+    "packages/acp-chat-react/src/*/fixtures/**/*.ts",
+    "packages/acp-chat-react/src/*/mocks/**/*.ts",
+    "packages/acp-ws-bridge/src/**/*.ts",
+    "packages/acp-ws-bridge/src/**/*.test.ts",
+    "packages/acp-ws-bridge/src/**/*.spec.ts",
+    "packages/acp-ws-bridge/src/*/fixtures/**/*.ts",
+    "packages/acp-ws-bridge/src/*/mocks/**/*.ts",
+    "packages/acp-harness-ui/src/**/*.ts",
+    "packages/acp-harness-ui/src/**/*.tsx",
+    "packages/acp-harness-ui/src/**/*.test.ts",
+    "packages/acp-harness-ui/src/**/*.test.tsx",
+    "packages/acp-harness-ui/src/**/*.spec.ts",
+    "packages/acp-harness-ui/src/**/*.spec.tsx",
+    "packages/acp-harness-ui/src/*/fixtures/**/*.ts",
+    "packages/acp-harness-ui/src/*/mocks/**/*.ts",
+    "packages/integration-tests/src/**/*.ts",
+    "packages/integration-tests/src/**/*.tsx",
+    "packages/integration-tests/src/**/*.test.ts",
+    "packages/integration-tests/src/**/*.test.tsx",
+    "packages/integration-tests/src/**/*.spec.ts",
+    "packages/integration-tests/src/**/*.spec.tsx"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

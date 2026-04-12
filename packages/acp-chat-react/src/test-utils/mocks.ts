@@ -5,7 +5,8 @@
  * test instances of the ACP store and related components.
  */
 
-import { AcpStore, createAcpStore } from '../store/index.js';
+import { createAcpStore } from '../store/index.js';
+import type { AcpStore } from '../store/index.js';
 import type { SessionControllerState, PermissionOption } from '@harms-haus/acp-chat-core';
 
 /**

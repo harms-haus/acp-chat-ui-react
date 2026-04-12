@@ -1,8 +1,5 @@
-import { useSyncExternalStore, useRef, useMemo, useCallback } from "react";
+import { useSyncExternalStore, useMemo, useCallback, useRef } from "react";
 import type { SessionController } from "@harms-haus/acp-chat-core";
-
-// Stable empty snapshot for server-side rendering to prevent hydration mismatches
-const EMPTY_SERVER_SNAPSHOT: { activeThoughts: string[]; activeToolCalls: string[] } = { activeThoughts: [], activeToolCalls: [] };
 
 /**
  * Event types emitted by SessionController

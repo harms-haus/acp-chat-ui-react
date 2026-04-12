@@ -15,11 +15,11 @@ import {
 import {
   PACKAGE_VERSION,
   SessionController,
-  type SessionControllerState,
-  type StartAgentConfig,
-  ReplayController,
-  type SessionCaptureInterceptor,
-  type InitSuccess,
+  type ReplayController,
+} from "@harms-haus/acp-chat-core";
+import type {
+  SessionControllerState,
+  SessionCaptureInterceptor,
 } from "@harms-haus/acp-chat-core";
 import { SettingsRow } from "./SettingsRow.js";
 import { ReplayPanel } from "./components/ReplayPanel.js";
@@ -286,10 +286,10 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<PanelTab>("replay");
   const [source, setSource] = useState<SessionSource>("replay");
-  const [bridgeUrl, setBridgeUrl] = useState(initialSettings.bridgeUrl);
-  const [command, setCommand] = useState(initialSettings.command);
-  const [commandArgs, setCommandArgs] = useState(initialSettings.commandArgs);
-  const [commandCwd, setCommandCwd] = useState(initialSettings.commandCwd);
+  const [bridgeUrl, _setBridgeUrl] = useState(initialSettings.bridgeUrl);
+  const [command, _setCommand] = useState(initialSettings.command);
+  const [commandArgs, _setCommandArgs] = useState(initialSettings.commandArgs);
+  const [commandCwd, _setCommandCwd] = useState(initialSettings.commandCwd);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
   const [bridgeStatus, setBridgeStatus] = useState<string>("disconnected");
   const [isInitialized, setIsInitialized] = useState(false);
@@ -297,7 +297,7 @@ export default function App() {
   const [selectedModeId, setSelectedModeId] = useState<string | undefined>(undefined);
   const [selectedModelId, setSelectedModelId] = useState<string | undefined>(undefined);
   const [selectedSessionId, setSelectedSessionId] = useState<string | undefined>(undefined);
-  const [availableSessions, setAvailableSessions] = useState<SessionItem[]>([]);
+  const [_availableSessions, _setAvailableSessions] = useState<SessionItem[]>([]);
 
   const controllerRef = useRef<SessionController | null>(null);
   const replayControllerRef = useRef<ReplayController | null>(null);
@@ -351,11 +351,11 @@ export default function App() {
 
     setConnectionStatus("connecting");
 
-    const controller = new SessionController(url, 30000);
-    const store = new AcpStore(controller);
+const controller = new SessionController(url, 30000);
+  const _store = new AcpStore(controller);
 
-    controllerRef.current = controller;
-    storeRef.current = store;
+  controllerRef.current = controller;
+  storeRef.current = _store;
 
     const unsubStatus = controller.on("statusChange", (state: SessionControllerState) => {
       console.log('[App] statusChange:', state.connectionStatus, state.bridgeStatus);
@@ -390,20 +390,20 @@ export default function App() {
       if (agentConfig.cwd) {
         startAgentConfig.cwd = agentConfig.cwd;
       }
-      controller.startAgent(startAgentConfig).catch((err: unknown) => {
-        console.error("Failed to send startAgent:", err);
-      });
-    }
-    
-    setActiveStore(store);
+controller.startAgent(startAgentConfig).catch((err: unknown) => {
+    console.error("Failed to send startAgent:", err);
+  });
 
-    return () => {
+  setActiveStore(_store);
+  }
+
+  return () => {
       unsubStatus();
       unsubError();
     };
   }, [disconnect]);
 
-  const handleSourceChange = useCallback((newSource: SessionSource) => {
+  const _handleSourceChange = useCallback((newSource: SessionSource) => {
     const activeModes: SessionSource[] = ["replay", "live"];
     const wasActiveSession = activeModes.includes(source);
     const isActiveSession = activeModes.includes(newSource);
@@ -417,10 +417,10 @@ export default function App() {
   const handleReplayControllerChange = useCallback((controller: ReplayController | null) => {
     replayControllerRef.current = controller;
 
-    if (controller) {
-      const store = new AcpStore(controller as unknown as SessionController, { enableBatching: false });
-      storeRef.current = store;
-      setActiveStore(store);
+if (controller) {
+    const _store = new AcpStore(controller as unknown as SessionController, { enableBatching: false });
+    storeRef.current = _store;
+    setActiveStore(_store);
 
       const unsubStatus = controller.on("statusChange", (state) => {
         setConnectionStatus(state.connectionStatus as ConnectionStatus);
@@ -497,7 +497,7 @@ export default function App() {
     };
   }, [disconnect]);
 
-  const store = activeStore ?? stableMockStore;
+  const _store = activeStore ?? stableMockStore;
 
   const isLiveModeEnabled = import.meta.env.VITE_ENABLE_LIVE_MODE === "true";
 
@@ -594,8 +594,8 @@ export default function App() {
 
         <Separator orientation="horizontal" style={{ margin: "16px 0" }} />
 
-          <ThreadPanel
-            store={store}
+<ThreadPanel
+  store={_store}
             controller={controllerRef.current || replayControllerRef.current || createMockController()}
             renderSettingsRow={(props) => (
               <SettingsRow
@@ -623,15 +623,15 @@ export default function App() {
           />
         </div>
 
-        <aside data-acp-shell-sidebar>
-          <h3 style={{ fontSize: "14px", marginBottom: "12px" }}>Diagnostics</h3>
-          <DiagnosticsPanel store={store} />
+<aside data-acp-shell-sidebar>
+  <h3 style={{ fontSize: "14px", marginBottom: "12px" }}>Diagnostics</h3>
+  <DiagnosticsPanel store={_store} />
 
-          <Separator orientation="horizontal" style={{ margin: "16px 0" }} />
+  <Separator orientation="horizontal" style={{ margin: "16px 0" }} />
 
-          <h3 style={{ fontSize: "14px", marginBottom: "12px" }}>Performance</h3>
-          <PerfDisplay store={store} />
-        </aside>
+  <h3 style={{ fontSize: "14px", marginBottom: "12px" }}>Performance</h3>
+  <PerfDisplay store={_store} />
+</aside>
       </div>
     </div>
   );

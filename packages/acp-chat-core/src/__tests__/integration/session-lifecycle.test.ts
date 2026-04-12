@@ -8,8 +8,11 @@ import { ReplayController } from "../../session/replay-controller.js";
 import { ReplayRunner } from "../../test-utils/replay-runner.js";
 import { loadFixture } from "../../test-utils/fixture-loader.js";
 import {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   assertReplaySuccess,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   assertReplayStatistics,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   summarizeReplay,
 } from "../../test-utils/replay-assertions.js";
 
@@ -69,7 +72,7 @@ vi.mock("../../transport/client.js", () => {
       this.setStatus("disconnected");
     }
 
-    send(data: string) {}
+    send(_data: string) {}
 
     emitEnvelope(envelope: any) {
       this.handlers.envelope.forEach((h) => { h(envelope); });
@@ -79,7 +82,7 @@ vi.mock("../../transport/client.js", () => {
       this.handlers.error.forEach((h) => { h(error); });
     }
 
-    async initReplay(script: string, sessionId: string, replaySpeed?: number) {
+    async initReplay(_script: string, _sessionId: string, _replaySpeed?: number) {
       return Promise.resolve({ status: "success" as const, mode: "replay" as const });
     }
   }

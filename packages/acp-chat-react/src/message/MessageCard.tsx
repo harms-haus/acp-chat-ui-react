@@ -1,15 +1,14 @@
 import { memo, useMemo, useCallback } from "react";
 import type { NormalizedMessage } from "@harms-haus/acp-chat-core";
 import type { MessageCardProps } from "./types.js";
-import type { Logger } from "../utils/logger.js";
-import { noOpLogger } from "../utils/logger.js";
+import { noOpLogger, type Logger } from "../utils/logger.js";
 import { ContentRenderer } from "../content/ContentRenderer.js";
 import { MessageStatusIndicator } from "./MessageStatusIndicator.js";
 import { MessageTimestamp } from "./MessageTimestamp.js";
 import { MessageActionBar } from "../actions/MessageActionBar.js";
 import type { MessageAction } from "../actions/types.js";
 
-function formatTime(timestamp: number): string {
+function _formatTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
@@ -29,7 +28,7 @@ export const MessageCard = memo(function MessageCard({
   className = "",
   actions,
   onCopy,
-  logger = noOpLogger,
+  logger: _logger = noOpLogger,
 }: MessageCardExtendedProps) {
   const roleClass = useMemo(
     () => (message.role === "user" ? "acp-message--user" : "acp-message--agent"),

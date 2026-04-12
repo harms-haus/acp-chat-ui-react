@@ -26,7 +26,7 @@ function DefaultSettingsRow({
 }: SettingsRowRenderProps) {
   const selectedMode = modes.find((m) => m.id === selectedModeId) ?? null;
   const selectedModel = models.find((m) => m.id === selectedModelId) ?? null;
-  const selectedSession = sessions.find((s) => s.sessionId === selectedSessionId) ?? null;
+  const _selectedSession = sessions.find((s) => s.sessionId === selectedSessionId) ?? null;
 
   const sessionOptions: SessionOption[] = useMemo(
     () =>

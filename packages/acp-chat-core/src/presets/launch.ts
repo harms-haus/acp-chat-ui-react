@@ -10,9 +10,9 @@ export interface LaunchPreset {
 
 const BRIDGE_URL_DEFAULT = "ws://127.0.0.1:8765";
 
-function getEnvVar(key: string, fallback: string | null = null): string | null {
-    try {
-        const env = (import.meta as { env?: Record<string, string | undefined> }).env;
+function _getEnvVar(key: string, fallback: string | null = null): string | null {
+  try {
+    const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
         if (env && env[key] !== undefined) {
             return env[key] ?? fallback;
         }
@@ -62,8 +62,8 @@ export function parseLaunchPreset(envOverride?: Record<string, string | undefine
 }
 
 function getEnvVarAsRecord(): Record<string, string | undefined> {
-    try {
-        const env = (import.meta as { env?: Record<string, string | undefined> }).env;
+  try {
+    const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
         if (env) {
             return env;
         }

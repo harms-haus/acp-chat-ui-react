@@ -54,7 +54,7 @@ function parseReplayFixture(fixturePath: string): ReplayEnvelope[] {
   return lines.map((line, index) => {
     try {
       return JSON.parse(line) as ReplayEnvelope;
-    } catch (e) {
+    } catch (_e) {
       throw new Error(`Failed to parse line ${index + 1} in ${fixturePath}`);
     }
   });

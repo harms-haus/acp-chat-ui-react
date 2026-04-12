@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from "vitest";
 import { EnvelopeBuilder, MessageBuilder, TestConstants } from "./test-utils";
-import type { BridgeEnvelope, BridgeMessage } from "@harms-haus/acp-chat-core";
+import type { BridgeEnvelope } from "@harms-haus/acp-chat-core";
 
 describe("BridgeEnvelope serialization", () => {
   describe("Basic serialization", () => {

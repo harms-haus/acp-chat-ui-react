@@ -65,23 +65,23 @@ export function LivePanel({
         const parsed = JSON.parse(saved);
         return parsed.bridgeUrl || DEFAULT_BRIDGE_URL;
       }
-    } catch (error) {
-      // Ignore parsing errors
-    }
-    return DEFAULT_BRIDGE_URL;
-  });
-
-  const [command, setCommand] = useState(() => {
-    try {
-      const saved = localStorage.getItem("acp-harness-live-config");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return parsed.command || "";
+      } catch (_error) {
+        // Ignore parsing errors
       }
-    } catch (error) {
-      // Ignore parsing errors
-    }
-    return "";
+      return DEFAULT_BRIDGE_URL;
+    });
+
+    const [command, setCommand] = useState(() => {
+      try {
+        const saved = localStorage.getItem("acp-harness-live-config");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return parsed.command || "";
+        }
+      } catch (_error) {
+        // Ignore parsing errors
+      }
+      return "";
   });
 
   const [args, setArgs] = useState(() => {
@@ -91,7 +91,7 @@ export function LivePanel({
         const parsed = JSON.parse(saved);
         return parsed.args || "";
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore parsing errors
     }
     return "";
@@ -104,7 +104,7 @@ export function LivePanel({
         const parsed = JSON.parse(saved);
         return parsed.cwd || "";
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore parsing errors
     }
     return "";
@@ -156,8 +156,8 @@ export function LivePanel({
         if (result.status === "success") {
           showToast(`Live mode initialized (${result.mode})`, "success");
         }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+} catch (_error) {
+  const errorMessage = _error instanceof Error ? _error.message : String(_error);
       const userFriendlyError = getUserFriendlyLiveError(errorMessage);
       setInitError(userFriendlyError);
       showToast(userFriendlyError, "error");
@@ -186,13 +186,13 @@ export function LivePanel({
       return;
     }
 
-    try {
-      const session = captureInterceptor.stopCaptureAndExport();
-      const exportPath = `fixtures/replay-data/captured/${session.startTime}/`;
-      showToast(`Session exported to: ${exportPath}`, "success");
-      onCapture?.(session);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      try {
+const session = captureInterceptor.stopCaptureAndExport();
+    const exportPath = `fixtures/replay-data/captured/${session.startTime}/`;
+    showToast(`Session exported to: ${exportPath}`, "success");
+    onCapture?.(session);
+} catch (_error) {
+  const errorMessage = _error instanceof Error ? _error.message : "Unknown error";
       showToast(`Export failed: ${errorMessage}`, "error");
     }
   }, [captureInterceptor, onCapture, showToast]);
@@ -266,14 +266,14 @@ export function LivePanel({
       a.href = url;
       a.download = `session-${Date.now()}.json`;
       a.click();
-      URL.revokeObjectURL(url);
+URL.revokeObjectURL(url);
 
-      showToast("Session recorded and downloaded", "success");
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      showToast(`Record & download failed: ${errorMessage}`, "error");
-    }
-  }, [store, showToast]);
+    showToast("Session recorded and downloaded", "success");
+  } catch (_error) {
+      const errorMessage = _error instanceof Error ? _error.message : "Unknown error";
+          showToast(`Record & download failed: ${errorMessage}`, "error");
+      }
+    }, [store, showToast]);
 
   if (!isLiveModeEnabled) {
     return null;

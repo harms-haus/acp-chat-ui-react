@@ -4,6 +4,7 @@ import { ReplayController } from "../session/replay-controller.js";
 import type { BridgeEnvelope } from "../generated/index.js";
 
 // Mock TransportClient
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const mockTransportClientMap = new Map<number, any>();
 
 vi.mock("../transport/client.js", () => {
@@ -102,7 +103,7 @@ describe("ReplayController", () => {
   }
 
   // Helper to get last sent data
-  function getLastSentData(): string | null {
+  function _getLastSentData(): string | null {
     const mockTransport = getMockTransport();
     return mockTransport.lastSent;
   }
@@ -177,7 +178,7 @@ describe("ReplayController", () => {
       };
       setTimeout(() => mockTransport.emitEnvelope(envelope), 10);
 
-      const result = await controller.initialize({
+      const _result = await controller.initialize({
         name: "test-client",
         version: "1.0.0",
       });
@@ -667,7 +668,7 @@ describe("ReplayController", () => {
       };
       setTimeout(() => mockTransport.emitEnvelope(envelope), 10);
 
-      const result = await controller.listSessions(undefined, "/test/cwd");
+      const _result = await controller.listSessions(undefined, "/test/cwd");
 
       expect(result.sessions).toEqual([
         {

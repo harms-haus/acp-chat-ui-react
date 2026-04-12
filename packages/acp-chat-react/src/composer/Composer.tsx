@@ -43,23 +43,23 @@ function useComposerState(props: ComposerProps, slashCommands: SlashCommand[] = 
     isComposing,
   };
 
-  const sendAllowed = canSend(composerState);
+  const _sendAllowed = canSend(composerState);
   const stopAllowed = canStop(isStreaming);
 
-  const handleSend = useCallback(async () => {
-    if (!sendAllowed || !sessionId) return;
+const handleSend = useCallback(async () => {
+  if (!_sendAllowed || !sessionId) return;
 
-    const text = getSendText(value);
-    if (!text) return;
+  const text = getSendText(value);
+  if (!text) return;
 
-    try {
-      await controller.sendPrompt(sessionId, text);
-      setValue("");
-      props.onSend?.(text);
-    } catch (error) {
-      logger?.error("Failed to send prompt:", error);
-    }
-  }, [sendAllowed, sessionId, value, controller, props.onSend, logger]);
+  try {
+    await controller.sendPrompt(sessionId, text);
+    setValue("");
+    props.onSend?.(text);
+  } catch (error) {
+    logger?.error("Failed to send prompt:", error);
+  }
+}, [_sendAllowed, sessionId, value, controller, props.onSend, logger]);
 
   const handleStop = useCallback(async () => {
     if (!stopAllowed || !sessionId) return;
@@ -166,7 +166,7 @@ function useComposerState(props: ComposerProps, slashCommands: SlashCommand[] = 
     isComposing,
     isStreaming,
     textareaRef,
-    sendAllowed,
+    sendAllowed: _sendAllowed,
     stopAllowed,
     disabled: composerState.disabled,
     rows,
@@ -191,9 +191,9 @@ function DefaultSettingsRow({
   selectedModeId,
   selectedModelId,
   selectedSessionId,
-  onModeChange,
-  onModelChange,
-  onSessionChange,
+  onModeChange: _onModeChange,
+  onModelChange: _onModelChange,
+  onSessionChange: _onSessionChange,
   disabled,
 }: SettingsRowRenderProps) {
   return (
@@ -212,18 +212,18 @@ function DefaultSettingsRow({
 
 export const Composer = memo(function Composer(props: ComposerRootProps) {
   const {
-    className = "",
-    placeholder = "Type a message...",
-    renderSettingsRow,
-    controller,
-    slashCommands = [],
-    logger,
-  } = props;
+  className = "",
+  placeholder = "Type a message...",
+  renderSettingsRow,
+  controller,
+  slashCommands = [],
+  logger: _logger,
+} = props;
 
   const {
     value,
     textareaRef,
-    sendAllowed,
+    sendAllowed: _sendAllowed2,
     stopAllowed,
     disabled,
     rows,

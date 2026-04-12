@@ -1,6 +1,6 @@
 import { memo, useCallback } from "react";
 import { Autocomplete } from "@base-ui-components/react/autocomplete";
-import type { SlashSuggestionProps, SlashCommand } from "./types.js";
+import type { SlashSuggestionProps } from "./types.js";
 
 export const SlashSuggestions = memo(function SlashSuggestions({
   commands,

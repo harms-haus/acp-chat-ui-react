@@ -89,13 +89,13 @@ describe.skip("filesystem events", () => {
     // Register filesystem handlers
     const readRequests: Array<{ path: string; line?: number; limit?: number }> = [];
     const writeRequests: Array<{ path: string; content: unknown }> = [];
-
-    (controller as any).subscribeToFileReads(async (request) => {
+    
+    (controller as any).subscribeToFileReads(async (request: { path: string; line?: number; limit?: number }) => {
       readRequests.push(request);
       return { content: JSON.stringify(request) };
     });
-
-    (controller as any).subscribeToFileWrites(async (request) => {
+    
+    (controller as any).subscribeToFileWrites(async (request: { path: string; content: unknown }) => {
       writeRequests.push(request);
       return { success: true };
     });

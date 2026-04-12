@@ -26,7 +26,7 @@ function SettingsSelectInner<T extends SettingsSelectOption>({
     [options, onChange]
   );
 
-  const selectedOption = useMemo(
+  const _selectedOption = useMemo(
     () => options.find((o) => o.id === selectedValue),
     [options, selectedValue]
   );

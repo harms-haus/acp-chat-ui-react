@@ -1,7 +1,6 @@
 import type { ReactNode, MouseEvent } from "react";
 import type { NormalizedMessage } from "@harms-haus/acp-chat-core";
 import type { ClipboardAPI } from "../types/browser-apis.js";
-import { defaultClipboardWithFallback } from "../utils/clipboard.js";
 
 export interface MessageAction {
   id: string;

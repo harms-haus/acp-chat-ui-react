@@ -274,12 +274,10 @@ export class DefaultSessionCaptureInterceptor implements SessionCaptureIntercept
   }
 
   private writeToFiles(session: CapturedSession, outputDir: string): void {
-    let fs: typeof import('fs');
-    let path: typeof import('path');
+    let fs: any;
+    let path: any;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       fs = require('fs');
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       path = require('path');
     } catch {
       return;

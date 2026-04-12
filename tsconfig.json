@@ -19,9 +19,5 @@
     "noImplicitOverride": true,
     "verbatimModuleSyntax": true
   },
-  "references": [
-    { "path": "./packages/acp-chat-core" },
-    { "path": "./packages/acp-chat-react" },
-    { "path": "./packages/acp-harness-ui" }
-  ]
+  "exclude": ["node_modules", "**/dist", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/__tests__/**", "**/__mocks__/**"]
 }

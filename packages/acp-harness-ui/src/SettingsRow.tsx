@@ -28,8 +28,8 @@ export function SettingsRow({
   disabled,
 }: SettingsRowProps) {
   const selectedMode = modes.find((m) => m.id === selectedModeId);
-  const selectedModel = models.find((m) => m.id === selectedModelId);
-  const selectedSession = sessions.find((s) => s.sessionId === selectedSessionId);
+  const _selectedModel = models.find((m) => m.id === selectedModelId);
+  const _selectedSession = sessions.find((s) => s.sessionId === selectedSessionId);
 
   return (
     <div
