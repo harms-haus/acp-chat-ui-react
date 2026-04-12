@@ -177,7 +177,7 @@ describe("DefaultSessionCaptureInterceptor", () => {
       };
       controller.emitTraffic("in", envelope);
 
-      const session = interceptor.stopCaptureAndExport();
+      const session = interceptor.stopCaptureAndExport("/tmp/test-capture-interceptor");
 
       expect(session).toBeDefined();
       expect(session.sessionId).toBe("session-123");

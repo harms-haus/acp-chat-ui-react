@@ -14,6 +14,7 @@
     "test-bridge-all": "cd crates/acp-ws-bridge && cargo test && cd ../.. && pnpm test-bridge",
     "test:visual": "pnpm --filter @harms-haus/acp-harness-ui test:visual",
     "test:visual:update": "pnpm --filter @harms-haus/acp-harness-ui test:visual:update",
+    "test:all": "pnpm test-core && pnpm test-react && cd crates/acp-ws-bridge && cargo test && cd ../.. && pnpm test-bridge",
     "check": "pnpm -r run check",
     "perf:test": "node --experimental-strip-types scripts/perf-runner.ts",
     "bundle:check": "node --experimental-strip-types scripts/bundle-check.ts",

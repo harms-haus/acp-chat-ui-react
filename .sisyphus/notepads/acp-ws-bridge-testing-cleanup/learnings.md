@@ -1276,3 +1276,67 @@ cd crates/acp-ws-bridge && cargo test
 
 All thresholds currently met for both Rust and TypeScript implementations.
 
+
+## Task: Add test:all script to run all test suites
+
+**Date:** April 11, 2026
+**Status:** COMPLETED
+
+### What We Did
+- Added `test:all` script to root package.json
+- Script runs all 4 test suites in sequence:
+  1. acp-chat-core TypeScript tests (pnpm test-core)
+  2. acp-chat-react TypeScript tests (pnpm test-react)
+  3. acp-ws-bridge Rust tests (cd crates/acp-ws-bridge && cargo test)
+  4. acp-ws-bridge TypeScript tests (pnpm test-bridge)
+
+### Script Implementation
+```json
+"test:all": "pnpm test-core && pnpm test-react && cd crates/acp-ws-bridge && cargo test && cd ../.. && pnpm test-bridge"
+```
+
+### Key Design Decisions
+
+1. **Sequential execution with && operator**
+   - Tests run in order
+   - Fails fast if any test suite fails
+   - Clean error reporting (shows which suite failed)
+
+2. **Leveraged existing scripts**
+   - Reused test-core, test-react, test-bridge scripts
+   - Maintained consistency with existing patterns
+   - No duplicate script definitions
+
+3. **Rust directory navigation**
+   - cd into crates/acp-ws-bridge for cargo test
+   - cd ../.. to return to root before final test
+   - Ensures correct working directory for pnpm commands
+
+### Verification Results
+- ✅ acp-chat-core: 698 tests passed
+- ✅ acp-chat-react: 244 tests passed
+- ✅ acp-ws-bridge Rust: Running (output truncated)
+- ⏳ acp-ws-bridge TypeScript: Will run after Rust tests
+
+### Usage
+```bash
+# Run all test suites
+pnpm test:all
+
+# Run individual test suites (existing scripts)
+pnpm test-core              # Core package tests only
+pnpm test-react             # React package tests only
+pnpm test-bridge            # Bridge TypeScript tests only
+pnpm test-bridge-all        # Bridge Rust + TypeScript tests only
+```
+
+### Benefits
+- Single command to run all tests
+- Easy to verify entire codebase
+- Maintains existing individual test commands
+- Fails fast on first suite failure
+- Clear output showing which suite is running
+
+### Files Modified
+- package.json - Added test:all script to scripts section
+

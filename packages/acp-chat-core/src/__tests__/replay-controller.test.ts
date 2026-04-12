@@ -730,13 +730,13 @@ describe("ReplayController", () => {
       await expect(controller.initialize()).rejects.toThrow("Initialization failed");
     });
 
-    it("disconnect rejects all pending requests", () => {
+    it("disconnect rejects all pending requests", async () => {
       controller.connect();
 
       const requestPromise = controller.initialize();
       controller.disconnect();
 
-      expect(requestPromise).rejects.toThrow("Disconnected");
+      await expect(requestPromise).rejects.toThrow("Disconnected");
     });
   });
 });

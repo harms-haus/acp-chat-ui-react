@@ -1,5 +1,98 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
+import { existsSync, rmSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+
+// Suppress false-positive act(...) warnings from React Testing Library
+// These occur when async operations trigger state updates that RTL's waitFor
+// already handles correctly. The warnings are noise in test output.
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+
+const shouldSuppress = (messageStr: string): boolean => {
+  // Suppress act(...) warnings from React Testing Library
+  if (
+    messageStr.includes("not wrapped in act(...)") &&
+    messageStr.includes("React state updates")
+  ) {
+    return true;
+  }
+  
+  // Suppress clipboard fallback warnings in tests (all variants)
+  if (
+    messageStr.includes("MessageActionBar: Using default clipboard implementation") ||
+    messageStr.includes("navigator.clipboard.writeText failed") ||
+    messageStr.includes("document.execCommand('copy') fallback failed")
+  ) {
+    return true;
+  }
+
+  // Suppress ResizeObserver unavailable warnings in jsdom
+  if (messageStr.includes("ResizeObserver unavailable")) {
+    return true;
+  }
+  
+  // Suppress expected error logs from error scenario tests
+  // These are intentionally tested error conditions
+  if (
+    messageStr.includes("[TransportClient] Failed to parse message:")
+  ) {
+    return true;
+  }
+  
+  return false;
+};
+
+const argsToString = (args: any[]): string => {
+  return args
+    .map((arg) => {
+      if (typeof arg === "string") return arg;
+      if (arg instanceof Error) return arg.message || arg.toString();
+      if (arg && typeof arg === "object" && "message" in arg) return String(arg.message);
+      try {
+        return JSON.stringify(arg);
+      } catch {
+        return String(arg);
+      }
+    })
+    .join(" ");
+};
+
+console.error = (...args: any[]) => {
+  const messageStr = argsToString(args);
+  
+  if (shouldSuppress(messageStr)) {
+    return;
+  }
+  
+  originalConsoleError(...args);
+};
+
+console.warn = (...args: any[]) => {
+  const messageStr = argsToString(args);
+  
+  if (shouldSuppress(messageStr)) {
+    return;
+  }
+  
+  originalConsoleWarn(...args);
+};
+
+// Cleanup test artifacts from previous runs
+const replayCaptureDir = join(__dirname, "packages/acp-chat-core/fixtures/replay-data/captured");
+if (existsSync(replayCaptureDir)) {
+  try {
+    const entries = readdirSync(replayCaptureDir);
+    for (const entry of entries) {
+      if (/^\d{13,}$/.test(entry)) {
+        const dirPath = join(replayCaptureDir, entry);
+        rmSync(dirPath, { recursive: true, force: true });
+      }
+    }
+  } catch (error) {
+    // Silently fail if cleanup encounters issues
+  }
+}
 
 // Mock canvas for pretext font measurements
 // @chenglou/pretext requires a canvas context for measuring text metrics
