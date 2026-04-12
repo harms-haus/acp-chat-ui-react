@@ -1,0 +1,167 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release'
+        required: true
+        type: string
+  push:
+    branches: [release/*]
+
+jobs:
+  dry-run:
+    name: Dry-Run Package Check
+    runs-on: ubuntu-latest
+    outputs:
+      validation-result: ${{ steps.validation.outputs.result }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Dry-run acp-chat-core
+        run: |
+          cd packages/acp-chat-core
+          npm pack --dry-run 2>&1 | tee ../../core-dry-run.log
+          cd ../..
+
+      - name: Dry-run acp-chat-react
+        run: |
+          cd packages/acp-chat-react
+          npm pack --dry-run 2>&1 | tee ../../react-dry-run.log
+          cd ../..
+
+      - name: Dry-run acp-ws-bridge
+        run: |
+          cd packages/acp-ws-bridge
+          npm pack --dry-run 2>&1 | tee ../../ws-bridge-dry-run.log
+          cd ../..
+
+      - name: Run publish check
+        id: validation
+        run: |
+          bun scripts/publish-check.ts --verbose | tee publish-check.log
+          echo "result=${{ job.status }}" >> $GITHUB_OUTPUT
+
+      - name: Upload dry-run artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dry-run-logs
+          path: |
+            core-dry-run.log
+            react-dry-run.log
+            ws-bridge-dry-run.log
+            publish-check.log
+
+  publish-validation:
+    name: Publish Validation
+    runs-on: ubuntu-latest
+    needs: dry-run
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate required files
+        run: |
+          echo "Validating required files..."
+          [ -f LICENSE ] || { echo "❌ LICENSE file missing"; exit 1; }
+          echo "✓ LICENSE exists"
+
+          [ -f packages/acp-chat-core/README.md ] || { echo "❌ acp-chat-core README.md missing"; exit 1; }
+          echo "✓ acp-chat-core/README.md exists"
+
+          [ -f packages/acp-chat-react/README.md ] || { echo "❌ acp-chat-react README.md missing"; exit 1; }
+          echo "✓ acp-chat-react/README.md exists"
+
+          [ -f packages/acp-ws-bridge/README.md ] || { echo "❌ acp-ws-bridge README.md missing"; exit 1; }
+          echo "✓ acp-ws-bridge/README.md exists"
+
+      - name: Run bundle check
+        run: pnpm bundle:check
+
+      - name: Comprehensive publish check
+        run: |
+          echo "Running comprehensive publish validation..."
+          bun scripts/publish-check.ts --verbose
+
+      - name: Check for debug artifacts
+        run: |
+          echo "Checking for source maps..."
+          if find packages/*/dist -name "*.map" -type f | grep -q .; then
+            echo "❌ Source maps found in dist/ directories"
+            find packages/*/dist -name "*.map" -type f
+            exit 1
+          else
+            echo "✓ No source maps found"
+          fi
+
+          echo "Checking for test files..."
+          if find packages/*/dist -name "*.test.*" -o -name "*.spec.*" | grep -q .; then
+            echo "❌ Test files found in dist/ directories"
+            find packages/*/dist -name "*.test.*" -o -name "*.spec.*"
+            exit 1
+          else
+            echo "✓ No test files found"
+          fi
+
+      - name: Create validation report
+        run: |
+          echo "# Release Validation Report" > validation-report.md
+          echo "" >> validation-report.md
+          echo "**Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> validation-report.md
+          echo "" >> validation-report.md
+          echo "**Status:** ✅ All validations passed" >> validation-report.md
+          echo "" >> validation-report.md
+          echo "## Checks Performed" >> validation-report.md
+          echo "" >> validation-report.md
+          echo "- [x] LICENSE file exists" >> validation-report.md
+          echo "- [x] All README.md files exist" >> validation-report.md
+          echo "- [x] Bundle check passed" >> validation-report.md
+          echo "- [x] Publish check passed" >> validation-report.md
+          echo "- [x] No source maps in dist/" >> validation-report.md
+          echo "- [x] No test files in dist/" >> validation-report.md
+          echo "" >> validation-report.md
+          echo "## Packages Ready for Release" >> validation-report.md
+          echo "" >> validation-report.md
+          echo "1. @harms-haus/acp-chat-core" >> validation-report.md
+          echo "2. @harms-haus/acp-chat-react" >> validation-report.md
+          echo "3. @harms-haus/acp-ws-bridge" >> validation-report.md
+
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: validation-report.md

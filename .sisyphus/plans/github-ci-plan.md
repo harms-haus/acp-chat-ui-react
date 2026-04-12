@@ -862,7 +862,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 11. Create release.yml - Dry-run job
+- [x] 11. Create release.yml - Dry-run job
 
   **What to do**:
   - Create `.github/workflows/release.yml`
@@ -962,7 +962,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 12. Create release.yml - Publish validation job
+- [x] 12. Create release.yml - Publish validation job
 
   **What to do**:
   - Add publish-validation job to release.yml
@@ -1061,7 +1061,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 13. Validate workflows with schema check
+- [x] 13. Validate workflows with schema check
 
   **What to do**:
   - Validate ci.yml against GitHub Actions schema
