@@ -18,10 +18,11 @@ if (typeof WebSocket === "undefined") {
 }
 
 if (typeof CloseEvent === "undefined") {
-  global.CloseEvent = vi.fn().mockImplementation((type, eventInitDict) => ({
-    type,
-    ...eventInitDict,
-  }));
+  global.CloseEvent = class CloseEvent extends Event {
+    constructor(type: string, eventInitDict?: CloseEventInit) {
+      super(type, eventInitDict);
+    }
+  } as any;
 }
 
 // Suppress false-positive act(...) warnings from React Testing Library
