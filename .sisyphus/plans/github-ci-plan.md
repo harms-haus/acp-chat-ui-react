@@ -1139,7 +1139,7 @@ Wave FINAL (After ALL tasks):
   - package.json updates: valid JSON, correct fields
   Output: `Workflows [VALID/INVALID] | Scripts [PASS/FAIL] | Config [VALID/INVALID] | VERDICT`
 
-- [ ] F3. **Real Manual QA** — `unspecified-high`
+- [x] F3. **Real Manual QA** — `unspecified-high`
   Validate workflows can be parsed:
   1. Use `yq` to validate YAML syntax
   2. Check all job references exist

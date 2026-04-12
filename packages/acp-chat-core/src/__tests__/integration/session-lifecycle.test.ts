@@ -102,13 +102,13 @@ describe("Session lifecycle integration", () => {
 
   describe("basic lifecycle with replay fixtures", () => {
     it("loads replay fixture successfully", () => {
-      const fixture = loadFixture("captured/1775883989494");
+      const fixture = loadFixture("tool-calling/session-1");
       expect(fixture.sessionId).toBeDefined();
       expect(fixture.events.length).toBeGreaterThan(0);
     });
 
     it("can create ReplayRunner with fixture", () => {
-      const fixture = loadFixture("captured/1775883989494");
+      const fixture = loadFixture("tool-calling/session-1");
 
       const runner = new ReplayRunner({
         controller,
