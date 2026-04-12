@@ -168,7 +168,7 @@ Wave FINAL (After ALL tasks):
 
 ## TODOs
 
-- [ ] 1. Create .github/workflows directory
+- [x] 1. Create .github/workflows directory
 
   **What to do**:
   - Create `.github/` directory at project root
@@ -215,7 +215,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 2. Create LICENSE file (MIT)
+- [x] 2. Create LICENSE file (MIT)
 
   **What to do**:
   - Create `LICENSE` file at project root
@@ -267,7 +267,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 3. Create .npmrc configuration
+- [x] 3. Create .npmrc configuration
 
   **What to do**:
   - Create `.npmrc` at project root
@@ -336,7 +336,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 4. Update package.json files with files field
+- [x] 4. Update package.json files with files field
 
   **What to do**:
   - Update `packages/acp-chat-core/package.json`:
@@ -393,7 +393,9 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 5. Create publish-check.ts script
+---
+
+- [x] 5. Create publish-check.ts script
 
   **What to do**:
   - Create `scripts/publish-check.ts` script
