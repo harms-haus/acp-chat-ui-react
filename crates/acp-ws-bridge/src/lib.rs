@@ -31,6 +31,7 @@
 
 pub mod contract;
 pub mod server;
+pub mod test_utils;
 
 pub use contract::{
     BridgeEnvelope, BridgeMessage, BridgeStatus, UnsupportedVersionError, ENVELOPE_VERSION,

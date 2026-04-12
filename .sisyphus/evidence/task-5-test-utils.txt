@@ -1,0 +1,102 @@
+# Test Utilities Implementation - Evidence
+
+## Created Files
+
+### 1. packages/acp-chat-react/src/test-utils/index.ts
+- Main export file for all test utilities
+- Exports: customRender, mockStore, mockChatCore, factory functions
+
+### 2. packages/acp-chat-react/src/test-utils/render.tsx
+- Custom render wrapper for React Testing Library
+- Wraps components with EventProvider and store context
+- Provides useTestStore hook for accessing store in test components
+- Returns store and controller for direct access
+
+### 3. packages/acp-chat-react/src/test-utils/mocks.ts
+- MockSessionController class for testing
+- mockStore() - Creates mock ACP store with controller
+- mockChatCore() - Creates mock session controller
+- createMockAcpStore() - Alias for mockStore
+
+### 4. packages/acp-chat-react/src/test-utils/factories.ts
+- createMockMessage() - Creates mock NormalizedMessage
+- createMockThought() - Creates mock NormalizedThought
+- createMockToolCall() - Creates mock NormalizedToolCall
+- createMockPermissionRequest() - Creates mock NormalizedPermissionRequest
+
+## Key Features
+
+1. **Custom Render**: Wraps components with necessary providers automatically
+2. **Mock Store**: Creates fully functional ACP store with mock controller
+3. **Factory Functions**: Generate realistic test data for all ACP entities
+4. **Event Emission**: Mock controller supports emitting all ACP events
+5. **Type Safety**: All utilities are fully typed with TypeScript
+
+## Usage Examples
+
+### Basic Test with Mock Store
+```tsx
+import { customRender, mockStore } from '@/test-utils';
+import { MyComponent } from './MyComponent';
+
+test('renders with mock store', () => {
+  const { controller } = mockStore({
+    sessionState: { initialized: true, sessionId: 'test-123' }
+  });
+
+  customRender(<MyComponent />, { sessionController: controller });
+});
+```
+
+### Using Factory Functions
+```tsx
+import { createMockMessage, createMockThought } from '@/test-utils';
+
+const message = createMockMessage({
+  role: 'user',
+  content: 'Hello, world!'
+});
+
+const thought = createMockThought({
+  content: 'Thinking...'
+});
+```
+
+### Accessing Store in Tests
+```tsx
+import { customRender, mockStore, useTestStore } from '@/test-utils';
+
+function TestComponent() {
+  const store = useTestStore();
+  const messages = store.getMessages();
+  return <div>{messages.length} messages</div>;
+}
+
+test('store integration', () => {
+  const { controller, store } = mockStore();
+  customRender(<TestComponent />, { sessionController: controller });
+  // Can also access store directly from the return value
+  console.log(store.getMessages());
+});
+```
+
+## Verification
+
+All TypeScript diagnostics pass:
+- No errors in test-utils directory
+- Proper type exports
+- Correct imports from core package
+
+## Implementation Notes
+
+1. MockSessionController is a simplified version of the core's mock
+2. Store batching is disabled by default for tests (immediate notifications)
+3. Optional properties are only added when explicitly provided (exactOptionalPropertyTypes compliance)
+4. Test utilities are NOT exported from main package index (internal-only)
+
+## Next Steps
+
+These utilities are ready to be used in existing tests:
+- packages/acp-chat-react/src/thread/virtualized-thread.test.tsx
+- packages/acp-chat-react/src/composer/composer-flow.test.tsx
+- All other test files in the React package

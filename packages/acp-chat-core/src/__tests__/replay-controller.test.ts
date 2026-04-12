@@ -9,6 +9,7 @@ const mockTransportClientMap = new Map<number, any>();
 vi.mock("../transport/client.js", () => {
   class MockTransportClient {
     public status: "disconnected" | "connected" = "disconnected";
+    public lastSent: string | null = null;
     private handlers: {
       statusChange: Set<(status: "disconnected" | "connected") => void>;
       envelope: Set<(envelope: any) => void>;
@@ -67,6 +68,7 @@ vi.mock("../transport/client.js", () => {
     }
 
     send(data: string) {
+      this.lastSent = data;
     }
 
     emitEnvelope(envelope: any) {
@@ -97,6 +99,12 @@ describe("ReplayController", () => {
 
   function getMockTransport(): any {
     return (controller as any).transport;
+  }
+
+  // Helper to get last sent data
+  function getLastSentData(): string | null {
+    const mockTransport = getMockTransport();
+    return mockTransport.lastSent;
   }
 
   describe("connection lifecycle", () => {
@@ -195,7 +203,7 @@ describe("ReplayController", () => {
         type: "acp_payload",
         payload: {
           jsonrpc: "2.0",
-          id: 2,
+          id: 1,
           result: {
             sessionId: "session-123",
           },
@@ -214,12 +222,12 @@ describe("ReplayController", () => {
       const mockTransport = getMockTransport();
       const envelope: BridgeEnvelope = {
         version: 1,
-        seq: 2,
+        seq: 1,
         timestamp_ms: Date.now(),
         type: "acp_payload",
         payload: {
           jsonrpc: "2.0",
-          id: 3,
+          id: 1,
           result: {},
         },
       };
@@ -370,12 +378,11 @@ describe("ReplayController", () => {
           method: "session/request_permission",
           id: 42,
           params: {
-            requestId: 42,
-            toolName: "read_file",
-            prompt: "Allow reading file?",
+            sessionId: "test-session",
+            toolCall: { toolCallId: "tc-1" },
             options: [
-              { id: "allow", title: "Allow" },
-              { id: "deny", title: "Deny" },
+              { optionId: "allow", name: "Allow", kind: "allow_once" },
+              { optionId: "deny", name: "Deny", kind: "deny" },
             ],
           },
         },
@@ -385,7 +392,8 @@ describe("ReplayController", () => {
       expect(permissionHandler).toHaveBeenCalledWith(
         expect.objectContaining({
           requestId: 42,
-          toolName: "read_file",
+          sessionId: "test-session",
+          toolCall: { toolCallId: "tc-1" },
         }),
       );
     });
@@ -556,9 +564,9 @@ describe("ReplayController", () => {
       expect(trafficHandler).toHaveBeenCalled();
       const calls = trafficHandler.mock.calls;
       if (calls.length > 0) {
-        const lastCall = calls[calls.length - 1];
-        if (Array.isArray(lastCall) && lastCall.length >= 2) {
-          const [direction, data] = lastCall;
+        const firstCall = calls[0];
+        if (Array.isArray(firstCall) && firstCall.length >= 2) {
+          const [direction, data] = firstCall;
           expect(direction).toBe("out");
           expect(data).toHaveProperty("method", "initialize");
         }
@@ -687,7 +695,7 @@ describe("ReplayController", () => {
         payload: {
           jsonrpc: "2.0",
           id: 1,
-          result: { sessionId: "loaded-session" },
+          result: { sessionId: "session-123" },
         },
       };
       setTimeout(() => mockTransport.emitEnvelope(envelope), 10);
@@ -696,7 +704,7 @@ describe("ReplayController", () => {
 
       expect(clearingHandler).toHaveBeenCalled();
       const state = controller.getState();
-      expect(state.sessionId).toBe("loaded-session");
+      expect(state.sessionId).toBe("session-123");
       expect(statusHandler).toHaveBeenCalled();
     });
   });

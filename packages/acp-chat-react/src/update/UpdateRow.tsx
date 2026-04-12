@@ -26,6 +26,7 @@ export const UpdateRow = memo(function UpdateRow({
     <div
       data-acp-update-type={type}
       data-acp-update-status={status}
+      data-testid={`acp-update-${type}`}
       className={`acp-update ${statusClass} ${className}`}
     >
       <UpdateIndicator status={status} />

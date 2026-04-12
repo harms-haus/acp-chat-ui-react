@@ -48,3 +48,5 @@ temp/
 old-acp*/
 
 .opencode/index
+
+fixtures/replay-data/captured

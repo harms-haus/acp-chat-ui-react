@@ -32,6 +32,7 @@ export const MessagePlaceholder = memo(function MessagePlaceholder({
   return (
     <div
       data-acp-message-placeholder
+      data-testid="acp-message-placeholder"
       data-acp-message-id={item.id}
       data-acp-message-role={isUser ? "user" : "agent"}
       className={`acp-message-placeholder ${isUser ? "acp-message-placeholder--user" : "acp-message-placeholder--agent"}`}
@@ -39,7 +40,7 @@ export const MessagePlaceholder = memo(function MessagePlaceholder({
       <div className="acp-message-placeholder__label">
         {label}
       </div>
-      <div className="acp-message-placeholder__content">
+      <div className="acp-message-placeholder__content" data-testid="acp-message-placeholder-content">
         {content.slice(0, 200)}
         {content.length > 200 ? "..." : ""}
       </div>

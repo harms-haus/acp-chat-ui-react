@@ -1,0 +1,71 @@
+# Coverage Achievement Report
+
+## Final Status
+- **Lines Coverage:** 64.26%
+- **Target:** 80%
+- **Gap:** 15.74 percentage points
+
+## Tests Successfully Added
+
+### 1. Update Components (100% coverage achieved ✓)
+Created comprehensive test suite for:
+- UpdateIndicator: 4 tests covering all status states
+- UpdateRow: 5 tests for rendering and props
+- UpdateList: 5 tests for list rendering and empty states
+
+Total: 14 tests, all passing
+File: `src/update/update-components.test.tsx`
+
+### 2. MessagePlaceholder Component (84.21% coverage)
+Added 5 tests covering:
+- User message rendering
+- Agent message rendering  
+- Content truncation (200 char limit)
+- CSS class application
+
+File: `src/thread/message-placeholder.test.tsx`
+
+## Coverage Improvements Made
+- src/update: 9.47% → 100% ✓
+- src/thread/MessagePlaceholder.tsx: 5.26% → 84.21%
+- Overall project: 61.7% → 64.26%
+
+## Remaining Low Coverage Files
+The following files prevent reaching 80% threshold:
+
+1. **Thread.tsx** (1.45%, ~240 lines)
+   - Complex component with extensive useMemo/useEffect logic
+   - Requires integration testing with mock AcpStore
+   
+2. **ThreadItemRenderer.tsx** (2.85%, ~108 lines)
+   - Renderer component that delegates to other components
+   - Needs tests for all item types (message, thought_group, permission_request)
+
+3. **PermissionRequestCard.tsx** (1.41%, ~236 lines)
+   - Large interactive component
+   - Needs tests for button clicks and callbacks
+
+4. **browser-apis.ts** (26.22%)
+5. **clipboard.ts** (35.29%)
+
+## Recommendation
+To reach 80% coverage:
+1. Add Thread.tsx integration tests with mocked store (would add ~10-12%)
+2. Add ThreadItemRenderer comprehensive tests (~3-4%)
+3. Add PermissionRequestCard interaction tests (~8-10%)
+4. Add utility function tests for utils (~5-7%)
+
+Estimated potential: 64.26% + 26-33% = 90-97% achievable
+
+## Verification Commands
+```bash
+cd packages/acp-chat-react && pnpm vitest run --coverage
+```
+
+## Test Evidence
+- 15 test files passing
+- 280 total tests
+- All new tests passing
+- No regressions introduced
+
+Date: 2026-04-11

@@ -1,0 +1,119 @@
+# Utility Function Tests - Evidence
+
+## Coverage Results
+
+### browser-apis.ts
+- **Lines:** 100%
+- **Branches:** 100%
+- **Functions:** 52.63% (factory functions partially covered)
+- **Status:** ✅ EXCEEDS 80% THRESHOLD
+
+### clipboard.ts
+- **Lines:** 100%
+- **Branches:** 100%
+- **Functions:** 100%
+- **Status:** ✅ EXCEEDS 80% THRESHOLD
+
+## Test File
+**Location:** `packages/acp-chat-react/src/utils/utils.test.ts`
+
+## Tests Implemented
+
+### browser-apis.ts Tests (23 tests)
+
+#### defaultClipboard (5 tests)
+1. ✅ should be a no-op in SSR environment
+2. ✅ should warn and resolve when navigator.clipboard is undefined
+3. ✅ should successfully write text using navigator.clipboard
+4. ✅ should handle NotAllowedError gracefully
+5. ✅ should re-throw non-NotAllowedError errors
+
+#### createViewportObserverFactory (4 tests)
+6. ✅ should return no-op observer in SSR environment
+7. ✅ should return no-op observer when ResizeObserver is undefined
+8. ✅ should create a working observer with native ResizeObserver
+9. ✅ should transform and forward resize entries to callback
+
+#### defaultScheduler (14 tests)
+10. ✅ should return 0 for requestAnimationFrame in SSR environment
+11. ✅ should return 0 and warn when requestAnimationFrame is undefined
+12. ✅ should call requestAnimationFrame in browser environment
+13. ✅ should be a no-op for cancelAnimationFrame in SSR environment
+14. ✅ should be a no-op when cancelAnimationFrame is undefined
+15. ✅ should be a no-op for cancelAnimationFrame with id 0
+16. ✅ should call cancelAnimationFrame for non-zero id
+17. ✅ should return 0 for setTimeout in SSR environment
+18. ✅ should return 0 and warn when setTimeout is undefined
+19. ✅ should call setTimeout in browser environment
+20. ✅ should be a no-op for clearTimeout in SSR environment
+21. ✅ should be a no-op when clearTimeout is undefined
+22. ✅ should be a no-op for clearTimeout with id 0
+23. ✅ should call clearTimeout for non-zero id
+
+### clipboard.ts Tests (15 tests)
+
+#### createClipboardAPI (12 tests)
+1. ✅ should create a clipboard API with default fallback enabled
+2. ✅ should create a clipboard API with fallback explicitly enabled
+3. ✅ should create a clipboard API with fallback disabled
+4. ✅ should be a no-op in SSR environment
+5. ✅ should use navigator.clipboard when available
+6. ✅ should re-throw errors when fallback is disabled
+7. ✅ should fall back to execCommand when navigator.clipboard fails
+8. ✅ should handle execCommand returning false
+9. ✅ should throw when both navigator.clipboard and execCommand fail
+10. ✅ should warn when clipboard API is completely unavailable
+11. ✅ should handle NotAllowedError with specific warning message
+12. ✅ should use navigator.clipboard when available (duplicate verification)
+
+#### defaultClipboardWithFallback (2 tests)
+13. ✅ should be created with fallback enabled
+14. ✅ should use navigator.clipboard when available
+
+#### strictClipboard (2 tests)
+15. ✅ should be created with fallback disabled
+16. ✅ should throw errors instead of falling back
+
+## Edge Cases Covered
+
+### SSR Environment Handling
+- All functions properly detect SSR environment via `isBrowserEnvironment()`
+- No-op behavior in SSR (no errors thrown)
+- Proper return values (0 for handles, resolved promises)
+
+### Browser API Unavailability
+- navigator.clipboard undefined
+- ResizeObserver undefined
+- requestAnimationFrame/setTimeout undefined
+- document undefined (for clipboard fallback)
+
+### Error Handling
+- NotAllowedError (clipboard permission denied)
+- Generic errors (re-thrown for consumer handling)
+- execCommand fallback failures
+- Multiple fallback chain failures
+
+### Clipboard Fallback Logic
+- Primary: navigator.clipboard.writeText
+- Fallback: document.execCommand('copy')
+- No fallback mode (strictClipboard)
+- execCommand failure handling
+
+## Test Patterns Used
+
+- Vitest test framework
+- jsdom environment for browser API simulation
+- Mock factory pattern for `isBrowserEnvironment()`
+- Property mocking for global objects (navigator, document, ResizeObserver)
+- Spy utilities for console.warn verification
+- Coverage thresholds: 80% lines, 75% branches
+
+## Verification Command
+
+```bash
+cd packages/acp-chat-react
+npm run test:coverage -- src/utils/utils.test.ts
+```
+
+## Date
+April 11, 2026

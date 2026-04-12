@@ -133,6 +133,7 @@ export const ThreadItemRenderer = memo(function ThreadItemRenderer({
     <div
       className="acp-thread__item"
       data-acp-thread-item
+      data-testid="acp-thread-item"
       data-acp-thread-item-type={item.type}
       data-acp-thread-item-id={item.id}
     >

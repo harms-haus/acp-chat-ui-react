@@ -162,9 +162,8 @@ describe("DefaultSessionCaptureInterceptor", () => {
 
       const session = interceptor.exportCapturedSession();
       expect(session.events).toHaveLength(1);
-      if (session.events[0]) {
-        expect(session.endTime).not.toBeNull();
-      }
+      // endTime is null while capture is still active
+      expect(session.endTime).toBeNull();
     });
 
     it("exports session even if not capturing", () => {
@@ -305,7 +304,7 @@ describe("DefaultSessionCaptureInterceptor", () => {
       expect(session.models).toEqual(["gpt-4"]);
     });
 
-    it("captures zero-token events", () => {
+    it("captures events with estimated token count", () => {
       interceptor.startCapture("session-123");
 
       const envelope: BridgeEnvelope = {
@@ -320,8 +319,93 @@ describe("DefaultSessionCaptureInterceptor", () => {
 
       const session = interceptor.exportCapturedSession();
       if (session.events[0]) {
-        expect(session.events[0].tokenCount).toBe(0);
+        // Token count is estimated based on JSON string length
+        expect(session.events[0].tokenCount).toBeGreaterThan(0);
       }
+    });
+
+    it("exports session with pre-existing state", () => {
+      const initialState: ReplaySessionData = {
+        sessionId: "session-123",
+        cwd: "/test/workspace",
+        messages: [],
+        thoughts: [],
+        toolCalls: [],
+      };
+
+      interceptor.startCapture("session-456", initialState);
+
+      const session = interceptor.exportCapturedSession();
+      expect(session.preExistingState).toBe(initialState);
+      expect(session.sessionId).toBe("session-456");
+    });
+  });
+
+  describe("exportCapturedSession errors", () => {
+    it("throws error when exporting without active capture", () => {
+      expect(() => {
+        interceptor.exportCapturedSession();
+      }).toThrow("No session has been captured");
+    });
+  });
+
+  describe("getActiveSessionId", () => {
+    it("returns session id when capturing", () => {
+      interceptor.startCapture("test-session-123");
+      expect(interceptor.getActiveSessionId()).toBe("test-session-123");
+    });
+
+    it("returns null when not capturing", () => {
+      expect(interceptor.getActiveSessionId()).toBeNull();
+    });
+
+    it("returns session id after stopping capture", () => {
+      // Implementation keeps state after stopping, so sessionId is still available
+      interceptor.startCapture("session-123");
+      interceptor.stopCapture();
+      expect(interceptor.getActiveSessionId()).toBe("session-123");
+    });
+  });
+
+  describe("stopCaptureAndExport", () => {
+    it("stops capture and exports session", () => {
+      interceptor.startCapture("session-123");
+
+      const envelope: BridgeEnvelope = {
+        version: 1,
+        seq: 0,
+        timestamp_ms: Date.now(),
+        type: "acp_payload",
+        payload: { jsonrpc: "2.0", method: "test" },
+      };
+
+      controller.emitTraffic("in", envelope);
+
+      const session = interceptor.stopCaptureAndExport("/tmp/test-capture");
+
+      expect(session).toBeDefined();
+      expect(session.sessionId).toBe("session-123");
+      expect(session.events).toHaveLength(1);
+      expect(session.endTime).not.toBeNull();
+      expect(interceptor.isCapturing()).toBe(false);
+    });
+  });
+
+  describe("metadata extraction", () => {
+    it("extracts model from metadata field", () => {
+      interceptor.startCapture("session-123");
+
+      controller.emitSessionUpdate({
+        sessionId: "session-123",
+        update: {
+          metadata: {
+            model: "claude-sonnet",
+          },
+        },
+      });
+
+      const session = interceptor.exportCapturedSession();
+      expect(session.models).toContain("claude-sonnet");
     });
   });
 });

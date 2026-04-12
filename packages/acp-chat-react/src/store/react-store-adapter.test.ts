@@ -462,7 +462,7 @@ describe("AcpStore", () => {
 
   describe("cleanup", () => {
     it("unsubscribes from controller on destroy", () => {
-      const unsubscribers = [vi.fn(), vi.fn(), vi.fn()];
+      const unsubscribers = [vi.fn(), vi.fn(), vi.fn(), vi.fn()];
       let unsubIndex = 0;
 
       const mockController = {

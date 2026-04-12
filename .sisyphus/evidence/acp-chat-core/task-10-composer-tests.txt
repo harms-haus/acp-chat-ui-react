@@ -1,0 +1,89 @@
+Task 10: Composer Helper Logic Tests
+=====================================
+Date: Sat Apr 11 2026
+
+Test File Created:
+- packages/acp-chat-core/src/helpers/composer-logic.test.ts
+
+Test Results:
+- 37 tests passed
+- 0 tests failed
+- Test duration: 6ms
+
+Coverage for composer-logic.ts:
+- Statements: 100%
+- Branches: 100%
+- Functions: 100%
+- Lines: 100%
+
+Functions Tested:
+1. shouldSendOnKeydown() - 5 tests
+   - Enter key without shift (true)
+   - Enter key with shift (false)
+   - Non-Enter keys (false)
+   - IME composing state (false)
+   - Case sensitivity
+
+2. canSend() - 6 tests
+   - Non-empty input when enabled (true)
+   - Empty input (false)
+   - Whitespace-only input (false)
+   - Disabled state (false)
+   - Streaming state (false)
+
+3. canStop() - 2 tests
+   - Streaming state (true)
+   - Not streaming (false)
+
+4. getButtonState() - 2 tests
+   - Returns 'stop' when streaming
+   - Returns 'send' when not streaming
+
+5. getSendText() - 3 tests
+   - Trimmed value
+   - Empty string for whitespace
+   - Preserves internal whitespace
+
+6. isSendButtonDisabled() - 3 tests
+   - Non-empty input when not disabled (false)
+   - Disabled regardless of input (true)
+   - Empty input when not disabled (true)
+
+7. startPrompt() - 3 tests
+   - Without turnId
+   - With turnId
+   - With empty string turnId
+
+8. completePrompt() - 1 test
+   - Creates complete state
+
+9. cancelPrompt() - 1 test
+   - Creates cancelled state
+
+10. failPrompt() - 1 test
+    - Creates error state
+
+11. isPromptActive() - 4 tests
+    - Active phase (true)
+    - Other phases (false)
+    - Active with turnId
+
+12. shouldShowStopButton() - 7 tests
+    - Active lifecycle phase (true)
+    - Non-active without timeline item (false)
+    - Message with streaming status (true)
+    - Non-message type (false)
+    - Message not streaming (false)
+    - Cancelled with streaming message
+    - Timeline item without status
+
+Edge Cases Covered:
+- Empty input strings
+- Whitespace-only input
+- IME composing state
+- Disabled states
+- Streaming states
+- All prompt phases (idle, active, complete, cancelled, error)
+- Timeline item variations (type, status combinations)
+- Null/undefined timeline items
+

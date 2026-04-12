@@ -123,20 +123,20 @@ Transform acp-chat-core from a "tests exist but don't run" state to a production
 - [ ] Coverage reporting guide
 
 ### Definition of Done
-- [ ] `pnpm test-core` runs successfully with all tests passing
-- [ ] Coverage report shows 80%+ for lines, 75%+ for branches
-- [ ] No console.log statements in production code paths
-- [ ] All new tests include agent-executed QA scenarios
+- [x] `pnpm test-core` runs successfully with all tests passing
+- [x] Coverage report shows 80%+ for lines, 75%+ for branches
+- [x] No console.log statements in production code paths
+- [x] All new tests include agent-executed QA scenarios
 - [ ] Documentation complete and accurate
-- [ ] No regression in existing functionality
+- [x] No regression in existing functionality
 
 ### Must Have (Non-Negotiable)
-- 80%+ test coverage for core modules
-- All existing tests must pass
-- Debug logging removed or properly guarded
-- Vitest test discovery working
-- Integration tests with replay fixtures
-- Comprehensive documentation
+- [x] 80%+ test coverage for core modules
+- [x] All existing tests must pass
+- [x] Debug logging removed or properly guarded
+- [x] Vitest test discovery working
+- [x] Integration tests with replay fixtures
+- [ ] Comprehensive documentation
 
 ### Must NOT Have (Explicit Exclusions)
 - No Playwright tests (out of scope)
@@ -257,7 +257,7 @@ Wave FINAL (Verification):
 
 ### Wave 1: Foundation - Cleanup & Infrastructure
 
-- [ ] **1. Remove debug logging from controller.ts**
+- [x] **1. Remove debug logging from controller.ts**
 
   **What to do:**
   - Remove all `console.log` statements from `src/session/controller.ts`
@@ -304,7 +304,7 @@ Wave FINAL (Verification):
   - Message: `refactor(core): remove debug logging from controller`
   - Files: `packages/acp-chat-core/src/session/controller.ts`
 
-- [ ] **2. Fix Vitest test discovery configuration**
+- [x] **2. Fix Vitest test discovery configuration**
 
   **What to do:**
   - Investigate why vitest cannot find test files despite correct patterns
@@ -509,7 +509,7 @@ Wave FINAL (Verification):
   - Message: `fix(core): add extraData field to BridgeEnvelope type`
   - Files: `packages/acp-chat-core/src/generated/BridgeEnvelope.ts`
 
-- [ ] **6. Audit and document dead code removal**
+- [x] **6. Audit and document dead code removal**
 
   **What to do:**
   - Run static analysis to find unused exports
@@ -559,7 +559,7 @@ Wave FINAL (Verification):
 
 ### Wave 2: Core Module Tests
 
-- [ ] **7. SessionController comprehensive tests**
+- [x] **7. SessionController comprehensive tests**
 
   **What to do:**
   - Replace minimal 49-line test file with comprehensive tests
@@ -612,7 +612,7 @@ Wave FINAL (Verification):
   - Message: `test(core): add comprehensive SessionController tests`
   - Files: `packages/acp-chat-core/src/session/controller.test.ts`
 
-- [ ] **8. TransportClient tests**
+- [x] **8. TransportClient tests**
 
   **What to do:**
   - Create comprehensive tests for TransportClient (currently none)
@@ -664,7 +664,7 @@ Wave FINAL (Verification):
   - Message: `test(core): add TransportClient tests`
   - Files: `packages/acp-chat-core/src/transport/client.test.ts`
 
-- [ ] **9. Bridge parser expanded tests**
+- [x] **9. Bridge parser expanded tests**
 
   **What to do:**
   - Expand beyond existing `bridge-contract.test.ts`
@@ -713,7 +713,7 @@ Wave FINAL (Verification):
   - Message: `test(core): add bridge parser edge case tests`
   - Files: `packages/acp-chat-core/src/bridge/parser.test.ts`
 
-- [ ] **10. Composer helper logic tests**
+- [x] **10. Composer helper logic tests**
 
   **What to do:**
   - Test all functions in `composer-logic.ts`
@@ -742,9 +742,9 @@ Wave FINAL (Verification):
   - `src/helpers/composer-logic.ts` - Implementation (75 lines)
 
   **Acceptance Criteria:**
-  - [ ] All exported functions tested
-  - [ ] Edge cases covered (empty input, disabled state, etc.)
-  - [ ] 90%+ coverage
+  - [x] All exported functions tested
+  - [x] Edge cases covered (empty input, disabled state, etc.)
+  - [x] 90%+ coverage (achieved: 100%)
 
   **QA Scenarios:**
   ```
@@ -753,7 +753,7 @@ Wave FINAL (Verification):
     Steps:
       1. Run: pnpm vitest run packages/acp-chat-core/src/helpers/composer-logic.test.ts
     Expected Result: All tests pass
-    Evidence: .sisyphus/evidence/task-10-composer-tests.txt
+    Evidence: .sisyphus/evidence/acp-chat-core/task-10-composer-tests.txt
   ```
 
   **Commit:** YES
@@ -1498,12 +1498,13 @@ Wave FINAL (Verification):
 
   **Parallelization:**
   - **Can Run In Parallel:** YES (with F2-F4)
-  - **Blocked By:** ALL tasks 1-25
+  - **Blocked By:** ALL tasks 1-25 (MUST wait for user approval after all tasks complete)
 
   **Acceptance Criteria:**
   - [ ] All Must Have items verified present
   - [ ] All Must NOT Have items verified absent
   - [ ] Evidence files confirmed
+  - [ ] User approval received ("okay" or "LGTM")
 
   **Evidence:** `.sisyphus/evidence/acp-chat-core/f1-compliance-report.md`
 
@@ -1529,12 +1530,13 @@ Wave FINAL (Verification):
 
   **Parallelization:**
   - **Can Run In Parallel:** YES (with F1, F3-F4)
-  - **Blocked By:** ALL tasks 1-25
+  - **Blocked By:** ALL tasks 1-25 (MUST wait for user approval after all tasks complete)
 
   **Acceptance Criteria:**
   - [ ] Type check passes
   - [ ] Tests pass
   - [ ] No critical issues
+  - [ ] User approval received ("okay" or "LGTM")
 
   **Evidence:** `.sisyphus/evidence/acp-chat-core/f2-quality-report.md`
 
@@ -1555,12 +1557,13 @@ Wave FINAL (Verification):
 
   **Parallelization:**
   - **Can Run In Parallel:** YES (with F1-F2, F4)
-  - **Blocked By:** ALL tasks 1-25
+  - **Blocked By:** ALL tasks 1-25 (MUST wait for user approval after all tasks complete)
 
   **Acceptance Criteria:**
   - [ ] Overall coverage >= 80%
   - [ ] Branch coverage >= 75%
   - [ ] No critical paths uncovered
+  - [ ] User approval received ("okay" or "LGTM")
 
   **Evidence:** `.sisyphus/evidence/acp-chat-core/f3-coverage-report.md`
 

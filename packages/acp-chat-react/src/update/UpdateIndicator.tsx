@@ -10,6 +10,7 @@ export const UpdateIndicator = memo(function UpdateIndicator({
   return (
     <div
       data-acp-update-status={status}
+      data-testid={`update-indicator-${status}`}
       className={`acp-update__indicator ${statusClass} ${className}`}
       aria-hidden="true"
     />

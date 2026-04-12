@@ -22,7 +22,7 @@ export const UpdateList = memo(function UpdateList({
 
   if (updates.length === 0) {
     return (
-      <div data-acp-update-list-empty className={`acp-update-list--empty ${className}`}>
+      <div data-acp-update-list-empty data-testid="acp-update-list-empty" className={`acp-update-list--empty ${className}`}>
         <span className="acp-update-list__empty-text">No updates</span>
       </div>
     );
@@ -31,6 +31,7 @@ export const UpdateList = memo(function UpdateList({
   return (
     <div
       data-acp-update-list
+      data-testid="acp-update-list"
       className={`acp-update-list ${className}`}
       style={{ "--acp-update-list-gap": `${gap}px` } as React.CSSProperties}
     >
@@ -38,7 +39,8 @@ export const UpdateList = memo(function UpdateList({
         <div
           key={update.id}
           data-acp-update-wrapper
-          data-acp-update-index={index}
+          data-acp-update-wrapper-index={index}
+          data-testid={`acp-update-wrapper-${index}`}
         >
           {renderUpdate(update)}
         </div>

@@ -1,0 +1,73 @@
+Task 19: Session Capture/Replay Flow Tests - COMPLETED
+=========================================================
+
+File Created: packages/acp-chat-core/src/__tests__/integration/capture-replay-flow.test.ts
+Lines: 756
+File Size: 22,657 bytes
+
+Test Results:
+-------------
+✓ All 23 tests passed
+✓ 0 TypeScript errors
+
+Test Coverage:
+--------------
+1. Session capture functionality (startCapture, stopCapture)
+2. Captured session replay through ReplayController  
+3. Capture interceptor integration with SessionController
+4. Export functionality (exportCapturedSession)
+5. Various session types (tool-calling, thought, permission-request)
+6. Edge cases and error handling
+
+Tests Breakdown:
+----------------
+✓ session capture functionality: 4 tests
+  ✓ starts capture and records traffic events
+  ✓ stops capture and sets endTime
+  ✓ captures sessionUpdate events with metadata
+  ✓ captures with pre-existing session state
+
+✓ export functionality: 4 tests
+  ✓ exports captured session with all data
+  ✓ exports after stopCapture with endTime set
+  ✓ throws error when exporting without capture
+  ✓ stopCaptureAndExport stops and exports in one call
+
+✓ capture interceptor integration: 3 tests
+  ✓ integrates with SessionController-like interface
+  ✓ handles multiple event types during capture
+  ✓ properly unsubscribes on stopCapture
+
+✓ captured session replay: 3 tests
+  ✓ can replay captured session data
+  ✓ preserves event order in captured data
+  ✓ captures events with accurate token counts
+
+✓ various session types: 4 tests
+  ✓ captures tool-calling session type
+  ✓ captures thought session type
+  ✓ captures permission-request session type
+  ✓ captures mixed session with multiple types
+
+✓ edge cases and error handling: 5 tests
+  ✓ handles starting capture while already capturing
+  ✓ handles stopping capture when not active
+  ✓ handles malformed sessionUpdate gracefully
+  ✓ handles traffic events without errors
+  ✓ handles empty capture session
+
+Integration Points Verified:
+----------------------------
+✓ DefaultSessionCaptureInterceptor wraps SessionController
+✓ Captures all traffic events (inbound and outbound)
+✓ Extracts metadata (modes, models) from sessionUpdate events
+✓ Computes token counts for each event
+✓ Exports captured sessions with complete data
+✓ Captured data structure compatible with ReplayController
+✓ No filesystem writes in tests (uses mock controller)
+
+Command Executed:
+pnpm vitest run src/__tests__/integration/capture-replay-flow.test.ts
+
+Result: ✓ 23 tests passed (0 failed)
+TypeScript: ✓ 0 errors

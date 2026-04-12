@@ -1,0 +1,149 @@
+# Task 4: Create test utilities and helpers for acp-chat-core
+
+## Summary
+Created comprehensive test utilities and helpers for acp-chat-core testing infrastructure.
+
+## Files Created
+
+### 1. packages/acp-chat-core/src/test-utils/fixtures.ts
+**Purpose:** Load test fixtures from the fixtures directory
+**Functions:**
+- `listFixtures()` - Lists all available replay fixtures by timestamp
+- `loadReplayFixture(name)` - Loads complete fixture with events
+- `loadReplayFixtureMetadata(name)` - Loads fixture metadata without events
+
+**Features:**
+- Reads from `fixtures/replay-data/captured/{timestamp}/` directories
+- Parses `session-data.json` (CapturedSession metadata)
+- Parses `replay-events.jsonl` (JSONL events file)
+- Handles errors gracefully with descriptive messages
+- Type-safe with CapturedSession and CapturedEvent types
+
+### 2. packages/acp-chat-core/src/test-utils/mocks.ts
+**Purpose:** Mock implementations for testing WebSocket and session controllers
+**Classes:**
+- `MockTransportClient` - Simulates TransportClient with event emission
+  - `on/off` methods for statusChange, envelope, error events
+  - `setStatus`, `connect`, `disconnect` methods
+  - `emitEnvelope`, `emitError` helper methods
+- `MockSessionController` - Simulates SessionController with event emission
+  - `on/off` methods for all controller events
+  - `connect`, `disconnect`, `getState` methods
+  - Event emission helpers (emitStatus, emitTraffic, emitSessionUpdate, etc.)
+
+**Factory Functions:**
+- `createMockTransport(config?)` - Creates MockTransportClient with defaults
+- `createMockController(initialState?)` - Creates MockSessionController with defaults
+
+**Features:**
+- Full TypeScript typing matching actual interfaces
+- Event handler registration/unregistration
+- State management and updates
+- Compatible with existing test patterns
+
+### 3. packages/acp-chat-core/src/test-utils/factories.ts
+**Purpose:** Factory functions for creating ACP message structures
+**Functions:**
+- `createACPPayload()` - Creates JSON-RPC 2.0 request
+- `createACPPayloadResult()` - Creates JSON-RPC 2.0 response
+- `createACPPayloadError()` - Creates JSON-RPC 2.0 error
+- `createACPPayloadNotification()` - Creates JSON-RPC 2.0 notification
+- `createBridgeEnvelope()` - Creates BridgeEnvelope with ACP payload
+- `createBridgeStatusEnvelope()` - Creates bridge status envelope
+- `createSessionUpdate()` - Creates session update structure
+- `createSessionUpdateEnvelope()` - Creates envelope with session update
+- `createInitializeResult()` - Creates initialize response result
+- `createCreateSessionResult()` - Creates createSession response result
+- `createPermissionRequestParams()` - Creates permission request params
+- `createPermissionRequestEnvelope()` - Creates permission request envelope
+- `createListSessionsResult()` - Creates listSessions response result
+- `createLoadSessionResult()` - Creates loadSession response result
+- `createBatchedSessionUpdatesEnvelope()` - Creates batched updates envelope
+
+**Types Exported:**
+- `JsonRpcRequest`
+- `JsonRpcResponse`
+- `JsonRpcError`
+- `JsonRpcNotification`
+- `SessionUpdate`
+
+**Features:**
+- All factory functions have sensible defaults
+- TypeScript type safety throughout
+- Supports all common ACP message patterns
+- Batched update support
+- Permission request support
+
+### 4. packages/acp-chat-core/src/test-utils/index.ts
+**Purpose:** Main export file for all test utilities
+**Exports:** All functions and types from fixtures.ts, mocks.ts, and factories.ts
+
+### 5. packages/acp-chat-core/src/__tests__/test-utils.test.ts
+**Purpose:** Comprehensive test suite verifying all utilities work correctly
+**Tests:** 20 tests covering:
+  - Fixture loaders (listFixtures, loadReplayFixtureMetadata)
+  - Mock implementations (MockTransportClient, MockSessionController)
+  - All factory functions (14 different factory functions)
+  - Type checking for exported types
+
+**Test Results:** ✓ All 20 tests passed (5ms runtime)
+
+## Usage Example
+
+```typescript
+import {
+  loadReplayFixture,
+  createMockController,
+  createBridgeEnvelope,
+  createACPPayload,
+} from '../test-utils';
+
+// Load a fixture
+const fixture = loadReplayFixture('1775691680997');
+console.log(`Loaded ${fixture.events.length} events`);
+
+// Create a mock controller
+const controller = createMockController({
+  sessionId: 'test-session',
+  initialized: true,
+});
+controller.connect();
+
+// Create a bridge envelope
+const payload = createACPPayload({
+  id: 1,
+  method: 'test/method',
+  params: { foo: 'bar' },
+});
+const envelope = createBridgeEnvelope({
+  seq: 1,
+  payload,
+});
+
+// Test event emission
+controller.emitSessionUpdate({
+  sessionId: 'test-session',
+  update: { type: 'message', id: 'msg-1' },
+});
+```
+
+## Verification
+✅ All utilities can be imported from test-utils/index.ts
+✅ All 20 tests pass (5ms runtime)
+✅ No TypeScript errors in test-utils directory
+✅ No TypeScript errors in test-utils.test.ts
+✅ Utilities match existing test patterns
+✅ Type-safe with proper TypeScript types
+✅ No errors when loading fixtures
+✅ Mock classes emit events correctly
+✅ Factory functions create valid structures
+✅ Discriminated union handling for BridgeEnvelope
+✅ exactOptionalPropertyTypes compatibility
+
+## Notes
+- Test utilities are NOT exported from main index.ts (kept separate as intended)
+- Fixtures directory structure: `fixtures/replay-data/captured/{timestamp}/`
+- Each fixture contains `session-data.json` and `replay-events.jsonl`
+- Mock implementations provide full interface coverage
+- Factory functions support all common ACP message types
+- Documentation includes JSDoc comments for all functions

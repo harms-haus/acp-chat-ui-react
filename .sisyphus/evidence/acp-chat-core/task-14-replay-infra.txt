@@ -1,0 +1,151 @@
+# Task 14: Replay Fixture Infrastructure
+
+## Completed: April 11, 2026
+
+## Files Created
+
+1. `packages/acp-chat-core/src/test-utils/fixture-loader.ts` (385 lines)
+   - Load and parse replay JSONL files
+   - Supports both captured/ format and structured {demoType}/session-{n}/ format
+   - Functions: listFixtures(), loadFixture(), loadFixtureMetadata(), loadFixtureManifest()
+   - Types: LoadedFixture, LoadedReplayEvent
+
+2. `packages/acp-chat-core/src/test-utils/replay-runner.ts` (353 lines)
+   - Execute replay files through ReplayController
+   - Records session updates, permission requests, and statistics
+   - Classes: ReplayRunner
+   - Types: ReplayRunnerConfig, ReplayStatistics, RecordedSessionUpdate, RecordedPermissionRequest, ReplayOutcome
+
+3. `packages/acp-chat-core/src/test-utils/replay-assertions.ts` (323 lines)
+   - Assertion helpers for replay outcomes
+   - Functions: assertReplaySuccess(), assertHasSessionUpdates(), assertPermissionRequestsHandled(), filterSessionUpdates(), summarizeReplay(), etc.
+   - 13 different assertion helpers for comprehensive replay testing
+
+4. `packages/acp-chat-core/src/test-utils/index.ts` (updated)
+   - Exports all new replay utilities
+   - Maintains backward compatibility with existing fixtures.ts exports
+
+5. `packages/acp-chat-core/src/test-utils/__tests__/replay-infrastructure.test.ts` (240 lines)
+   - Integration tests for replay infrastructure
+   - 13 tests validating fixture loading and assertion helpers
+   - All tests passing
+
+## Test Results
+
+```
+✓ packages/acp-chat-core/src/test-utils/__tests__/replay-infrastructure.test.ts (13 tests)
+  ✓ Replay Fixture Infrastructure
+    ✓ listFixtures (2 tests)
+    ✓ loadFixture (3 tests)
+    ✓ loadFixtureMetadata (1 test)
+    ✓ loadFixtureManifest (1 test)
+    ✓ assertion helpers (4 tests)
+    ✓ fixture format validation (2 tests)
+
+Test Files  1 passed (1)
+Tests  13 passed (13)
+```
+
+## Fixture Format Support
+
+### Captured Format
+Location: `fixtures/replay-data/captured/{timestamp}/`
+- `replay-events.jsonl` - JSONL format replay events
+- `session-data.json` - Session metadata
+
+### Structured Format
+Location: `fixtures/replay-data/{demoType}/session-{n}/`
+- `replay-events.jsonl` - JSONL format replay events
+- `manifest.json` - Manifest with session metadata
+- `{sessionId}/session-data.json` - Pre-existing session state
+
+Supported demo types:
+- tool-calling
+- simple-thought
+- permission-request
+- tool-calling-thinking
+- multi-session
+- complex-content
+- long-context
+- filesystem-test
+
+## Usage Example
+
+```typescript
+import {
+  loadFixture,
+  ReplayRunner,
+  assertReplaySuccess,
+  assertHasSessionUpdates,
+} from '@harms-haus/acp-chat-core/test-utils';
+import { ReplayController } from '@harms-haus/acp-chat-core';
+
+// Load a fixture
+const fixture = loadFixture('tool-calling/session-1');
+
+// Create and configure runner
+const controller = new ReplayController({ bridgeUrl: 'ws://localhost:8080/replay-v2' });
+const runner = new ReplayRunner({
+  controller,
+  fixture,
+  replaySpeed: 1.0,
+});
+
+// Auto-respond to permission requests
+runner.autoRespondToPermissions('approve');
+
+// Execute replay
+const outcome = await runner.execute();
+
+// Assert on outcomes
+assertReplaySuccess(outcome);
+assertHasSessionUpdates(outcome, {
+  update: { type: 'agent_thought_chunk' },
+}, 3);
+
+// Access statistics
+console.log(runner.getStatistics());
+// { totalEvents: 50, inboundEvents: 50, outboundEvents: 0, totalTokens: 1234, durationMs: 5000, errorCount: 0 }
+```
+
+## Key Features
+
+1. **Fixture Loader**: 
+   - Automatically detects captured vs structured format
+   - Parses JSONL events efficiently
+   - Loads session metadata and pre-existing state
+   - Handles both flat and nested directory structures
+
+2. **Replay Runner**:
+   - Integrates with ReplayController
+   - Records all session updates
+   - Tracks permission requests and responses
+   - Collects execution statistics
+   - Supports configurable replay speed
+
+3. **Assertion Helpers**:
+   - Type-safe assertions on replay outcomes
+   - Filter session updates by criteria
+   - Verify permission request handling
+   - Validate statistics
+   - Check event sequences
+   - Generate human-readable summaries
+
+## Integration with Existing Code
+
+- Works with existing fixtures in `fixtures/replay-data/`
+- Compatible with ReplayController from `src/session/replay-controller.ts`
+- Uses types from `src/replay/types.ts`
+- Extends existing test-utils module
+- Maintains backward compatibility with fixtures.ts
+
+## Next Steps
+
+This infrastructure enables:
+- Task 15: Create new replay fixtures
+- Task 16: Integration tests for session lifecycle
+- Task 17: Integration tests for tool calling
+- Task 18: Integration tests for permission requests
+- Task 19: End-to-end replay tests
+
+All blocking dependencies for Wave 3 integration tests are now in place.

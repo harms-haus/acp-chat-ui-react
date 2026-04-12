@@ -1,0 +1,84 @@
+Task 18: WebSocket Connection Lifecycle Tests
+Status: COMPLETED
+Date: 2026-04-11
+
+## Summary
+Created comprehensive integration tests for WebSocket connection lifecycle in TransportClient.
+
+## Test File
+Location: packages/acp-chat-core/src/__tests__/integration/connection-lifecycle.test.ts
+
+## Test Coverage
+Total Tests: 38
+All Tests: PASSED
+
+### Test Categories:
+
+1. Connection Establishment (4 tests)
+   - Establishes connection and transitions through states
+   - Emits statusChange events during connection
+   - Handles WebSocket constructor errors
+   - Prevents duplicate connections
+
+2. Connection Teardown (3 tests)
+   - Gracefully disconnects from connected state
+   - Clears reconnect timeout on manual disconnect
+   - Disconnects from any state
+
+3. Reconnection with Exponential Backoff (6 tests)
+   - Reconnects automatically on unexpected close
+   - Uses exponential backoff for reconnect delays
+   - Respects maxReconnectDelayMs cap
+   - Stops reconnecting after maxReconnectAttempts
+   - Resets reconnectAttempts on successful connection
+   - Does not reconnect when disabled
+
+4. Connection State Transitions (5 tests)
+   - Follows correct state machine: disconnected → connecting → connected
+   - Transitions to reconnecting on unexpected close
+   - Transitions from reconnecting to connecting on reconnect attempt
+   - Transitions from reconnecting to disconnected after max attempts
+   - Transitions to error state on WebSocket construction failure
+
+5. Connection Error Scenarios (5 tests)
+   - Handles WebSocket error event
+   - Handles WebSocket close event with error
+   - Handles invalid URL gracefully
+   - Handles message parsing errors gracefully
+   - Continues operating after recoverable error
+
+6. Graceful Degradation (4 tests)
+   - Handles rapid connect/disconnect cycles
+   - Handles multiple close events without crashing
+   - Handles multiple error events without crashing
+   - Handles reconnect during manual disconnect
+
+7. Multiple Connection Attempts (4 tests)
+   - Allows reconnection after manual disconnect
+   - Tracks connection attempts correctly
+   - Handles connection after all reconnect attempts exhausted
+   - Preserves configuration across reconnections
+
+8. Event Emission During Lifecycle (3 tests)
+   - Emits events to multiple handlers
+   - Stops emitting to unregistered handlers
+   - Emits error events during connection lifecycle
+
+9. Edge Cases (4 tests)
+   - Handles zero reconnect delay
+   - Handles very large reconnect delay
+   - Handles concurrent connect calls during connection
+   - Handles message received before connection completes
+
+## Test Techniques
+- Mocked WebSocket for integration-level testing
+- Fake timers (vi.useFakeTimers) for testing reconnection delays
+- Exponential backoff verification (100ms, 200ms, 400ms, 800ms...)
+- State transition tracking via statusChange events
+- Error handling and graceful degradation scenarios
+
+## Key Differences from Unit Tests (client.test.ts)
+- Integration tests use mocked WebSocket at protocol level
+- Unit tests mock TransportClient methods
+- Integration tests verify full connection flows and state machines
+- Focus on lifecycle behavior rather than method isolation

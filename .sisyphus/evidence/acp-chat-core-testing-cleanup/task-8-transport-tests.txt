@@ -1,0 +1,14 @@
+
+> test
+> vitest run packages/acp-chat-core/src/transport/client.test.ts
+
+
+ RUN  v2.1.9 /home/blake/Documents/software/acp-react-chat-ui
+
+ ✓ packages/acp-chat-core/src/transport/client.test.ts (50 tests) 18ms
+
+ Test Files  1 passed (1)
+      Tests  50 passed (50)
+   Start at  06:02:30
+   Duration  265ms (transform 53ms, setup 31ms, collect 49ms, tests 18ms, environment 0ms, prepare 42ms)
+

@@ -1,0 +1,78 @@
+Task 12: Preset Validation Tests
+==================================
+
+File Created:
+-------------
+packages/acp-chat-core/src/presets/launch.test.ts (512 lines, 44 tests)
+
+Functions Tested:
+-----------------
+1. parseLaunchPreset() - Environment variable parsing
+   - All 7 environment variables tested:
+     * ACP_LAUNCH_CMD
+     * ACP_SESSION_ID
+     * ACP_CWD
+     * ACP_BRIDGE_MODE (proxy/replay/invalid)
+     * ACP_AUTO_CONNECT (true/false variants)
+     * ACP_BRIDGE_URL (custom and default)
+     * ACP_REPLAY_FILE
+
+2. isPresetValid() - Validation logic
+   - Proxy mode validation (requires launchCmd)
+   - Replay mode validation (requires replayFile)
+   - Null mode validation
+   - Field combinations
+
+Test Coverage:
+--------------
+✓ Valid inputs for all environment variables
+✓ Invalid inputs (malformed values, wrong types)
+✓ Edge cases:
+  - Missing vars (null/undefined)
+  - Empty strings
+  - Whitespace handling
+  - Special characters
+  - Unicode characters
+  - Very long values
+  - Case sensitivity
+  - Default values
+  - Boolean parsing ('true', '1', 'false', '0', invalid)
+  - Bridge mode validation ('proxy', 'replay', invalid, empty)
+  
+Test Results:
+-------------
+Test Files: 1 passed (1)
+Tests: 44 passed (44)
+Duration: ~233ms
+
+Coverage Notes:
+---------------
+- All public APIs tested (parseLaunchPreset, isPresetValid)
+- Internal functions tested indirectly through public API
+- No mocking required (uses envOverride parameter)
+- All code paths exercised
+
+Key Implementation Details:
+---------------------------
+- parseLaunchPreset accepts optional envOverride parameter for testability
+- Falls back to import.meta.env (Vite) or process.env (Node.js)
+- Default bridge URL: ws://127.0.0.1:8765
+- Boolean parsing: only 'true' and '1' are truthy
+- Bridge mode: only 'proxy' and 'replay' are valid
+
+Test File Structure:
+--------------------
+describe("parseLaunchPreset")
+  ├── environment variable parsing (16 tests)
+  ├── default values (4 tests)
+  └── edge cases (7 tests)
+
+describe("isPresetValid")
+  ├── proxy mode validation (3 tests)
+  ├── replay mode validation (3 tests)
+  ├── null/unknown mode validation (2 tests)
+  ├── mode-specific field combinations (4 tests)
+  └── edge cases (2 tests)
+
+describe("LaunchPreset type")
+  └── type structure (3 tests)
