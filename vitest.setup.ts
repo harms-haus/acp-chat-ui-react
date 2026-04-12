@@ -3,6 +3,20 @@ import { vi } from "vitest";
 import { existsSync, rmSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
+// Mock WebSocket for Node.js environment
+// WebSocket is not available in Node.js by default, but our tests use it
+if (typeof WebSocket === "undefined") {
+  global.WebSocket = vi.fn().mockImplementation(() => ({
+    send: vi.fn(),
+    close: vi.fn(),
+    readyState: 1,
+    onopen: null,
+    onmessage: null,
+    onerror: null,
+    onclose: null,
+  }));
+}
+
 // Suppress false-positive act(...) warnings from React Testing Library
 // These occur when async operations trigger state updates that RTL's waitFor
 // already handles correctly. The warnings are noise in test output.

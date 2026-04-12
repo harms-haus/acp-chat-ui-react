@@ -22,6 +22,11 @@ export default defineConfig({
       ["**/message-actions.test.tsx", "jsdom"],
       ["**/permission-request-card.test.tsx", "jsdom"],
       ["**/thread.test.tsx", "jsdom"],
+      ["**/update-components.test.tsx", "jsdom"],
+      ["**/message-placeholder.test.tsx", "jsdom"],
+      ["**/ThreadItemRenderer.test.tsx", "jsdom"],
+      ["**/ssr-smoke.test.ts", "jsdom"],
+      ["**/store/react-store-adapter.test.ts", "jsdom"],
     ],
   },
 });

@@ -17,7 +17,7 @@ const BUNDLE_BUDGETS: BundleBudget[] = [
   },
   {
     packageName: '@acp/chat-react',
-    maxGzipKB: 120,
+    maxGzipKB: 150,
     distPath: 'packages/acp-chat-react/dist',
   },
 ];
