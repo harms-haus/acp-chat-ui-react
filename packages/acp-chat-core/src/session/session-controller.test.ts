@@ -115,7 +115,7 @@ describe("SessionController", () => {
 
   // Helper to get the last request ID from sent data
   function getLastRequestId(): number {
-    const _mockTransport = getMockTransport();
+    const mockTransport = getMockTransport();
     if (!mockTransport.lastSent) {
       throw new Error("No request sent yet");
     }
@@ -125,7 +125,7 @@ describe("SessionController", () => {
 
   // Helper to simulate response from server
   function simulateResponse(requestId: number, result: unknown) {
-    const _mockTransport = getMockTransport();
+    const mockTransport = getMockTransport();
     const envelope: BridgeEnvelope = {
       version: 1,
       seq: requestId,
@@ -141,7 +141,7 @@ describe("SessionController", () => {
   }
 
   function simulateError(requestId: number, message: string) {
-    const _mockTransport = getMockTransport();
+    const mockTransport = getMockTransport();
     const envelope: BridgeEnvelope = {
       version: 1,
       seq: requestId,
@@ -259,7 +259,7 @@ describe("SessionController", () => {
 
     expect(typeof unsubscribe).toBe("function");
 
-    const _mockTransport = getMockTransport();
+    const mockTransport = getMockTransport();
     const envelope: BridgeEnvelope = {
         version: 1,
         seq: 0,
@@ -294,7 +294,7 @@ describe("SessionController", () => {
       expect(typeof unsubscribe).toBe("function");
       
       controller.connect();
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const envelope: BridgeEnvelope = {
         version: 1,
         seq: 0,
@@ -318,7 +318,7 @@ describe("SessionController", () => {
       
       expect(typeof unsubscribe).toBe("function");
       
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const error = new Error("Connection failed");
       mockTransport.emitError(error);
       
@@ -337,7 +337,7 @@ describe("SessionController", () => {
       expect(typeof unsubscribe).toBe("function");
       
       controller.connect();
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const envelope: BridgeEnvelope = {
         version: 1,
         seq: 0,
@@ -370,7 +370,7 @@ describe("SessionController", () => {
       
       expect(typeof unsubscribe).toBe("function");
       
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const envelope: BridgeEnvelope = {
         version: 1,
         seq: 0,
@@ -516,7 +516,7 @@ describe("SessionController", () => {
     });
 
     it("createSession accepts mcpServers parameter", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
       
       const createPromise = controller.createSession("/test", [{ name: "test-mcp", config: {} }]);
@@ -568,7 +568,7 @@ describe("SessionController", () => {
     });
 
     it("loadSession accepts optional mcpServers", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
       
       const loadPromise = controller.loadSession("session-1", "/test", [{ name: "mcp" }]);
@@ -603,7 +603,7 @@ describe("SessionController", () => {
     });
 
     it("listSessions accepts cursor and cwd parameters", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
       
       const listPromise = controller.listSessions("cursor-abc", "/specific/cwd");
@@ -625,7 +625,7 @@ describe("SessionController", () => {
     });
 
     it("sendPrompt sends prompt with correct structure", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
       
       const promptPromise = controller.sendPrompt("session-123", "Hello, world!");
@@ -660,7 +660,7 @@ describe("SessionController", () => {
     });
 
     it("cancelPrompt sends notification without id", () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
 
       controller.cancelPrompt("session-123");
@@ -692,7 +692,7 @@ describe("SessionController", () => {
     });
 
     it("respondToPermission sends correct response", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
 
       await controller.respondToPermission(42, "allow-once");
@@ -722,7 +722,7 @@ describe("SessionController", () => {
     });
 
     it("cancelPermission sends cancel response", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
 
       await controller.cancelPermission(42);
@@ -741,7 +741,7 @@ describe("SessionController", () => {
       const permissionHandler = vi.fn();
       controller.on("permissionRequest", permissionHandler);
 
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const envelope: BridgeEnvelope = {
         version: 1,
         seq: 0,
@@ -796,7 +796,7 @@ describe("SessionController", () => {
     });
 
     it("handleFileReadRequest validates path and rejects paths with ..", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
 
       // Subscribe to file reads
@@ -830,7 +830,7 @@ describe("SessionController", () => {
     });
 
     it("handleFileReadRequest validates path and rejects absolute paths", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
       const fileReadHandler = vi.fn().mockResolvedValue({ content: "test" });
       
@@ -865,7 +865,7 @@ describe("SessionController", () => {
     });
 
     it("handleFileReadRequest calls subscribed handler and sends response", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
       const fileReadHandler = vi.fn().mockResolvedValue({ content: "file content here" });
       
@@ -903,7 +903,7 @@ describe("SessionController", () => {
     });
 
     it("handleFileWriteRequest calls subscribed handler and sends response", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
       const fileWriteHandler = vi.fn().mockResolvedValue({ success: true });
       
@@ -940,7 +940,7 @@ describe("SessionController", () => {
     });
 
     it("handleFileWriteRequest validates path", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
       const fileWriteHandler = vi.fn().mockResolvedValue({ success: true });
       
@@ -981,7 +981,7 @@ describe("SessionController", () => {
     });
 
     it("startAgent sends bridge envelope with agent config", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
       const trafficHandler = vi.fn();
       controller.on("traffic", trafficHandler);
@@ -1007,7 +1007,7 @@ describe("SessionController", () => {
     });
 
     it("startAgent waits for WebSocket connection before sending", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const sendSpy = vi.spyOn(mockTransport, "send");
 
       // Set transport to disconnected state
@@ -1024,7 +1024,7 @@ describe("SessionController", () => {
     });
 
     it("startAgent rejects if connection times out", async () => {
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       mockTransport.setStatus("disconnected");
 
       // Don't connect, just wait for timeout
@@ -1048,7 +1048,7 @@ describe("SessionController", () => {
       const sessionUpdateHandler = vi.fn();
       controller.on("sessionUpdate", sessionUpdateHandler);
 
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const envelope: BridgeEnvelope = {
         version: 1,
         seq: 0,
@@ -1075,7 +1075,7 @@ describe("SessionController", () => {
       const sessionUpdateHandler = vi.fn();
       controller.on("sessionUpdate", sessionUpdateHandler);
 
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const envelope: BridgeEnvelope = {
         version: 1,
         seq: 0,
@@ -1119,7 +1119,7 @@ describe("SessionController", () => {
       const sessionUpdateHandler = vi.fn();
       controller.on("sessionUpdate", sessionUpdateHandler);
 
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const envelope: BridgeEnvelope = {
         version: 1,
         seq: 0,
@@ -1152,7 +1152,7 @@ describe("SessionController", () => {
       const statusHandler = vi.fn();
       controller.on("statusChange", statusHandler);
 
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const envelope: BridgeEnvelope = {
         version: 1,
         seq: 0,
@@ -1188,7 +1188,7 @@ describe("SessionController", () => {
       const errorHandler = vi.fn();
       controller.on("error", errorHandler);
 
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const error = new Error("WebSocket connection failed");
       mockTransport.emitError(error);
 
@@ -1230,7 +1230,7 @@ describe("SessionController", () => {
       const trafficHandler = vi.fn();
       controller.on("traffic", trafficHandler);
 
-      const _mockTransport = getMockTransport();
+      const mockTransport = getMockTransport();
       const envelope: BridgeEnvelope = {
         version: 1,
         seq: 0,

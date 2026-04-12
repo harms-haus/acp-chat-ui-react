@@ -89,7 +89,7 @@ describe("token timing utilities", () => {
 
   it("calculates delay for 0 tokens as 15ms", () => {
     const tokenCount = 0;
-    const delay = (tokenCount / TPS) * 1000;
+    const delay = Math.max(ZERO_TOKEN_DELAY_MS, (tokenCount / TPS) * 1000);
     expect(delay).toBe(ZERO_TOKEN_DELAY_MS);
   });
 

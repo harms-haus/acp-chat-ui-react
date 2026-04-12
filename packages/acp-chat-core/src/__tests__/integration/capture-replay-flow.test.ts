@@ -195,7 +195,7 @@ describe("Capture/Replay Flow Integration", () => {
     vi.clearAllMocks();
     controller = new MockSessionController();
     interceptor = new DefaultSessionCaptureInterceptor(controller as any);
-    replayController = new ReplayController({
+    _replayController = new ReplayController({
       bridgeUrl: "ws://localhost:8080/replay-v2",
     });
   });

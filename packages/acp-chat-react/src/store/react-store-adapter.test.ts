@@ -190,7 +190,7 @@ describe("AcpStore", () => {
           capabilities: null,
         })),
         on: vi.fn((event: string, handler: unknown) => {
-          if (event === "statusChange") statusHandler = handler as typeof statusHandler;
+          if (event === "statusChange") _statusHandler = handler as typeof statusHandler;
           if (event === "sessionUpdate") updateHandler = handler as typeof updateHandler;
           return () => {};
         }),

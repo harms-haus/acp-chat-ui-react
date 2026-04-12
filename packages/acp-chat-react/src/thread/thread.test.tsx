@@ -213,7 +213,7 @@ describe("Thread", () => {
         initialized: true,
       });
 
-      const { store: _store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
+      const { store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
 
       const userMessage = createMockMessage({
         role: "user",
@@ -299,7 +299,7 @@ describe("Thread", () => {
         initialized: true,
       });
 
-      const { store: _store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
+      const { store } = customRender(<Thread store={null as any} />, { sessionController: controller as any });
 
       const thought = createMockThought({
         content: "Thinking about the solution...",

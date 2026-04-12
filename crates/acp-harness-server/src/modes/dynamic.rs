@@ -14,6 +14,8 @@ use tokio_tungstenite::{WebSocketStream, tungstenite::Message};
 
 use harms_haus_acp_ws_bridge::{BridgeEnvelope, BridgeMessage, BridgeStatus};
 
+use crate::modes::replay::{self, ReplayConfig};
+
 pub struct DynamicConfig {
     pub default_cwd: Option<String>,
     pub default_env: Vec<(String, String)>,
@@ -40,50 +42,58 @@ fn to_text(s: String) -> Message {
 }
 
 pub async fn run_dynamic_mode(
-    config: DynamicConfig,
-    ws_stream: WebSocketStream<tokio::net::TcpStream>,
-    mut shutdown_rx: broadcast::Receiver<()>,
+  config: DynamicConfig,
+  ws_stream: WebSocketStream<tokio::net::TcpStream>,
+  mut shutdown_rx: broadcast::Receiver<()>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let (ws_tx, mut ws_rx) = ws_stream.split();
-    let ws_tx = Arc::new(tokio::sync::Mutex::new(ws_tx));
+  let (ws_tx, mut ws_rx) = ws_stream.split();
 
-    let (out_tx, mut out_rx) = mpsc::unbounded_channel::<BridgeEnvelope>();
+  let (out_tx, mut out_rx) = mpsc::unbounded_channel::<BridgeEnvelope>();
 
-    send_envelope(&out_tx, BridgeMessage::bridge_status(BridgeStatus::Starting))?;
+  send_envelope(&out_tx, BridgeMessage::bridge_status(BridgeStatus::Starting))?;
 
-    let first_message = loop {
-        tokio::select! {
-            msg = ws_rx.next() => {
-                match msg {
-                    Some(Ok(Message::Text(text))) => {
-                        break text.to_string();
-                    }
-                    Some(Ok(Message::Close(_))) | None => {
-                        tracing::info!("Client disconnected before mode selection");
-                        return Ok(());
-                    }
-                    _ => {}
-                }
-            }
-            _ = shutdown_rx.recv() => {
-                tracing::info!("Shutdown signal received while waiting for client");
-                return Ok(());
-            }
+  let first_message = loop {
+    tokio::select! {
+      msg = ws_rx.next() => {
+        match msg {
+          Some(Ok(Message::Text(text))) => {
+            break text.to_string();
+          }
+          Some(Ok(Message::Close(_))) | None => {
+            tracing::info!("Client disconnected before mode selection");
+            return Ok(());
+          }
+          _ => {}
         }
-    };
-
-    // Detect mode: JSON-RPC for replay, BridgeEnvelope for live
-    if let Ok(json) = serde_json::from_str::<Value>(&first_message) {
-        if json.get("jsonrpc").is_some() && json.get("method").is_some() {
-            let method = json.get("method").and_then(|m| m.as_str()).unwrap_or("");
-            
-            if method == "initialize" || method == "session/new" {
-                tracing::warn!("Replay detected in --live mode. Use server without --live for replay.");
-                // TODO: Implement proper replay by reuniting split stream
-                return Ok(());
-            }
-        }
+      }
+      _ = shutdown_rx.recv() => {
+        tracing::info!("Shutdown signal received while waiting for client");
+        return Ok(());
+      }
     }
+  };
+
+  // Detect mode: JSON-RPC for replay, BridgeEnvelope for live
+  if let Ok(json) = serde_json::from_str::<Value>(&first_message) {
+    if json.get("jsonrpc").is_some() && json.get("method").is_some() {
+      let method = json.get("method").and_then(|m| m.as_str()).unwrap_or("");
+
+      if method == "initialize" || method == "session/new" {
+        tracing::info!("Replay protocol detected in dynamic mode, delegating to replay handler");
+        let ws_stream = ws_tx.reunite(ws_rx).map_err(|_| "Failed to reunite WebSocket stream")?;
+        let replay_config = ReplayConfig::new(None, None, None, None, 65.0)
+          .map_err(|e| format!("Failed to create replay config: {}", e))?;
+        return replay::run_replay_mode_with_message(
+          replay_config,
+          ws_stream,
+          shutdown_rx,
+          first_message,
+        ).await;
+      }
+    }
+  }
+
+  let ws_tx = Arc::new(tokio::sync::Mutex::new(ws_tx));
     
     let start_agent = if let Ok(envelope) = serde_json::from_str::<BridgeEnvelope>(&first_message) {
         if let BridgeMessage::StartAgent { command, args, cwd, env } = envelope.message {

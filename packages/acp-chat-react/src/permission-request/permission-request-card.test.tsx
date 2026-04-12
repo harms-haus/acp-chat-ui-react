@@ -454,7 +454,7 @@ render(
         const request = createMockRequest();
         const toolCall = createMockTool({ kind, title: "Test" });
 
-render(
+const { container } = render(
           <PermissionRequestCard
             request={request}
             toolCall={toolCall}

@@ -51,6 +51,7 @@ pub fn write_json<T: Serialize>(data: &T, path: &Path) -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use harms_haus_acp_ws_bridge::{BridgeMessage, BridgeStatus};
     use std::fs;
 
     #[test]

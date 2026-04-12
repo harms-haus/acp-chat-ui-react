@@ -668,7 +668,7 @@ describe("ReplayController", () => {
       };
       setTimeout(() => mockTransport.emitEnvelope(envelope), 10);
 
-      const _result = await controller.listSessions(undefined, "/test/cwd");
+      const result = await controller.listSessions(undefined, "/test/cwd");
 
       expect(result.sessions).toEqual([
         {
