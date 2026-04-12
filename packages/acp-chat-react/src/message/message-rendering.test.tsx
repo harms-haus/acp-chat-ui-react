@@ -119,11 +119,11 @@ describe("MessageStatusIndicator", () => {
   });
 
   it("renders complete status", () => {
-render(<MessageStatusIndicator status="completed" />);
+    render(<MessageStatusIndicator status="completed" />);
 
-const indicator = document.querySelector("[data-acp-message-status='completed']");
+    const indicator = document.querySelector("[data-acp-message-status='completed']");
     expect(indicator).toBeTruthy();
-    expect(screen.getByText("Complete")).toBeTruthy();
+    expect(screen.getByText("Completed")).toBeTruthy();
   });
 
   it("renders error status", () => {

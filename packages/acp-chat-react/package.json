@@ -24,7 +24,8 @@
     "dev": "vite build --watch",
     "build": "vite build",
     "check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
     "@base-ui-components/react": "^1.0.0-rc.0",

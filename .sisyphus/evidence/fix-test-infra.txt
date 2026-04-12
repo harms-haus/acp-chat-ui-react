@@ -1,0 +1,54 @@
+# Test Infrastructure Fix Evidence
+
+## Changes Made
+
+### 1. Installed Dependencies
+- canvas@3.2.3 (devDependency)
+- @testing-library/jest-dom@6.9.1 (already present)
+
+### 2. Updated vitest.setup.ts
+- Added canvas context mock for @chenglou/pretext font measurements
+- Mocks HTMLCanvasElement.getContext() to return 2D context
+- Provides measureText() approximation (8px per character)
+- Mocks canvas width/height properties
+- Conditionally applies mock only when HTMLCanvasElement is defined (jsdom environment)
+
+### 3. Updated packages/acp-chat-react/vitest.config.ts
+- Changed setupFiles from [] to ["../../vitest.setup.ts"]
+- Now imports jest-dom matchers from root setup file
+
+## Issues Resolved
+
+### Before (26 Environment Failures)
+- "Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package" (16 instances)
+- "Cannot set properties of null (setting 'font')" (8 instances)
+- TypeError in @chenglou/pretext's getFontMeasurementState
+
+### After (0 Environment Failures)
+- All canvas-related errors eliminated
+- pretext font measurements working with mocked context
+- JSDOM tests passing with proper setup
+
+## Test Results
+- virtualized-thread.test.tsx: 10/10 passed
+- message-rendering.test.tsx: 20/21 passed (1 unrelated failure - "Complete" vs "Completed")
+- No canvas, getContext, or font measurement errors in output
+
+## Verification
+```bash
+# Canvas package installed
+grep canvas package.json
+# Output: "canvas": "^3.2.3"
+
+# vitest.setup.ts imports jest-dom
+head -1 vitest.setup.ts
+# Output: import "@testing-library/jest-dom";
+
+# acp-chat-react uses root setup
+grep setupFiles packages/acp-chat-react/vitest.config.ts
+# Output: setupFiles: ["../../vitest.setup.ts"]
+
+# No canvas errors in test output
+pnpm test | grep -i "canvas\|getContext"
+# Output: (empty - no errors)
+```

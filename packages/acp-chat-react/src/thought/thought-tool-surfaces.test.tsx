@@ -80,6 +80,9 @@ describe("ThoughtStack", () => {
     const trigger = screen.getByText("1 thought");
     fireEvent.click(trigger);
 
+    const expandButton = screen.getByRole("button", { name: /thinking/i });
+    fireEvent.click(expandButton);
+
     await waitFor(() => {
       expect(screen.getByText("I need to analyze this problem")).toBeInTheDocument();
     });

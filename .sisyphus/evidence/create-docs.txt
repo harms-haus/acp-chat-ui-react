@@ -1,0 +1,35 @@
+Component Testing Guide Created
+=================================
+
+File: packages/acp-chat-react/docs/component-testing.md
+Created: 2026-04-11
+
+Content Summary:
+- Setup section with test environment configuration
+- Rendering components with mock objects
+- Querying elements using data-acp-* selectors
+- User events (fireEvent, keyboard, click, hover)
+- Common patterns (async operations, state updates, render props)
+- Test file organization guidelines
+
+Key Patterns Documented:
+1. data-acp-* selector convention (from README.md)
+2. Mock store and controller creation helpers
+3. Testing disabled states (disconnected, uninitialized, no session)
+4. Hook testing with renderHook and act
+5. Async testing with waitFor
+6. Content block rendering tests
+7. Status indicator tests
+8. Tool call rendering tests
+9. Render isolation and memoization tests
+
+Examples sourced from:
+- composer-flow.test.tsx (Composer component, keyboard handling, disabled states)
+- settings.test.tsx (SettingsPanel, useSettings hook, custom render)
+- message-rendering.test.tsx (MessageCard, MessageList, ContentRenderer)
+- slash-and-actions.test.tsx (useSlashCommands hook, SlashSuggestions)
+- thought-tool-surfaces.test.tsx (ThoughtStack, ToolCall, render isolation)
+- message-actions.test.tsx (MessageActionBar, useMessageActions hook)
+
+Line count: 650+ lines
+Sections: 6 major sections with comprehensive examples

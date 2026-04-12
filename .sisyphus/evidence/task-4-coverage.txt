@@ -1,0 +1,44 @@
+Coverage Setup Verification
+========================
+
+Task: Set up coverage collection with thresholds in vitest.config.ts
+
+Files Modified:
+- packages/acp-chat-react/vitest.config.ts (created)
+- packages/acp-chat-react/package.json (added @vitest/coverage-v8 dependency)
+
+Coverage Configuration:
+------------------------
+Provider: v8 (NOT istanbul)
+Reporters: text, json, html, lcov
+Thresholds:
+  - Lines: 80%
+  - Branches: 75%
+
+Coverage Output:
+-----------------
+Directory: packages/acp-chat-react/coverage/
+Files Generated:
+  - index.html (HTML report)
+  - coverage-final.json (JSON report)
+  - lcov.info (LCOV format)
+  - clover.xml (Clover format)
+
+Verification:
+-------------
+✅ pnpm vitest run --coverage generates coverage report
+✅ HTML report generated in coverage/ directory
+✅ Thresholds configured (80% lines, 75% branches)
+✅ v8 provider used (confirmed by "Coverage enabled with v8" message)
+✅ Works with React/jsdom environment
+✅ No TypeScript errors in vitest.config.ts
+
+Command to verify:
+  cd packages/acp-chat-react && pnpm vitest run --coverage
+
+Notes:
+------
+- Initially used react plugin but removed it (caused TypeScript errors)
+- Vitest with jsdom environment doesn't need react plugin
+- Test file patterns added to test.include for better filtering
+- LSP diagnostics clean

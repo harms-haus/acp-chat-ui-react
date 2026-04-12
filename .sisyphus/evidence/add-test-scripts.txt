@@ -1,0 +1,43 @@
+# Test Scripts Added Evidence
+
+## Task
+Add `pnpm test-react` and `test-react:coverage` scripts to root package.json
+
+## Changes Made
+
+### 1. Root package.json (/home/blake/Documents/software/acp-react-chat-ui/package.json)
+Added two new scripts to the scripts section:
+```json
+"test-react": "pnpm -F @harms-haus/acp-chat-react test",
+"test-react:coverage": "pnpm -F @harms-haus/acp-chat-react test:coverage"
+```
+
+### 2. React package package.json (/home/blake/Documents/software/acp-react-chat-ui/packages/acp-chat-react/package.json)
+Added coverage script to enable coverage reports:
+```json
+"test:coverage": "vitest run --coverage"
+```
+
+## Verification
+
+### Command 1: pnpm test-react
+✅ Command executed successfully
+✅ Tests ran from root directory
+✅ Output shows: `RUN v2.1.9 /home/blake/Documents/software/acp-react-chat-ui/packages/acp-chat-react`
+✅ Test suite executed (19 test files, 185 tests)
+
+### Command 2: pnpm test-react:coverage
+✅ Command executed successfully
+✅ Tests ran from root directory
+✅ Coverage enabled with v8
+✅ Output shows: `Coverage enabled with v8`
+✅ Test suite executed with coverage reporting
+
+## Pattern Consistency
+The new scripts follow the same pattern as the existing `test-core` and `test-core:coverage` scripts:
+- `test-react` calls the package's `test` script
+- `test-react:coverage` calls the package's `test:coverage` script
+- Both use `pnpm -F @harms-haus/acp-chat-react` to target the React package
+
+## Date Completed
+2026-04-11

@@ -106,9 +106,9 @@ describe("SessionList", () => {
         expect(screen.getByText("Project 1 Session")).toBeInTheDocument();
       });
 
-      const selectButton = container.querySelector('[data-acp-session-select-button]');
-      expect(selectButton).not.toBeNull();
-      fireEvent.click(selectButton!);
+      const sessionRow = container.querySelector('[data-acp-session-row]');
+      expect(sessionRow).not.toBeNull();
+      fireEvent.click(sessionRow!);
 
       await waitFor(() => {
         expect(onSessionSelect).toHaveBeenCalledWith(
@@ -133,15 +133,16 @@ describe("SessionList", () => {
   });
 
   describe("session loading", () => {
-    it("should call loadSession when load button clicked", async () => {
+    it("should call loadSession when session row clicked", async () => {
       render(<SessionList controller={mockController} />);
 
       await waitFor(() => {
         expect(screen.getByText("Project 1 Session")).toBeInTheDocument();
       });
 
-      const loadButtons = screen.getAllByText("Load");
-      fireEvent.click(loadButtons[0]!);
+      const sessionRow = screen.getByText("Project 1 Session").closest("[data-acp-session-row]");
+      expect(sessionRow).not.toBeNull();
+      fireEvent.click(sessionRow!);
 
       await waitFor(() => {
         expect(mockController.loadSession).toHaveBeenCalledWith("session-1", "/home/user/project1");
@@ -157,8 +158,9 @@ describe("SessionList", () => {
         expect(screen.getByText("Project 1 Session")).toBeInTheDocument();
       });
 
-      const loadButtons = screen.getAllByText("Load");
-      fireEvent.click(loadButtons[0]!);
+      const sessionRow = screen.getByText("Project 1 Session").closest("[data-acp-session-row]");
+      expect(sessionRow).not.toBeNull();
+      fireEvent.click(sessionRow!);
 
       await waitFor(() => {
         expect(onSessionLoaded).toHaveBeenCalledWith(
@@ -184,8 +186,9 @@ describe("SessionList", () => {
         expect(screen.getByText("Project 1 Session")).toBeInTheDocument();
       });
 
-      const loadButtons = screen.getAllByText("Load");
-      fireEvent.click(loadButtons[0]!);
+      const sessionRow = screen.getByText("Project 1 Session").closest("[data-acp-session-row]");
+      expect(sessionRow).not.toBeNull();
+      fireEvent.click(sessionRow!);
 
       await waitFor(() => {
         expect(onSessionLoadError).toHaveBeenCalledWith(

@@ -267,7 +267,7 @@ Wave FINAL (Verification):
 
 ### Wave 1: Foundation - Cleanup
 
-- [ ] **1. Remove dead /src/client/ directory**
+- [x] **1. Remove dead /src/client/ directory**
 
   **What to do:**
   - Delete `/packages/acp-chat-react/src/client/` directory entirely
@@ -317,7 +317,7 @@ Wave FINAL (Verification):
   - Message: `refactor(react): remove unused /client directory`
   - Files: Deletion of `packages/acp-chat-react/src/client/`
 
-- [ ] **2. Audit and remove any other dead code**
+- [x] **2. Audit and remove any other dead code**
 
   **What to do:**
   - Run static analysis to find unused exports
@@ -366,7 +366,7 @@ Wave FINAL (Verification):
   - Message: `refactor(react): remove dead code [describe what was removed]`
   - Files: Any files with dead code
 
-- [ ] **3. Fix any critical TODOs in test files**
+- [x] **3. Fix any critical TODOs in test files**
 
   **What to do:**
   - Review TODO comments in test files
@@ -407,7 +407,7 @@ Wave FINAL (Verification):
   - Message: `chore(react): address critical TODOs in test files`
   - Files: Modified test files
 
-- [ ] **4. Set up coverage collection with thresholds**
+- [x] **4. Set up coverage collection with thresholds**
 
   **What to do:**
   - Add coverage configuration to vitest.config.ts
@@ -453,7 +453,7 @@ Wave FINAL (Verification):
   - Message: `chore(react): add coverage configuration`
   - Files: `packages/acp-chat-react/vitest.config.ts`
 
-- [ ] **5. Update test utilities if needed**
+- [x] **5. Update test utilities if needed**
 
   **What to do:**
   - Review existing test utilities
@@ -498,7 +498,7 @@ Wave FINAL (Verification):
 
 ### Wave 2: Hook Tests
 
-- [ ] **6. Complete useChatEvent hook tests**
+- [x] **6. Complete useChatEvent hook tests**
 
   **What to do:**
   - Replace TODO comments with real renderHook tests
@@ -550,7 +550,7 @@ Wave FINAL (Verification):
 
 ### Wave FINAL: Verification
 
-- [ ] **F1. Plan compliance audit (oracle)**
+- [x] **F1. Plan compliance audit (oracle)**
 
   Verify all requirements met, deliverables present.
 
@@ -558,7 +558,7 @@ Wave FINAL (Verification):
 
   **Evidence:** `.sisyphus/evidence/acp-chat-react/f1-compliance.md`
 
-- [ ] **F2. Code quality review (unspecified-high)**
+- [x] **F2. Code quality review (unspecified-high)**
 
   Type check, tests, lint.
 
@@ -566,7 +566,7 @@ Wave FINAL (Verification):
 
   **Evidence:** `.sisyphus/evidence/acp-chat-react/f2-quality.md`
 
-- [ ] **F3. Coverage verification (unspecified-high)**
+- [x] **F3. Coverage verification (unspecified-high)**
 
   Verify 80%+ coverage.
 
@@ -574,7 +574,7 @@ Wave FINAL (Verification):
 
   **Evidence:** `.sisyphus/evidence/acp-chat-react/f3-coverage.md`
 
-- [ ] **F4. Scope fidelity check (deep)**
+- [x] **F4. Scope fidelity check (deep)**
 
   Verify no scope creep.
 

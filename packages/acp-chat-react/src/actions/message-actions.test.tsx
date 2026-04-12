@@ -197,10 +197,10 @@ describe("MessageActionBar", () => {
     expect(actionBar).not.toBeNull();
 
     fireEvent.mouseEnter(actionBar!);
-    expect((actionBar as HTMLElement).style.opacity).toBe("1");
+    expect(actionBar).toHaveClass("acp-message-action-bar--visible");
 
     fireEvent.mouseLeave(actionBar!);
-    expect((actionBar as HTMLElement).style.opacity).toBe("0");
+    expect(actionBar).not.toHaveClass("acp-message-action-bar--visible");
   });
 
   it("should render disabled state for disabled actions", () => {

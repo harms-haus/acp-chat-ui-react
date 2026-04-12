@@ -20,6 +20,8 @@ export default defineConfig({
       ["**/settings.test.tsx", "jsdom"],
       ["**/slash-and-actions.test.tsx", "jsdom"],
       ["**/message-actions.test.tsx", "jsdom"],
+      ["**/permission-request-card.test.tsx", "jsdom"],
+      ["**/thread.test.tsx", "jsdom"],
     ],
   },
 });
