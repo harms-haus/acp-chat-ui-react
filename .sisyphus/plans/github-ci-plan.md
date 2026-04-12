@@ -483,7 +483,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 6. Create ci.yml - Setup job
+- [x] 6. Create ci.yml - Setup job
 
   **What to do**:
   - Create `.github/workflows/ci.yml`
@@ -565,7 +565,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 7. Create ci.yml - Test job (unit/integration)
+- [x] 7. Create ci.yml - Test job (unit/integration)
 
   **What to do**:
   - Add test job to ci.yml
@@ -643,7 +643,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 8. Create ci.yml - Visual regression job
+- [x] 8. Create ci.yml - Visual regression job
 
   **What to do**:
   - Add visual-regression job to ci.yml
@@ -718,7 +718,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 9. Create ci.yml - Bundle check job
+- [x] 9. Create ci.yml - Bundle check job
 
   **What to do**:
   - Add bundle-check job to ci.yml
@@ -787,7 +787,7 @@ Wave FINAL (After ALL tasks):
 
 ---
 
-- [ ] 10. Create ci.yml - Rust test job
+- [x] 10. Create ci.yml - Rust test job
 
   **What to do**:
   - Add rust-test job to ci.yml
