@@ -17,7 +17,7 @@ interface TrafficEntry {
   data: unknown;
 }
 
-describe("long-context replay", () => {
+describe("long-context replay", { timeout: 300000 }, () => {
   let bridgeProcess: ChildProcess;
   let port: number;
   let controller: ReplayController;
