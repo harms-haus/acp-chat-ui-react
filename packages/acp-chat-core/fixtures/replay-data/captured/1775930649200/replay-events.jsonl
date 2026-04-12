@@ -1,1 +1,0 @@
-{"envelope":{"version":1,"seq":0,"timestamp_ms":1775930649200,"type":"acp_payload","payload":{"jsonrpc":"2.0","method":"test"}},"tokenCount":29,"timestamp":1775930649200,"direction":"in"}
