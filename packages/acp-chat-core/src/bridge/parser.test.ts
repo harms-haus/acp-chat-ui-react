@@ -489,12 +489,12 @@ describe("parser: extra_data field (optional)", () => {
       timestamp_ms: 0,
       type: "acp_payload",
       payload: {},
-      extra_data: { replay_speed: 2.0 },
+      extraData: { replay_speed: 2.0 },
     };
     const json = JSON.stringify(envelope);
 
     const result = parseEnvelope(json);
-    expect(result.extra_data).toEqual({ replay_speed: 2.0 });
+    expect(result.extraData).toEqual({ replay_speed: 2.0 });
   });
 
   it("parses envelope without extra_data", () => {
@@ -508,7 +508,7 @@ describe("parser: extra_data field (optional)", () => {
     const json = JSON.stringify(envelope);
 
     const result = parseEnvelope(json);
-    expect(result.extra_data).toBeUndefined();
+    expect(result.extraData).toBeUndefined();
   });
 
   it("parses envelope with null extra_data", () => {
@@ -518,12 +518,12 @@ describe("parser: extra_data field (optional)", () => {
       timestamp_ms: 0,
       type: "acp_payload",
       payload: {},
-      extra_data: null,
+      extraData: null,
     };
     const json = JSON.stringify(envelope);
 
     const result = parseEnvelope(json);
-    expect(result.extra_data).toBeNull();
+    expect(result.extraData).toBeNull();
   });
 
   it("parses envelope with complex extra_data", () => {
@@ -533,7 +533,7 @@ describe("parser: extra_data field (optional)", () => {
       timestamp_ms: 0,
       type: "acp_payload",
       payload: {},
-      extra_data: {
+      extraData: {
         nested: { deep: { value: 42 } },
         array: [1, 2, 3],
         mixed: ["string", 123, true, null],
@@ -542,7 +542,7 @@ describe("parser: extra_data field (optional)", () => {
     const json = JSON.stringify(envelope);
 
     const result = parseEnvelope(json);
-    expect(result.extra_data).toMatchObject({
+    expect(result.extraData).toMatchObject({
       nested: { deep: { value: 42 } },
       array: [1, 2, 3],
     });
