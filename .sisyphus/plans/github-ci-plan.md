@@ -1125,11 +1125,11 @@ Wave FINAL (After ALL tasks):
 
 ## Final Verification Wave
 
-- [ ] F1. **Plan Compliance Audit** — `oracle`
+- [x] F1. **Plan Compliance Audit** — `oracle`
   Read the plan end-to-end. For each "Must Have": verify implementation exists (read file, run command). For each "Must NOT Have": search for forbidden patterns. Check all TODOs are complete.
   Output: `Must Have [8/8] | Must NOT Have [5/5] | Tasks [13/13] | VERDICT: APPROVE/REJECT`
 
-- [ ] F2. **Code Quality Review** — `unspecified-high`
+- [x] F2. **Code Quality Review** — `unspecified-high`
   Review all created files:
   - ci.yml: valid GitHub Actions syntax, proper job dependencies, correct action versions
   - release.yml: valid syntax, proper triggers, comprehensive validation
