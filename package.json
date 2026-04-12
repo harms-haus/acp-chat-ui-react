@@ -23,7 +23,8 @@
     "dev:harness": "pnpm --filter @harms-haus/acp-harness-ui dev",
     "dev:bridge": "cargo run --manifest-path crates/acp-ws-bridge/Cargo.toml --bin acp-bridge -- --addr 127.0.0.1:8765",
     "debug": "concurrently 'VITE_ENABLE_LIVE_MODE=true pnpm dev:harness' 'cargo run --manifest-path crates/acp-harness-server/Cargo.toml -- --live --addr 127.0.0.1:8765'",
-    "kill": "fuser -k 4173/tcp 8765/tcp 2>/dev/null || true"
+    "kill": "fuser -k 4173/tcp 8765/tcp 2>/dev/null || true",
+    "test:coverage": "pnpm test-core:coverage && pnpm test-react:coverage"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
