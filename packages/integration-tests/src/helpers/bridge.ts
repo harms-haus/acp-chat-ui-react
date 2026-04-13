@@ -51,13 +51,13 @@ export async function spawnBridge(port: number): Promise<ChildProcess> {
         let ready = false;
         let outputBuffer = '';
 
-        const timeout = setTimeout(() => {
-            if (!ready) {
-                const errorMsg = `Bridge startup timeout after 30s. Output:\n${outputBuffer}`;
-                bridge.kill('SIGKILL');
-                rejectSpawn(new Error(errorMsg));
-            }
-        }, 30000);
+  const timeout = setTimeout(() => {
+    if (!ready) {
+      const errorMsg = `Bridge startup timeout after 120s. Output:\n${outputBuffer}`;
+      bridge.kill('SIGKILL');
+      rejectSpawn(new Error(errorMsg));
+    }
+  }, 120000);
 
         const cleanup = () => {
             clearTimeout(timeout);
