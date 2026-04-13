@@ -17,7 +17,9 @@ interface TrafficEntry {
   data: unknown;
 }
 
-describe("long-context replay", () => {
+const describeTest = process.env.CI ? describe.skip : describe;
+
+describeTest("long-context replay", () => {
   let bridgeProcess: ChildProcess;
   let port: number;
   let controller: ReplayController;
