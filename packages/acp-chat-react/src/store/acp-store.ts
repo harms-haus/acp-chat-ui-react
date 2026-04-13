@@ -171,6 +171,7 @@ export class AcpStore {
         sessionId: null,
         initialized: false,
         capabilities: null,
+        configOptions: null,
       },
       messages: new Map(),
       thoughts: new Map(),

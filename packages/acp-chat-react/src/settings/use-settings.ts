@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import type { SessionController } from "@harms-haus/acp-chat-core";
+import type { SessionController, ConfigOption } from "@harms-haus/acp-chat-core";
 import type { AcpMode, AcpModel, SettingsPanelState, SettingsPanelActions } from "./types.js";
 import type { SessionItem } from "../session-list/types.js";
 import { DEFAULT_ACP_MODES, DEFAULT_ACP_MODELS } from "./types.js";
@@ -19,6 +19,28 @@ export interface UseSettingsReturn {
   actions: SettingsPanelActions;
 }
 
+function extractModesFromConfigOptions(configOptions: ConfigOption[] | null | undefined): AcpMode[] {
+  if (!configOptions) return [];
+  const modeOption = configOptions.find(opt => opt.category === "mode" || opt.id === "mode");
+  if (!modeOption) return [];
+  return modeOption.options.map(opt => ({
+    id: opt.value,
+    name: opt.name,
+    ...(opt.description && { description: opt.description }),
+  }));
+}
+
+function extractModelsFromConfigOptions(configOptions: ConfigOption[] | null | undefined): AcpModel[] {
+  if (!configOptions) return [];
+  const modelOption = configOptions.find(opt => opt.category === "model" || opt.id === "model");
+  if (!modelOption) return [];
+  return modelOption.options.map(opt => ({
+    id: opt.value,
+    name: opt.name,
+    ...(opt.description && { description: opt.description }),
+  }));
+}
+
 export function useSettings(options: UseSettingsOptions = {}): UseSettingsReturn {
   const {
     controller,
@@ -30,8 +52,17 @@ export function useSettings(options: UseSettingsOptions = {}): UseSettingsReturn
     sessions: providedSessions,
   } = options;
 
-  const modes = useMemo(() => providedModes ?? DEFAULT_ACP_MODES, [providedModes]);
-  const models = useMemo(() => providedModels ?? DEFAULT_ACP_MODELS, [providedModels]);
+  const [configOptions, setConfigOptions] = useState<ConfigOption[] | null>(null);
+  const [selectedSession, setSelectedSession] = useState<SessionItem | null>(null);
+  const [sessions, setSessions] = useState<SessionItem[]>(providedSessions ?? []);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const modesFromConfig = useMemo(() => extractModesFromConfigOptions(configOptions), [configOptions]);
+  const modelsFromConfig = useMemo(() => extractModelsFromConfigOptions(configOptions), [configOptions]);
+  
+  const modes = useMemo(() => providedModes ?? (configOptions ? modesFromConfig : DEFAULT_ACP_MODES), [providedModes, configOptions, modesFromConfig]);
+  const models = useMemo(() => providedModels ?? (configOptions ? modelsFromConfig : DEFAULT_ACP_MODELS), [providedModels, configOptions, modelsFromConfig]);
 
   const initialMode = useMemo(
     () => modes.find((m) => m.id === initialModeId) ?? null,
@@ -44,10 +75,6 @@ export function useSettings(options: UseSettingsOptions = {}): UseSettingsReturn
 
   const [selectedMode, setSelectedMode] = useState<AcpMode | null>(initialMode);
   const [selectedModel, setSelectedModel] = useState<AcpModel | null>(initialModel);
-  const [selectedSession, setSelectedSession] = useState<SessionItem | null>(null);
-  const [sessions, setSessions] = useState<SessionItem[]>(providedSessions ?? []);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (providedSessions) {
@@ -64,8 +91,28 @@ export function useSettings(options: UseSettingsOptions = {}): UseSettingsReturn
     }
   }, [initialSessionId, sessions]);
 
+  useEffect(() => {
+    if (!controller) return;
+    
+    const unsubConfig = controller.on("configOptionsChange", (newConfigOptions) => {
+      setConfigOptions(newConfigOptions);
+    });
+    
+    if (typeof controller.getConfigOptions === 'function') {
+      const currentConfig = controller.getConfigOptions();
+      if (currentConfig) {
+        setConfigOptions(currentConfig);
+      }
+    }
+    
+    return () => {
+      unsubConfig();
+    };
+  }, [controller]);
+
   const refreshSessions = useCallback(async () => {
     if (!controller || typeof controller.listSessions !== "function") {
+      setIsLoading(false);
       return;
     }
 

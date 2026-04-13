@@ -36,6 +36,16 @@ function useComposerState(props: ComposerProps, slashCommands: SlashCommand[] = 
   const isConnected = session.connectionStatus === "connected";
   const isInitialized = session.initialized;
 
+  console.log('[Composer] Session state:', {
+    sessionId,
+    connectionStatus: session.connectionStatus,
+    initialized: session.initialized,
+    isConnected,
+    isInitialized,
+    disabled,
+    finalDisabled: disabled || !isConnected || !isInitialized || !sessionId,
+  });
+
   const composerState = {
     value,
     disabled: disabled || !isConnected || !isInitialized || !sessionId,
@@ -271,6 +281,14 @@ export const Composer = memo(function Composer(props: ComposerRootProps) {
     onSessionChange: handleSessionChange,
     disabled: disabled || settingsState.isLoading,
   };
+
+  console.log('[Composer] Settings state:', {
+    isLoading: settingsState.isLoading,
+    disabled,
+    finalDisabled: disabled || settingsState.isLoading,
+    selectedMode: settingsState.selectedMode,
+    selectedModel: settingsState.selectedModel,
+  });
 
   const SettingsRowComponent = renderSettingsRow ?? DefaultSettingsRow;
 

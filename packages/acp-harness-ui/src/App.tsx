@@ -11,6 +11,8 @@ import {
   SessionList,
   type SettingsRowRenderProps,
   type SessionItem,
+  type AcpMode,
+  type AcpModel,
 } from "@harms-haus/acp-chat-react";
 import {
   PACKAGE_VERSION,
@@ -597,29 +599,81 @@ if (controller) {
 <ThreadPanel
   store={_store}
             controller={controllerRef.current || replayControllerRef.current || createMockController()}
-            renderSettingsRow={(props) => (
-              <SettingsRow
-                modes={props.modes}
-                models={props.models}
-                sessions={props.sessions}
-                selectedModeId={selectedModeId}
-                selectedModelId={selectedModelId}
-                selectedSessionId={selectedSessionId}
-                onModeChange={(mode) => {
-                  setSelectedModeId(mode.id);
-                  props.onModeChange(mode);
-                }}
-                onModelChange={(model) => {
-                  setSelectedModelId(model.id);
-                  props.onModelChange(model);
-                }}
-                onSessionChange={(session) => {
-                  setSelectedSessionId(session.sessionId);
-                  props.onSessionChange(session);
-                }}
-                disabled={props.disabled}
-              />
-            )}
+        renderSettingsRow={(props) => {
+          console.log('[App.renderSettingsRow] Props:', {
+            modes: props.modes,
+            models: props.models,
+            sessions: props.sessions,
+            disabled: props.disabled,
+            modesCount: props.modes?.length,
+            modelsCount: props.models?.length,
+            selectedModeId,
+            selectedModelId,
+            selectedSessionId,
+          });
+          
+          const controller = controllerRef.current;
+          const sessionId = controller?.getState().sessionId || undefined;
+          
+          console.log('[App.renderSettingsRow] Controller/Session:', {
+            hasController: !!controller,
+            sessionId,
+            controllerState: controller?.getState(),
+          });
+          
+          console.log('[App.renderSettingsRow] Mode/Model IDs:', {
+            firstModeId: props.modes?.[0]?.id,
+            firstModelId: props.models?.[0]?.id,
+            selectedModeId,
+            selectedModelId,
+            modeMatch: props.modes?.some(m => m.id === selectedModeId),
+            modelMatch: props.models?.some(m => m.id === selectedModelId),
+          });
+          
+          const handleModeChange = async (mode: AcpMode) => {
+            setSelectedModeId(mode.id);
+            if (controller && sessionId) {
+              try {
+                await controller.setConfigOption(sessionId, "mode", mode.id);
+              } catch (error) {
+                console.error("Failed to set mode:", error);
+              }
+            }
+            props.onModeChange(mode);
+          };
+
+          const handleModelChange = async (model: AcpModel) => {
+            setSelectedModelId(model.id);
+            if (controller && sessionId) {
+              try {
+                await controller.setConfigOption(sessionId, "model", model.id);
+              } catch (error) {
+                console.error("Failed to set model:", error);
+              }
+            }
+            props.onModelChange(model);
+          };
+
+          const handleSessionChange = (session: SessionItem) => {
+            setSelectedSessionId(session.sessionId);
+            props.onSessionChange(session);
+          };
+
+          return (
+            <SettingsRow
+              modes={props.modes}
+              models={props.models}
+              sessions={props.sessions}
+              selectedModeId={selectedModeId}
+              selectedModelId={selectedModelId}
+              selectedSessionId={selectedSessionId}
+              onModeChange={handleModeChange}
+              onModelChange={handleModelChange}
+              onSessionChange={handleSessionChange}
+              disabled={props.disabled}
+            />
+          );
+        }}
           />
         </div>
 

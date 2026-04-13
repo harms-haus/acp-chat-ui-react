@@ -39,11 +39,12 @@ type PendingRequest = {
 };
 
 export interface SessionControllerState {
-    connectionStatus: ConnectionStatus;
-    bridgeStatus: string;
-    sessionId: string | null;
-    initialized: boolean;
-    capabilities: unknown | null;
+  connectionStatus: ConnectionStatus;
+  bridgeStatus: string;
+  sessionId: string | null;
+  initialized: boolean;
+  capabilities: unknown | null;
+  configOptions: ConfigOption[] | null;
 }
 
 export interface PermissionOption {
@@ -60,12 +61,29 @@ export interface PermissionRequestParams {
   options: PermissionOption[];
 }
 
+export interface ConfigOptionValue {
+  value: string;
+  name: string;
+  description?: string;
+}
+
+export interface ConfigOption {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  type: string;
+  currentValue: string;
+  options: ConfigOptionValue[];
+}
+
 type StatusHandler = (state: SessionControllerState) => void;
 type SessionUpdateHandler = (params: unknown) => void;
 type TrafficHandler = (direction: "in" | "out", data: unknown) => void;
 type ErrorHandler = (error: Error) => void;
 type SessionClearingHandler = () => void;
 type PermissionRequestHandler = (params: PermissionRequestParams & { requestId: number }) => void;
+type ConfigOptionsHandler = (configOptions: ConfigOption[]) => void;
 
 export class SessionController {
     private transport: TransportClient;
@@ -79,19 +97,21 @@ export class SessionController {
   private errorHandlers = new Set<ErrorHandler>();
   private sessionClearingHandlers = new Set<SessionClearingHandler>();
   private permissionRequestHandlers = new Set<PermissionRequestHandler>();
+  private configOptionsHandlers = new Set<ConfigOptionsHandler>();
   private fileSystemManager: FileSystemSubscriptionManager;
 
-    constructor(bridgeUrl: string, requestTimeoutMs = 30000) {
-        this.requestTimeoutMs = requestTimeoutMs;
-        this.transport = new TransportClient({ url: bridgeUrl, reconnect: true });
-        this.state = {
-            connectionStatus: "disconnected",
-            bridgeStatus: "disconnected",
-            sessionId: null,
-            initialized: false,
-            capabilities: null,
-        };
-        this.fileSystemManager = new FileSystemSubscriptionManager();
+  constructor(bridgeUrl: string, requestTimeoutMs = 30000) {
+    this.requestTimeoutMs = requestTimeoutMs;
+    this.transport = new TransportClient({ url: bridgeUrl, reconnect: true });
+    this.state = {
+      connectionStatus: "disconnected",
+      bridgeStatus: "disconnected",
+      sessionId: null,
+      initialized: false,
+      capabilities: null,
+      configOptions: null,
+    };
+    this.fileSystemManager = new FileSystemSubscriptionManager();
 
         this.transport.on("statusChange", (status: ConnectionStatus) => this.handleTransportStatus(status));
         this.transport.on("envelope", (envelope: BridgeEnvelope) => this.handleEnvelope(envelope));
@@ -104,7 +124,8 @@ export class SessionController {
   on(event: "error", handler: ErrorHandler): () => void;
   on(event: "sessionClearing", handler: SessionClearingHandler): () => void;
   on(event: "permissionRequest", handler: PermissionRequestHandler): () => void;
-  on(event: "statusChange" | "sessionUpdate" | "traffic" | "error" | "sessionClearing" | "permissionRequest", handler: unknown): () => void {
+  on(event: "configOptionsChange", handler: ConfigOptionsHandler): () => void;
+  on(event: "statusChange" | "sessionUpdate" | "traffic" | "error" | "sessionClearing" | "permissionRequest" | "configOptionsChange", handler: unknown): () => void {
     switch (event) {
       case "statusChange":
         this.statusHandlers.add(handler as StatusHandler);
@@ -124,6 +145,9 @@ export class SessionController {
       case "permissionRequest":
         this.permissionRequestHandlers.add(handler as PermissionRequestHandler);
         return () => this.permissionRequestHandlers.delete(handler as PermissionRequestHandler);
+      case "configOptionsChange":
+        this.configOptionsHandlers.add(handler as ConfigOptionsHandler);
+        return () => this.configOptionsHandlers.delete(handler as ConfigOptionsHandler);
     }
   }
 
@@ -151,9 +175,17 @@ export class SessionController {
     this.permissionRequestHandlers.forEach((h) => { h({ ...params, requestId }); });
   }
 
-    getState(): SessionControllerState {
-        return { ...this.state };
-    }
+  private emitConfigOptionsChange(configOptions: ConfigOption[]): void {
+    this.configOptionsHandlers.forEach((h) => { h(configOptions); });
+  }
+
+  getState(): SessionControllerState {
+    return { ...this.state };
+  }
+
+  getConfigOptions(): ConfigOption[] | null {
+    return this.state.configOptions;
+  }
 
     connect(): void {
         this.transport.connect();
@@ -164,26 +196,48 @@ export class SessionController {
         this.rejectAllPending(new Error("Disconnected"));
     }
 
-    async initialize(clientInfo?: { name: string; version: string }): Promise<unknown> {
-        const params = {
-            protocolVersion: 1,
-            clientCapabilities: {},
-            ...(clientInfo ? { clientInfo } : {}),
-        };
-        const result = await this.sendRequest("initialize", params);
-        this.state.initialized = true;
-        this.state.capabilities = result;
-        this.emitStatusChange();
-        return result;
+  async initialize(clientInfo?: { name: string; version: string }): Promise<unknown> {
+    const params = {
+      protocolVersion: 1,
+      clientCapabilities: {},
+      ...(clientInfo ? { clientInfo } : {}),
+    };
+    const result = await this.sendRequest("initialize", params);
+    this.state.initialized = true;
+    this.state.capabilities = result;
+    this.emitStatusChange();
+    return result;
+  }
+
+  async setConfigOption(sessionId: string, configId: string, value: string): Promise<ConfigOption[]> {
+    const result = await this.sendRequest("session/set_config_option", {
+      sessionId,
+      configId,
+      value,
+    });
+    
+    if (result && typeof result === 'object' && 'configOptions' in result) {
+      const configOptions = (result as { configOptions: ConfigOption[] }).configOptions;
+      this.state.configOptions = configOptions;
+      this.emitConfigOptionsChange(configOptions);
     }
+    
+    return Array.isArray(result) ? result as unknown as ConfigOption[] : [];
+  }
 
   async createSession(cwd: string, mcpServers: unknown[] = []): Promise<unknown> {
     const result = await this.sendRequest("session/new", { cwd, mcpServers });
-  const sessionResult = result as { sessionId: string };
-  this.state.sessionId = sessionResult.sessionId;
-  this.emitStatusChange();
-  return result;
-}
+    const sessionResult = result as { sessionId: string; configOptions?: ConfigOption[]; modes?: unknown };
+    this.state.sessionId = sessionResult.sessionId;
+    
+    if (sessionResult.configOptions) {
+      this.state.configOptions = sessionResult.configOptions;
+      this.emitConfigOptionsChange(sessionResult.configOptions);
+    }
+    
+    this.emitStatusChange();
+    return result;
+  }
 
   async listSessions(cursor?: string, cwd?: string): Promise<{ sessions: Array<{ sessionId: string; cwd: string; title?: string; updatedAt?: string; _meta?: unknown }>; nextCursor?: string }> {
     const params: Record<string, unknown> = {};
@@ -194,7 +248,6 @@ export class SessionController {
   }
 
   async loadSession(sessionId: string, cwd: string, mcpServers?: unknown[]): Promise<unknown> {
-    // Emit clearing event before loading to allow state reset
     this.emitSessionClearing();
     const result = await this.sendRequest("session/load", {
       sessionId,
@@ -202,6 +255,13 @@ export class SessionController {
       mcpServers: mcpServers ?? [],
     });
     this.state.sessionId = sessionId;
+    
+    const loadResult = result as { configOptions?: ConfigOption[]; modes?: unknown };
+    if (loadResult.configOptions) {
+      this.state.configOptions = loadResult.configOptions;
+      this.emitConfigOptionsChange(loadResult.configOptions);
+    }
+    
     this.emitStatusChange();
     return result;
   }

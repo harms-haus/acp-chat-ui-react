@@ -152,6 +152,7 @@ export class MockSessionController {
     sessionId: null,
     initialized: false,
     capabilities: null,
+    configOptions: null,
   };
 
   private handlers: {

@@ -125,6 +125,7 @@ export class ReplayController {
       sessionId: null,
       initialized: false,
       capabilities: null,
+      configOptions: null,
       modes: options.modes ?? [
         { id: "replay", name: "Replay", description: "Replay a recorded session" },
       ],

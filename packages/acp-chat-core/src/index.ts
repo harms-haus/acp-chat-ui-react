@@ -33,7 +33,7 @@ export type { ConnectionStatus, TransportConfig, TransportEvents, InitSuccess } 
 
 // Session controller
 export { SessionController, DefaultSessionCaptureInterceptor, ReplayController } from "./session/index.js";
-export type { SessionControllerState, StartAgentConfig, PermissionRequestParams, PermissionOption } from "./session/index.js";
+export type { SessionControllerState, StartAgentConfig, PermissionRequestParams, PermissionOption, ConfigOption } from "./session/index.js";
 export type { CapturedSession, CapturedEvent, SessionCaptureInterceptor } from "./session/index.js";
 export type { ReplayControllerOptions, ReplayControllerState, ReplayMode, ReplayModel } from "./session/index.js";
 
