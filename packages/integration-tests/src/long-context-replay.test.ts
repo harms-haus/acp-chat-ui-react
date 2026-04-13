@@ -17,7 +17,7 @@ interface TrafficEntry {
   data: unknown;
 }
 
-describe.skip("long-context replay", { timeout: 300000 }, () => {
+describe("long-context replay", () => {
   let bridgeProcess: ChildProcess;
   let port: number;
   let controller: ReplayController;
@@ -83,42 +83,43 @@ describe.skip("long-context replay", { timeout: 300000 }, () => {
           }
         };
 
-        checkStatus();
-      });
+      checkStatus();
+    });
 
-      // Init replay - this triggers the bridge to start streaming events
-      await controller.initReplay("long-context", "session-1");
+    await controller.initialize({ name: "integration-test", version: "1.0.0" });
+    await controller.createSession("/", [], "long-context", "session-1");
+    await controller.sendPrompt("session-1", "");
 
-      await new Promise<void>((resolve, reject) => {
-        const deadline = Date.now() + 90_000;
+    await new Promise<void>((resolve, reject) => {
+      const deadline = Date.now() + 90_000;
 
-        const check = () => {
-          const hasDisconnected = trafficLog.some(
-            (t) =>
-              t.direction === "in" &&
-              (t.data as Record<string, unknown>)?.type === "bridge_status" &&
-              (t.data as Record<string, unknown>)?.status === "disconnected",
+      const check = () => {
+        const hasDisconnected = trafficLog.some(
+          (t) =>
+            t.direction === "in" &&
+            (t.data as Record<string, unknown>)?.type === "bridge_status" &&
+            (t.data as Record<string, unknown>)?.status === "disconnected",
+        );
+
+        if (hasDisconnected) {
+          resolve();
+          return;
+        }
+
+        if (Date.now() > deadline) {
+          reject(
+            new Error(
+              "Timed out waiting for bridge_status:disconnected after 90s",
+            ),
           );
+          return;
+        }
 
-          if (hasDisconnected) {
-            resolve();
-            return;
-          }
+        setTimeout(check, 200);
+      };
 
-          if (Date.now() > deadline) {
-            reject(
-              new Error(
-                "Timed out waiting for bridge_status:disconnected after 90s",
-              ),
-            );
-            return;
-          }
-
-          setTimeout(check, 200);
-        };
-
-        check();
-      });
+      check();
+    });
 
       // Filter out expected WebSocket disconnection errors
       const unexpectedErrors = errorEvents.filter(
@@ -148,24 +149,24 @@ describe.skip("long-context replay", { timeout: 300000 }, () => {
       const acpPayloadCount = inboundTypes.filter((t) => t === "acp_payload").length;
       expect(acpPayloadCount).toBeGreaterThan(100);
 
-      const acpUpdateTypes = new Set<string>();
-      inboundEvents.forEach((t) => {
-        const data = t.data as Record<string, unknown>;
-        if (data?.type === "acp_payload") {
-          const payload = data.payload as Record<string, unknown>;
-          const update = (payload?.params as Record<string, unknown>)?.update as
-            | Record<string, unknown>
-            | undefined;
-          if (update?.type) {
-            acpUpdateTypes.add(update.type as string);
-          }
-        }
-      });
+  const acpUpdateTypes = new Set<string>();
+  inboundEvents.forEach((t) => {
+    const data = t.data as Record<string, unknown>;
+    if (data?.type === "acp_payload") {
+      const payload = data.payload as Record<string, unknown>;
+      const update = (payload?.params as Record<string, unknown>)?.update as
+        | Record<string, unknown>
+        | undefined;
+      if (update?.type) {
+        acpUpdateTypes.add(update.type as string);
+      }
+    }
+  });
 
-      expect(acpUpdateTypes.has("user_message")).toBe(true);
-      expect(acpUpdateTypes.has("agent_thought_chunk")).toBe(true);
-      expect(acpUpdateTypes.has("tool_call")).toBe(true);
-      expect(acpUpdateTypes.has("tool_call_update")).toBe(true);
+  expect(acpUpdateTypes.has("agent_message_chunk")).toBe(true);
+  expect(acpUpdateTypes.has("agent_thought_chunk")).toBe(true);
+  expect(acpUpdateTypes.has("tool_call")).toBe(true);
+  expect(acpUpdateTypes.has("tool_call_update")).toBe(true);
 
       await killBridge(bridgeProcess);
     },
