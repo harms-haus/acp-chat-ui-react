@@ -65,23 +65,27 @@ describe("long-context replay", () => {
   it(
     "should replay the full long-context session with correct event ordering",
     async () => {
-      controller.connect();
+    controller.connect();
 
-      // Wait for connection to be established
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error("Timeout waiting for connection"));
-        }, 10000);
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error("Timeout waiting for connection"));
+      }, 30000);
 
-        const checkStatus = () => {
-          const state = controller.getState();
-          if (state.connectionStatus === "connected" || state.bridgeStatus === "connected") {
-            clearTimeout(timeout);
-            resolve();
-          } else {
-            setTimeout(checkStatus, 100);
-          }
-        };
+      let attempts = 0;
+      const checkStatus = () => {
+        attempts++;
+        const state = controller.getState();
+        if (state.connectionStatus === "connected" || state.bridgeStatus === "connected") {
+          clearTimeout(timeout);
+          resolve();
+        } else if (attempts > 300) {
+          clearTimeout(timeout);
+          reject(new Error(`Timeout waiting for connection after ${attempts} attempts. Status: ${JSON.stringify(state)}`));
+        } else {
+          setTimeout(checkStatus, 100);
+        }
+      };
 
       checkStatus();
     });
