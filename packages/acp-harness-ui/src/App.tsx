@@ -452,16 +452,18 @@ if (controller) {
     }
   }, []);
 
-  const handleReplayStatusChange = useCallback((status: "disconnected" | "connecting" | "replaying" | "complete" | "error") => {
-    const statusMap: Record<string, ConnectionStatus> = {
-      "disconnected": "disconnected",
-      "connecting": "connecting",
-      "replaying": "connected",
-      "complete": "connected",
-      "error": "error",
-    };
-    setConnectionStatus(statusMap[status] || "disconnected");
-  }, []);
+const handleReplayStatusChange = useCallback((status: "disconnected" | "connecting" | "initializing" | "connected" | "replaying" | "complete" | "error") => {
+  const statusMap: Record<string, ConnectionStatus> = {
+    "disconnected": "disconnected",
+    "connecting": "connecting",
+    "initializing": "connecting",
+    "connected": "connected",
+    "replaying": "connected",
+    "complete": "connected",
+    "error": "error",
+  };
+  setConnectionStatus(statusMap[status] || "disconnected");
+}, []);
 
   const handleConnectLive = useCallback((config: { bridgeUrl: string; command: string; args: string; cwd: string }) => {
     const args = config.args.trim() ? config.args.trim().split(/\s+/) : [];

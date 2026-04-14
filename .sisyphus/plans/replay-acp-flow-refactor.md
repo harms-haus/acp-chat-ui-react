@@ -634,7 +634,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
   - Message: `feat(replay): add session/load handler`
   - Files: `crates/acp-harness-server/src/modes/replay.rs`
 
-- [ ] **7. Update server mode dispatch if needed**
+- [x] **7. Update server mode dispatch if needed** (verified - no changes needed)
 
   **What to do**:
   - Check `server/mod.rs` for any changes needed
@@ -664,7 +664,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
 
 ### Wave 3: UI - React Component Refactor
 
-- [ ] **8. Refactor ReplayPanel with connect-first flow**
+- [x] **8. Refactor ReplayPanel with connect-first flow**
 
   **What to do**:
   - Transform ReplayPanel from demo-type-selection-first to connect-first
