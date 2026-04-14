@@ -932,6 +932,82 @@ async fn handle_json_rpc_request(
             }
         }
 
+        "session/load" => {
+            let request_id = request.id.unwrap_or(0);
+
+            // For replay mode, session/load behaves identically to session/new
+            let params = &request.params;
+            let session_id = params.get("sessionId")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .or_else(|| active_session_id.clone());
+
+            let demo_type = params.get("demoType")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string())
+                .or_else(|| active_demo_type.clone());
+
+            match (demo_type, session_id) {
+                (Some(dt), Some(sid)) => {
+                    *active_demo_type = Some(dt.clone());
+                    *active_session_id = Some(sid.clone());
+
+                    let base_dir = resolve_base_dir(&dt, &sid, active_file_path.as_ref());
+
+                    if let Some(ref manifest) = active_manifest {
+                        let session_valid = manifest.sessions.iter().any(|s| s.session_id == sid);
+                        if !session_valid {
+                            tracing::warn!("Session {} not found in manifest, proceeding for backwards compatibility", sid);
+                        }
+                    }
+
+                    send_session_state(ws_tx, &base_dir).await?;
+
+                    let events = load_replay_events(&base_dir)?;
+                    let total = events.len() as u64;
+                    let first_ts = events
+                        .first()
+                        .and_then(|e| e.raw.get("timestamp_ms"))
+                        .and_then(|v| v.as_u64())
+                        .unwrap_or(0);
+
+                    send_envelope(
+                        ws_tx,
+                        BridgeMessage::replay_metadata(first_ts, total, Some(format!("{} / {}", dt, sid))),
+                    ).await?;
+
+                    send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
+
+                    let response = json_rpc_response(request_id, serde_json::json!({
+                        "sessionId": sid,
+                        "cwd": params.get("cwd").and_then(|v| v.as_str()).unwrap_or("/"),
+                    }));
+
+                    let envelope = BridgeEnvelope::new(
+                        BridgeMessage::acp_payload(response),
+                        now_ms(),
+                    );
+                    ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
+
+                    tracing::info!("Session loaded: {}/{} ({} events loaded)", dt, sid, total);
+
+                    let _ = start_replay_streaming(
+                        ws_tx,
+                        &dt,
+                        &sid,
+                        active_file_path.as_ref(),
+                        shutdown_rx,
+                        tps.clone(),
+                    ).await;
+                }
+                _ => {
+                    let error = json_rpc_error(request_id, -32602, "Missing demoType or sessionId in session/load params");
+                    let envelope = BridgeEnvelope::new(BridgeMessage::acp_payload(error), now_ms());
+                    ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
+                }
+            }
+        }
+
         "session/prompt" => {
             let request_id = request.id.unwrap_or(0);
 

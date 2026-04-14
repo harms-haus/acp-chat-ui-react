@@ -595,7 +595,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
   - Message: `feat(replay): auto-start replay on session/new`
   - Files: `crates/acp-harness-server/src/modes/replay.rs`
 
-- [ ] **6. Handle session/load for replay mode**
+- [x] **6. Handle session/load for replay mode**
 
   **What to do**:
   - Add `session/load` handler if not present
