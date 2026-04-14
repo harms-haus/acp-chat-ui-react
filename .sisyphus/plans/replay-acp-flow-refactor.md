@@ -745,7 +745,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
   - Message: `feat(ui): refactor ReplayPanel with connect-first flow`
   - Files: `packages/acp-harness-ui/src/components/ReplayPanel.tsx`
 
-- [ ] **9. Add session/mode/model selection UI**
+- [x] **9. Add session/mode/model selection UI** (completed with Task 8)
 
   **What to do**:
   - Add dropdown/select components for sessions, modes, models
@@ -855,7 +855,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
   - Message: `feat(ui): add session/mode/model selectors to ReplayPanel`
   - Files: `packages/acp-harness-ui/src/components/ReplayPanel.tsx`
 
-- [ ] **10. Integrate with new replay flow**
+- [x] **10. Integrate with new replay flow** (completed with Task 8)
 
   **What to do**:
   - Update handleLoadSession to call session/new (not sendPrompt)
@@ -930,7 +930,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
 
 ### Wave 4: Integration & Documentation
 
-- [ ] **11. Test end-to-end replay flow**
+- [x] **11. Test end-to-end replay flow**
 
   **What to do**:
   - Test complete flow: path → connect → initialize → select → load → replay
@@ -972,7 +972,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
   
   **Commit**: NO (testing only)
 
-- [ ] **12. Verify backwards compatibility**
+- [x] **12. Verify backwards compatibility**
 
   **What to do**:
   - Test with old-style replay data (no manifest.json)
@@ -1011,7 +1011,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
   
   **Commit**: NO (testing only)
 
-- [ ] **13. Update documentation**
+- [x] **13. Update documentation**
 
   **What to do**:
   - Update wiki documentation if needed
