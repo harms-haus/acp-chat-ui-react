@@ -229,7 +229,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
   - Message: `feat(replay): accept replayDataPath in initialize _meta`
   - Files: `crates/acp-harness-server/src/modes/replay.rs`
 
-- [ ] **2. Add manifest.json parsing and storage**
+- [x] **2. Add manifest.json parsing and storage** (structs added, inline loading in Task 1)
 
   **What to do**:
   - Add Manifest structure definition
@@ -314,7 +314,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
   - Message: `feat(replay): add manifest.json parsing`
   - Files: `crates/acp-harness-server/src/modes/replay.rs`
 
-- [ ] **3. Return sessions/modes/models in initialize response**
+- [x] **3. Return sessions/modes/models in initialize response**
 
   **What to do**:
   - Modify initialize response to include sessions/modes/models from manifest

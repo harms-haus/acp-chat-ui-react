@@ -15,6 +15,7 @@
 //! (`{"envelope":{...},"tokenCount":N,...}`). The bridge extracts the envelope
 //! correctly for both formats.
 
+use std::collections::HashSet;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -646,27 +647,29 @@ async fn run_replay_mode_with_first_message(
     let mut active_session_id: Option<String> = config.session_id.clone();
     let mut active_file_path: Option<String> = config.file_path.clone();
     let mut active_replay_data_path: Option<String> = None;
+    let mut active_manifest: Option<ReplayManifest> = None;
     let mut is_initialized = false;
     let tps = Arc::new(AtomicU64::new((config.tps * 100.0) as u64));
 
     // Process first message if provided (for dynamic mode integration)
-    if let Some(first_msg) = first_message {
-        tracing::info!("Processing first message from dynamic mode");
-        if let Ok(request) = serde_json::from_str::<JsonRpcRequest>(&first_msg) {
-            let _ = handle_json_rpc_request(
-                &mut ws_tx,
-                &mut ws_rx,
-                &mut shutdown_rx,
-                request,
-                &mut active_demo_type,
-                &mut active_session_id,
-                &mut active_file_path,
-                &mut active_replay_data_path,
-                &mut is_initialized,
-                &tps,
-            ).await;
+        if let Some(first_msg) = first_message {
+            tracing::info!("Processing first message from dynamic mode");
+            if let Ok(request) = serde_json::from_str::<JsonRpcRequest>(&first_msg) {
+                let _ = handle_json_rpc_request(
+                    &mut ws_tx,
+                    &mut ws_rx,
+                    &mut shutdown_rx,
+                    request,
+                    &mut active_demo_type,
+                    &mut active_session_id,
+                    &mut active_file_path,
+                    &mut active_replay_data_path,
+                    &mut active_manifest,
+                    &mut is_initialized,
+                    &tps,
+                ).await;
+            }
         }
-    }
 
     loop {
         tokio::select! {
@@ -686,6 +689,7 @@ async fn run_replay_mode_with_first_message(
                     &mut active_session_id,
                     &mut active_file_path,
                     &mut active_replay_data_path,
+                    &mut active_manifest,
                     &mut is_initialized,
                     &tps,
                 ).await {
@@ -743,6 +747,7 @@ async fn handle_json_rpc_request(
     active_session_id: &mut Option<String>,
     active_file_path: &mut Option<String>,
     active_replay_data_path: &mut Option<String>,
+    active_manifest: &mut Option<ReplayManifest>,
     is_initialized: &mut bool,
     tps: &Arc<AtomicU64>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -766,7 +771,8 @@ async fn handle_json_rpc_request(
                             match serde_json::from_str::<ReplayManifest>(&manifest_str) {
                                 Ok(manifest) => {
                                     tracing::info!("Loaded manifest from {:?}: {} sessions", manifest_path, manifest.sessions.len());
-                                    // Store the replay data path for later use
+                                    // Store manifest and replay data path for later use
+                                    *active_manifest = Some(manifest.clone());
                                     *active_replay_data_path = replay_data_path.clone();
                                 }
                                 Err(e) => {
@@ -783,6 +789,21 @@ async fn handle_json_rpc_request(
                 }
             }
 
+            let mut sessions = Vec::new();
+            let mut all_modes: HashSet<String> = HashSet::new();
+            let mut all_models: HashSet<String> = HashSet::new();
+
+            if let Some(ref manifest) = active_manifest {
+                for session in &manifest.sessions {
+                    sessions.push(serde_json::json!({
+                        "sessionId": session.session_id,
+                        "description": session.description,
+                    }));
+                    all_modes.extend(session.modes.clone());
+                    all_models.extend(session.models.clone());
+                }
+            }
+
             // Wrap the response in a BridgeEnvelope as acp_payload
             let response = json_rpc_response(request_id, serde_json::json!({
                 "protocolVersion": 1,
@@ -790,6 +811,9 @@ async fn handle_json_rpc_request(
                     "modes": true,
                     "models": true,
                     "replay": true,
+                    "sessions": sessions,
+                    "availableModes": all_modes.into_iter().collect::<Vec<_>>(),
+                    "availableModels": all_models.into_iter().collect::<Vec<_>>(),
                 },
                 "serverInfo": {
                     "name": "acp-bridge-replay-v2",

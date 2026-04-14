@@ -4,7 +4,8 @@
   "session_ids": [
     "ses_2769f260bffeYcPTlG3qepNYTR",
     "ses_2767699e7ffep2eAJcqZGq5Bv8",
-    "ses_27671b8c6ffeWUL3J2eih04pkI"
+    "ses_27671b8c6ffeWUL3J2eih04pkI",
+    "ses_2766bce86ffeLUWsvugFoabTD4"
   ],
   "plan_name": "replay-acp-flow-refactor",
   "agent": "atlas",
