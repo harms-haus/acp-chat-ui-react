@@ -404,7 +404,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
   - Message: `feat(replay): return sessions/modes/models in initialize`
   - Files: `crates/acp-harness-server/src/modes/replay.rs`
 
-- [ ] **4. Implement proper session/list endpoint**
+- [x] **4. Implement proper session/list endpoint**
 
   **What to do**:
   - Modify existing `session/list` handler in replay.rs

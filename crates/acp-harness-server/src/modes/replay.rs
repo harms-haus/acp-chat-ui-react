@@ -945,8 +945,20 @@ async fn handle_json_rpc_request(
         "session/list" => {
             let request_id = request.id.unwrap_or(0);
 
+            let sessions: Vec<serde_json::Value> = if let Some(ref manifest) = active_manifest {
+                manifest.sessions.iter().map(|s| {
+                    serde_json::json!({
+                        "sessionId": s.session_id,
+                        "cwd": active_replay_data_path.as_ref().map(|p| p.as_str()).unwrap_or("/"),
+                        "title": s.description.as_deref().unwrap_or(&s.session_id),
+                    })
+                }).collect()
+            } else {
+                Vec::new()
+            };
+
             let response = json_rpc_response(request_id, serde_json::json!({
-                "sessions": [],
+                "sessions": sessions,
                 "nextCursor": null
             }));
             let envelope = BridgeEnvelope::new(
