@@ -492,7 +492,7 @@ Task 1 → Task 2 → Task 3 → Task 5 → Task 8 → Task 11 → F1-F4 → use
 
 ### Wave 2: Rust Server - Core Logic
 
-- [ ] **5. Modify session/new to auto-start replay**
+- [x] **5. Modify session/new to auto-start replay**
 
   **What to do**:
   - Modify `session/new` handler to start replay streaming immediately after session creation

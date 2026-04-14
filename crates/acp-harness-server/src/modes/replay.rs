@@ -547,6 +547,33 @@ async fn send_envelope(
     Ok(())
 }
 
+async fn start_replay_streaming(
+    ws_tx: &mut futures_util::stream::SplitSink<
+        WebSocketStream<tokio::net::TcpStream>,
+        Message,
+    >,
+    demo_type: &str,
+    session_id: &str,
+    file_path: Option<&String>,
+    shutdown_rx: &mut broadcast::Receiver<()>,
+    tps: Arc<AtomicU64>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let base_dir = resolve_base_dir(demo_type, session_id, file_path);
+    
+    let events = load_replay_events(&base_dir)?;
+    tracing::info!("Starting replay stream: {}/{} ({} events)", demo_type, session_id, events.len());
+
+    let (_dummy_tx, mut dummy_rx) = tokio::sync::mpsc::channel::<PermissionResponse>(1);
+    let (_dummy_disconnect_tx, mut dummy_disconnect_rx) = broadcast::channel::<()>(1);
+
+    stream_events(ws_tx, &events, shutdown_rx, &mut dummy_rx, &mut dummy_disconnect_rx, tps).await?;
+
+    send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Disconnected)).await?;
+    tracing::info!("Replay complete, connection kept alive");
+    
+    Ok(())
+}
+
 /// Stream replay events after init protocol initialization.
 ///
 /// This function is called by the unified server after successful init,
@@ -563,26 +590,26 @@ pub async fn stream_replay_after_init(
     mut client_disconnect_rx: broadcast::Receiver<()>,
     tps: Arc<AtomicU64>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    
+
     send_envelope(&mut ws_tx, BridgeMessage::bridge_status(BridgeStatus::Starting)).await?;
-    
+
     let demo_type = config.demo_type.ok_or("missing demo_type")?;
     let session_id = config.session_id.ok_or("missing session_id")?;
     let base_dir = resolve_base_dir(&demo_type, &session_id, config.file_path.as_ref());
-    
+
     tracing::info!("Streaming replay: {}/{}", demo_type, session_id);
-    
+
     send_session_state(&mut ws_tx, &base_dir).await?;
-    
+
     let events = load_replay_events(&base_dir)?;
-    
+
     let total = events.len() as u64;
     let first_ts = events
         .first()
         .and_then(|e| e.raw.get("timestamp_ms"))
         .and_then(|v| v.as_u64())
         .unwrap_or(0);
-    
+
     send_envelope(
         &mut ws_tx,
         BridgeMessage::replay_metadata(
@@ -598,7 +625,7 @@ pub async fn stream_replay_after_init(
 
     send_envelope(&mut ws_tx, BridgeMessage::bridge_status(BridgeStatus::Disconnected)).await?;
     tracing::info!("Replay v2 streaming complete ({} events)", events.len());
-    
+
     Ok(())
 }
 
@@ -830,10 +857,9 @@ async fn handle_json_rpc_request(
             tracing::info!("Client initialized");
         }
 
-        "session/new" => {
+"session/new" => {
             let request_id = request.id.unwrap_or(0);
 
-            // Extract demoType and sessionId from params
             let params = &request.params;
             let demo_type = params.get("demoType")
                 .and_then(|v| v.as_str())
@@ -852,10 +878,15 @@ async fn handle_json_rpc_request(
 
                     let base_dir = resolve_base_dir(&dt, &sid, active_file_path.as_ref());
 
-                    // Send session state
+                    if let Some(ref manifest) = active_manifest {
+                        let session_valid = manifest.sessions.iter().any(|s| s.session_id == sid);
+                        if !session_valid {
+                            tracing::warn!("Session {} not found in manifest, proceeding for backwards compatibility", sid);
+                        }
+                    }
+
                     send_session_state(ws_tx, &base_dir).await?;
 
-                    // Send replay metadata
                     let events = load_replay_events(&base_dir)?;
                     let total = events.len() as u64;
                     let first_ts = events
@@ -866,18 +897,11 @@ async fn handle_json_rpc_request(
 
                     send_envelope(
                         ws_tx,
-                        BridgeMessage::replay_metadata(
-                            first_ts,
-                            total,
-                            Some(format!("{} / {}", dt, sid)),
-                        ),
+                        BridgeMessage::replay_metadata(first_ts, total, Some(format!("{} / {}", dt, sid))),
                     ).await?;
 
-                    // Send bridge status connected
                     send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
 
-                    // Store events for later streaming (we'll reload when prompt comes)
-                    // Respond with session ID
                     let response = json_rpc_response(request_id, serde_json::json!({
                         "sessionId": sid,
                         "cwd": params.get("cwd").and_then(|v| v.as_str()).unwrap_or("/"),
@@ -890,17 +914,19 @@ async fn handle_json_rpc_request(
                     ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
 
                     tracing::info!("Session created: {}/{} ({} events loaded)", dt, sid, total);
+
+                    let _ = start_replay_streaming(
+                        ws_tx,
+                        &dt,
+                        &sid,
+                        active_file_path.as_ref(),
+                        shutdown_rx,
+                        tps.clone(),
+                    ).await;
                 }
                 _ => {
-                    let error = json_rpc_error(
-                        request_id,
-                        -32602,
-                        "Missing demoType or sessionId in session/new params",
-                    );
-                    let envelope = BridgeEnvelope::new(
-                        BridgeMessage::acp_payload(error),
-                        now_ms(),
-                    );
+                    let error = json_rpc_error(request_id, -32602, "Missing demoType or sessionId in session/new params");
+                    let envelope = BridgeEnvelope::new(BridgeMessage::acp_payload(error), now_ms());
                     ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
                 }
             }
@@ -909,7 +935,6 @@ async fn handle_json_rpc_request(
         "session/prompt" => {
             let request_id = request.id.unwrap_or(0);
 
-            // Acknowledge the prompt
             let response = json_rpc_response(request_id, serde_json::json!({
                 "status": "streaming"
             }));
@@ -919,22 +944,16 @@ async fn handle_json_rpc_request(
             );
             ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
 
-            // Load and stream events
             match (active_demo_type.as_ref(), active_session_id.as_ref()) {
                 (Some(dt), Some(sid)) => {
-                    let base_dir = resolve_base_dir(dt, sid, active_file_path.as_ref());
-                    let events = load_replay_events(&base_dir)?;
-
-                    tracing::info!("Starting replay stream: {}/{} ({} events)", dt, sid, events.len());
-
-                    let (_dummy_tx, mut dummy_rx) = tokio::sync::mpsc::channel::<PermissionResponse>(1);
-                    let (_dummy_disconnect_tx, mut dummy_disconnect_rx) = broadcast::channel::<()>(1);
-
-                    stream_events(ws_tx, &events, shutdown_rx, &mut dummy_rx, &mut dummy_disconnect_rx, tps.clone()).await?;
-
-                    // Send bridge status disconnected when replay is complete
-                    send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Disconnected)).await?;
-                    tracing::info!("Replay complete, connection kept alive");
+                    let _ = start_replay_streaming(
+                        ws_tx,
+                        dt,
+                        sid,
+                        active_file_path.as_ref(),
+                        shutdown_rx,
+                        tps.clone(),
+                    ).await;
                 }
                 _ => {
                     tracing::error!("No active session to replay — create session first");
