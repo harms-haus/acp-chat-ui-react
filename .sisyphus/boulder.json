@@ -1,71 +1,12 @@
 {
-  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/github-ci-plan.md",
-  "started_at": "2026-04-12T05:30:37.329Z",
+  "active_plan": "/home/blake/Documents/software/acp-react-chat-ui/.sisyphus/plans/replay-acp-flow-refactor.md",
+  "started_at": "2026-04-14T01:08:27.045Z",
   "session_ids": [
-    "ses_27fd45abcffetIkhYKSFINmNsK",
-    "ses_27fd34a11ffeQMu6MBYk1HEaMZ",
-    "ses_27ecd5c0effetmgaZJvk30t8oY",
-    "ses_27eca8a38ffe7aMWg0s0r9JQ5C",
-    "ses_27ec8253bffeqB9JM5EU4TDiE2",
-    "ses_27ec4cc53ffet3RhBq3I2laQm2",
-    "ses_27ec2687effe0V7GYFwqQO8Gx3"
+    "ses_2769f260bffeYcPTlG3qepNYTR",
+    "ses_2767699e7ffep2eAJcqZGq5Bv8",
+    "ses_27671b8c6ffeWUL3J2eih04pkI"
   ],
-  "plan_name": "github-ci-plan",
+  "plan_name": "replay-acp-flow-refactor",
   "agent": "atlas",
-  "task_sessions": {
-    "todo:5": {
-      "task_key": "todo:5",
-      "task_label": "5",
-      "task_title": "Create publish-check.ts script",
-      "session_id": "ses_27fd34a11ffeQMu6MBYk1HEaMZ",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-04-12T05:36:21.524Z"
-    },
-    "todo:6": {
-      "task_key": "todo:6",
-      "task_label": "6",
-      "task_title": "Create ci.yml - Setup job",
-      "session_id": "ses_27ecd5c0effetmgaZJvk30t8oY",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-04-12T10:19:29.187Z"
-    },
-    "todo:11": {
-      "task_key": "todo:11",
-      "task_label": "11",
-      "task_title": "Create release.yml - Dry-run job",
-      "session_id": "ses_27eca8a38ffe7aMWg0s0r9JQ5C",
-      "agent": "Sisyphus-Junior",
-      "category": "quick",
-      "updated_at": "2026-04-12T10:22:38.019Z"
-    },
-    "final-wave:f1": {
-      "task_key": "final-wave:f1",
-      "task_label": "F1",
-      "task_title": "**Plan Compliance Audit** — `oracle`",
-      "session_id": "ses_27ec8253bffeqB9JM5EU4TDiE2",
-      "agent": "Sisyphus-Junior",
-      "category": "ultrabrain",
-      "updated_at": "2026-04-12T10:26:21.045Z"
-    },
-    "final-wave:f2": {
-      "task_key": "final-wave:f2",
-      "task_label": "F2",
-      "task_title": "**Code Quality Review** — `unspecified-high`",
-      "session_id": "ses_27ec4cc53ffet3RhBq3I2laQm2",
-      "agent": "Sisyphus-Junior",
-      "category": "unspecified-high",
-      "updated_at": "2026-04-12T10:29:13.467Z"
-    },
-    "final-wave:f3": {
-      "task_key": "final-wave:f3",
-      "task_label": "F3",
-      "task_title": "**Real Manual QA** — `unspecified-high`",
-      "session_id": "ses_27ec2687effe0V7GYFwqQO8Gx3",
-      "agent": "Sisyphus-Junior",
-      "category": "unspecified-high",
-      "updated_at": "2026-04-12T10:32:41.081Z"
-    }
-  }
+  "task_sessions": {}
 }

@@ -76,16 +76,52 @@ impl From<PermissionResponseMessage> for PermissionResponse {
 /// Configuration for the v2 replay mode.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReplayConfig {
-  /// Demo type subdirectory under fixtures/replay-data/.
-  pub demo_type: Option<String>,
-  /// Session subdirectory (e.g. "session-1").
-  pub session_id: Option<String>,
-  /// Optional override for the replay data base path.
-  pub file_path: Option<String>,
-  /// Base directory for replay data.
-  pub replay_data_dir: Option<String>,
-  /// Tokens per second for replay timing. Defaults to 65.0. Must be >= 0.01.
-  pub tps: f64,
+	/// Demo type subdirectory under fixtures/replay-data/.
+	pub demo_type: Option<String>,
+	/// Session subdirectory (e.g. "session-1").
+	pub session_id: Option<String>,
+	/// Optional override for the replay data base path.
+	pub file_path: Option<String>,
+	/// Base directory for replay data.
+	pub replay_data_dir: Option<String>,
+	/// Tokens per second for replay timing. Defaults to 65.0. Must be >= 0.01.
+	pub tps: f64,
+}
+
+/// Represents a single session within a replay manifest.
+#[derive(Debug, Deserialize, Clone)]
+pub struct ManifestSession {
+	/// Type of demo/replay for this session.
+	#[serde(rename = "demoType")]
+	pub demo_type: String,
+	/// Unique identifier for the session.
+	#[serde(rename = "sessionId")]
+	pub session_id: String,
+	/// List of modes available for this session.
+	pub modes: Vec<String>,
+	/// List of models used or available for this session.
+	pub models: Vec<String>,
+	/// Timestamp when the session was captured (milliseconds since epoch).
+	#[serde(rename = "capturedAt")]
+	pub captured_at: i64,
+	/// Total token count for the session.
+	#[serde(rename = "tokenCount")]
+	pub token_count: i64,
+	/// Total event count for the session.
+	#[serde(rename = "eventCount")]
+	pub event_count: i64,
+	/// Optional description of the session.
+	pub description: Option<String>,
+}
+
+/// Top-level manifest structure for replay data.
+#[derive(Debug, Deserialize, Clone)]
+pub struct ReplayManifest {
+	/// Type of demo (e.g., "tool-calling-thinking").
+	#[serde(rename = "demoType")]
+	pub demo_type: String,
+	/// List of sessions in this manifest.
+	pub sessions: Vec<ManifestSession>,
 }
 
 impl ReplayConfig {
@@ -609,6 +645,7 @@ async fn run_replay_mode_with_first_message(
     let mut active_demo_type: Option<String> = config.demo_type.clone();
     let mut active_session_id: Option<String> = config.session_id.clone();
     let mut active_file_path: Option<String> = config.file_path.clone();
+    let mut active_replay_data_path: Option<String> = None;
     let mut is_initialized = false;
     let tps = Arc::new(AtomicU64::new((config.tps * 100.0) as u64));
 
@@ -624,6 +661,7 @@ async fn run_replay_mode_with_first_message(
                 &mut active_demo_type,
                 &mut active_session_id,
                 &mut active_file_path,
+                &mut active_replay_data_path,
                 &mut is_initialized,
                 &tps,
             ).await;
@@ -639,19 +677,20 @@ async fn run_replay_mode_with_first_message(
 
                         match serde_json::from_str::<JsonRpcRequest>(text_str) {
                             Ok(request) => {
-                                if let Err(e) = handle_json_rpc_request(
-                                    &mut ws_tx,
-                                    &mut ws_rx,
-                                    &mut shutdown_rx,
-                                    request,
-                                    &mut active_demo_type,
-                                    &mut active_session_id,
-                                    &mut active_file_path,
-                                    &mut is_initialized,
-                                    &tps,
-                                ).await {
-                                    tracing::error!("Error handling JSON-RPC request: {}", e);
-                                }
+                if let Err(e) = handle_json_rpc_request(
+                    &mut ws_tx,
+                    &mut ws_rx,
+                    &mut shutdown_rx,
+                    request,
+                    &mut active_demo_type,
+                    &mut active_session_id,
+                    &mut active_file_path,
+                    &mut active_replay_data_path,
+                    &mut is_initialized,
+                    &tps,
+                ).await {
+                    tracing::error!("Error handling JSON-RPC request: {}", e);
+                }
                             }
                             Err(_) => {
                                 if let Ok(obj) = serde_json::from_str::<serde_json::Value>(text_str) {
@@ -703,12 +742,46 @@ async fn handle_json_rpc_request(
     active_demo_type: &mut Option<String>,
     active_session_id: &mut Option<String>,
     active_file_path: &mut Option<String>,
+    active_replay_data_path: &mut Option<String>,
     is_initialized: &mut bool,
     tps: &Arc<AtomicU64>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     match request.method.as_str() {
         "initialize" => {
             let request_id = request.id.unwrap_or(0);
+
+            // Extract _meta.replay.replayDataPath from initialize params if present
+            let replay_data_path = request.params.get("_meta")
+                .and_then(|meta| meta.get("replay"))
+                .and_then(|replay| replay.get("replayDataPath"))
+                .and_then(|path| path.as_str())
+                .map(|s| s.to_string());
+
+            // If replayDataPath is provided, validate and load manifest
+            if let Some(ref path) = replay_data_path {
+                let manifest_path = PathBuf::from(path).join("manifest.json");
+                if manifest_path.exists() {
+                    match fs::read_to_string(&manifest_path) {
+                        Ok(manifest_str) => {
+                            match serde_json::from_str::<ReplayManifest>(&manifest_str) {
+                                Ok(manifest) => {
+                                    tracing::info!("Loaded manifest from {:?}: {} sessions", manifest_path, manifest.sessions.len());
+                                    // Store the replay data path for later use
+                                    *active_replay_data_path = replay_data_path.clone();
+                                }
+                                Err(e) => {
+                                    tracing::warn!("Failed to parse manifest.json at {:?}: {}", manifest_path, e);
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            tracing::warn!("Failed to read manifest.json at {:?}: {}", manifest_path, e);
+                        }
+                    }
+                } else {
+                    tracing::warn!("manifest.json not found at {:?}", manifest_path);
+                }
+            }
 
             // Wrap the response in a BridgeEnvelope as acp_payload
             let response = json_rpc_response(request_id, serde_json::json!({
