@@ -240,12 +240,21 @@ export class ReplayController {
   async initialize(clientInfo?: {
     name: string;
     version: string;
-  }): Promise<unknown> {
-    const params = {
+  }, replayDataPath?: string): Promise<unknown> {
+    const params: Record<string, unknown> = {
       protocolVersion: 1,
       clientCapabilities: {},
       ...(clientInfo ? { clientInfo } : {}),
     };
+    
+    if (replayDataPath) {
+      params._meta = {
+        replay: {
+          replayDataPath,
+        },
+      };
+    }
+    
     const result = await this.sendRequest("initialize", params);
     this.state.initialized = true;
     this.state.capabilities = result;

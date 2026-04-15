@@ -194,7 +194,7 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
       const initResult = await newController.initialize({
         name: "acp-harness-ui",
         version: "0.0.1",
-      });
+      }, replayDataPath);
 
       // Store capabilities from initialize response
       const capabilities = initResult as {
