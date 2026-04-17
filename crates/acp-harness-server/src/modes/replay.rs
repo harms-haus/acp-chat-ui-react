@@ -938,18 +938,19 @@ async fn handle_json_rpc_request(
 
         "session/load" => {
             let request_id = request.id.unwrap_or(0);
-
-            // For replay mode, session/load behaves identically to session/new
             let params = &request.params;
             let session_id = params.get("sessionId")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string())
                 .or_else(|| active_session_id.clone());
 
-            let demo_type = params.get("demoType")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string())
-                .or_else(|| active_demo_type.clone());
+            let demo_type = if let (Some(ref manifest), Some(ref sid)) = (&active_manifest, &session_id) {
+                manifest.sessions.iter()
+                    .find(|s| s.session_id == *sid)
+                    .map(|s| s.demo_type.clone())
+            } else {
+                active_demo_type.clone()
+            };
 
             match (demo_type, session_id) {
                 (Some(dt), Some(sid)) => {
