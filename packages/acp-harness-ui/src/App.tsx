@@ -302,6 +302,8 @@ export default function App() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | undefined>(undefined);
   const [_availableSessions, _setAvailableSessions] = useState<SessionItem[]>([]);
 
+  const [_replayController, _setReplayController] = useState<ReplayController | null>(null);
+
   const controllerRef = useRef<SessionController | null>(null);
   const replayControllerRef = useRef<ReplayController | null>(null);
   const captureInterceptorRef = useRef<SessionCaptureInterceptor | null>(null);
@@ -419,6 +421,7 @@ controller.startAgent(startAgentConfig).catch((err: unknown) => {
 
   const handleReplayControllerChange = useCallback((controller: ReplayController | null) => {
     replayControllerRef.current = controller;
+    _setReplayController(controller);  // Force re-render with controller
 
 if (controller) {
     const _store = new AcpStore(controller as unknown as SessionController, { enableBatching: false });
@@ -524,7 +527,7 @@ const handleReplayStatusChange = useCallback((status: "disconnected" | "connecti
           }}
         >
           <SessionsSidebar
-            controller={controllerRef.current || replayControllerRef.current}
+            controller={controllerRef.current || _replayController}
             isConnected={connectionStatus === "connected" && bridgeStatus === "connected" && isInitialized}
           />
         </aside>
