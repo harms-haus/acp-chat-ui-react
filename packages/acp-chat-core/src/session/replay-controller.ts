@@ -107,6 +107,7 @@ export class ReplayController {
   private errorHandlers = new Set<ErrorHandler>();
   private sessionClearingHandlers = new Set<SessionClearingHandler>();
   private permissionRequestHandlers = new Set<PermissionRequestHandler>();
+  private configOptionsHandlers = new Set<(options: unknown) => void>();
 
   // ---------------------------------------------------------------------------
   // Construction
@@ -153,10 +154,8 @@ export class ReplayController {
   on(event: "traffic", handler: TrafficHandler): () => void;
   on(event: "error", handler: ErrorHandler): () => void;
   on(event: "sessionClearing", handler: SessionClearingHandler): () => void;
-  on(
-    event: "permissionRequest",
-    handler: PermissionRequestHandler,
-  ): () => void;
+  on(event: "permissionRequest", handler: PermissionRequestHandler): () => void;
+  on(event: "configOptionsChange", handler: (options: unknown) => void): () => void;
   on(
     event:
       | "statusChange"
@@ -164,7 +163,8 @@ export class ReplayController {
       | "traffic"
       | "error"
       | "sessionClearing"
-      | "permissionRequest",
+      | "permissionRequest"
+      | "configOptionsChange",
     handler: unknown,
   ): () => void {
     switch (event) {
@@ -195,6 +195,10 @@ export class ReplayController {
           this.permissionRequestHandlers.delete(
             handler as PermissionRequestHandler,
           );
+      case "configOptionsChange":
+        this.configOptionsHandlers.add(handler as (options: unknown) => void);
+        return () =>
+          this.configOptionsHandlers.delete(handler as (options: unknown) => void);
     }
   }
 

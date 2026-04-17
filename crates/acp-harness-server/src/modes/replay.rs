@@ -569,7 +569,7 @@ async fn start_replay_streaming(
 
     stream_events(ws_tx, &events, shutdown_rx, &mut dummy_rx, &mut dummy_disconnect_rx, tps).await?;
 
-    send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Disconnected)).await?;
+    send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
     tracing::info!("Replay complete, connection kept alive");
     
     Ok(())
