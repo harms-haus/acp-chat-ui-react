@@ -976,20 +976,46 @@ async fn handle_json_rpc_request(
                         BridgeMessage::replay_metadata(first_ts, total, Some(format!("{} / {}", dt, sid))),
                     ).await?;
 
-                    send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
+send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
 
-                    let response = json_rpc_response(request_id, serde_json::json!({
-                        "sessionId": sid,
-                        "cwd": params.get("cwd").and_then(|v| v.as_str()).unwrap_or("/"),
-                    }));
+// Build configOptions from manifest (modes and models for this session)
+let mut config_options = Vec::new();
+if let Some(ref manifest) = active_manifest {
+if let Some(session) = manifest.sessions.iter().find(|s| s.session_id == sid) {
+// Add modes from selected session
+for mode in &session.modes {
+config_options.push(serde_json::json!({
+"type": "mode",
+"id": mode,
+"name": mode,
+"description": format!("{} mode", mode)
+}));
+}
+// Add models from selected session
+for model in &session.models {
+config_options.push(serde_json::json!({
+"type": "model",
+"id": model,
+"name": model,
+"provider": "unknown"
+}));
+}
+}
+}
 
-                    let envelope = BridgeEnvelope::new(
-                        BridgeMessage::acp_payload(response),
-                        now_ms(),
-                    );
-                    ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
+let response = json_rpc_response(request_id, serde_json::json!({
+"sessionId": sid,
+"cwd": params.get("cwd").and_then(|v| v.as_str()).unwrap_or("/"),
+"configOptions": config_options,
+}));
 
-                    tracing::info!("Session loaded: {}/{} ({} events loaded)", dt, sid, total);
+let envelope = BridgeEnvelope::new(
+BridgeMessage::acp_payload(response),
+now_ms(),
+);
+ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
+
+tracing::info!("Session loaded: {}/{} ({} events loaded, {} config options)", dt, sid, total, config_options.len());
 
                     let _ = start_replay_streaming(
                         ws_tx,
