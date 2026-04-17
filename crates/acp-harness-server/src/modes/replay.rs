@@ -779,8 +779,9 @@ async fn handle_json_rpc_request(
     tps: &Arc<AtomicU64>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     match request.method.as_str() {
-        "initialize" => {
+"initialize" => {
             let request_id = request.id.unwrap_or(0);
+            tracing::info!("[Rust replay.rs] initialize request received: request_id={}", request_id);
 
             // Extract _meta.replay.replayDataPath from initialize params if present
             let replay_data_path = request.params.get("_meta")
@@ -797,7 +798,7 @@ async fn handle_json_rpc_request(
                         Ok(manifest_str) => {
                             match serde_json::from_str::<ReplayManifest>(&manifest_str) {
                                 Ok(manifest) => {
-                                    tracing::info!("Loaded manifest from {:?}: {} sessions", manifest_path, manifest.sessions.len());
+                                    tracing::info!("[Rust replay.rs] initialize: manifest loaded from {:?}: {} sessions", manifest_path, manifest.sessions.len());
                                     // Store manifest and replay data path for later use
                                     *active_manifest = Some(manifest.clone());
                                     *active_replay_data_path = replay_data_path.clone();
@@ -848,17 +849,17 @@ async fn handle_json_rpc_request(
                 }
             }));
 
-let envelope = BridgeEnvelope::new(
-BridgeMessage::acp_payload(response),
-now_ms(),
-);
-ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
-*is_initialized = true;
-tracing::info!("Client initialized");
+            let envelope = BridgeEnvelope::new(
+                BridgeMessage::acp_payload(response),
+                now_ms(),
+            );
+            ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
+            *is_initialized = true;
+            tracing::info!("[Rust replay.rs] initialize: client initialized, sending bridge_status=Connected");
 
-// Send bridge_status to trigger ReplayController state update
-send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
-}
+            // Send bridge_status to trigger ReplayController state update
+            send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
+        }
 
 "session/new" => {
             let request_id = request.id.unwrap_or(0);
@@ -1068,6 +1069,10 @@ tracing::info!("Session loaded: {}/{} ({} events loaded, {} config options)", dt
 
         "session/list" => {
             let request_id = request.id.unwrap_or(0);
+            tracing::info!("[Rust replay.rs] session/list request received: request_id={}, manifest_state={}", 
+                request_id, 
+                if active_manifest.is_some() { "loaded" } else { "not_loaded" }
+            );
 
             let sessions: Vec<serde_json::Value> = if let Some(ref manifest) = active_manifest {
                 manifest.sessions.iter().map(|s| {
@@ -1080,6 +1085,8 @@ tracing::info!("Session loaded: {}/{} ({} events loaded, {} config options)", dt
             } else {
                 Vec::new()
             };
+
+            tracing::info!("[Rust replay.rs] session/list returning {} sessions", sessions.len());
 
             let response = json_rpc_response(request_id, serde_json::json!({
                 "sessions": sessions,

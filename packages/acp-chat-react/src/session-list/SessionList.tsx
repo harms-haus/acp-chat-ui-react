@@ -135,11 +135,13 @@ function SessionListInner({
 
   const fetchSessions = useCallback(
     async (cursor?: string) => {
+      console.log("[SessionList.fetchSessions] Fetch started: cursor=", cursor, "cwd=", cwd);
       setIsLoading(true);
       setError(null);
 
       try {
         const result = await controller.listSessions(cursor, cwd);
+        console.log("[SessionList.fetchSessions] Response received: sessions count=", result.sessions.length, "hasMore=", !!result.nextCursor);
         setSessions((prevSessions) =>
           cursor ? [...prevSessions, ...result.sessions] : result.sessions
         );
@@ -147,6 +149,7 @@ function SessionListInner({
         setNextCursor(result.nextCursor);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to fetch sessions";
+        console.error("[SessionList.fetchSessions] Error:", errorMessage);
         setError(errorMessage);
       } finally {
         setIsLoading(false);
@@ -214,6 +217,7 @@ function SessionListInner({
   );
 
   if (isLoading && sessions.length === 0) {
+    console.log("[SessionList] Render: isLoading=true, sessions count=0");
     return (
       <div data-acp-session-list data-acp-session-list-loading className={className} style={style}>
         <div data-acp-session-list-empty>{loadingText}</div>
@@ -222,6 +226,7 @@ function SessionListInner({
   }
 
   if (error && sessions.length === 0) {
+    console.log("[SessionList] Render: error state, sessions count=0");
     return (
       <div data-acp-session-list data-acp-session-list-error className={className} style={style}>
         <div data-acp-session-list-error-message>{error}</div>
@@ -233,6 +238,7 @@ function SessionListInner({
   }
 
   if (sessions.length === 0) {
+    console.log("[SessionList] Render: empty state, sessions count=0");
     return (
       <div data-acp-session-list data-acp-session-list-empty className={className} style={style}>
         <div data-acp-session-list-empty-message>{emptyText}</div>
@@ -240,6 +246,7 @@ function SessionListInner({
     );
   }
 
+  console.log("[SessionList] Render: sessions count=", sessions.length, "isSelected=", selectedSessionId, "controller state=", { isLoading, isLoadingSession, hasMore });
   return (
     <div data-acp-session-list className={className} style={style}>
       {error && (
@@ -271,15 +278,15 @@ function SessionListInner({
                 );
               }
 
-    return (
-      <SessionRow
-        key={session.sessionId}
-        session={session}
-        isSelected={isSelected}
-        isLoading={isLoadingSession && isSelected}
-        onLoad={() => handleLoad(session)}
-      />
-    );
+              return (
+                <SessionRow
+                  key={session.sessionId}
+                  session={session}
+                  isSelected={isSelected}
+                  isLoading={isLoadingSession && isSelected}
+                  onLoad={() => handleLoad(session)}
+                />
+              );
             })}
 
             {hasMore && (
@@ -302,6 +309,7 @@ function SessionListInner({
 export const SessionList = memo(function SessionList(props: SessionListProps) {
   const { controller, className = "", style } = props;
   const isSupported = typeof controller.listSessions === "function" && typeof controller.loadSession === "function";
+  console.log("[SessionList] Component render: isConnected=", isSupported, "controller=", controller);
 
   if (!isSupported) {
     return (

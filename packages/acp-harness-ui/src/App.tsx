@@ -213,6 +213,7 @@ function SessionsSidebar({
   onSessionLoaded?: (session: SessionItem) => void;
   onSessionLoadError?: (error: Error, session: SessionItem) => void;
 }) {
+  console.log("[App.SessionsSidebar] Render: controller=", controller, "isConnected=", isConnected);
   return (
     <div data-acp-sessions-sidebar style={{ flex: "1 1 0", minHeight: 0, display: "flex", flexDirection: "column" }}>
       <h3 style={{ fontSize: "14px", marginBottom: "12px", flexShrink: 0 }}>Sessions</h3>

@@ -298,6 +298,7 @@ export class ReplayController {
     }>;
     nextCursor?: string;
   }> {
+    console.log("[ReplayController.listSessions] Request sent: method=session/list, cursor=", cursor, "cwd=", cwd);
     const params: Record<string, unknown> = {};
     if (cursor) params.cursor = cursor;
     if (cwd) params.cwd = cwd;
@@ -314,6 +315,7 @@ export class ReplayController {
       }>;
       nextCursor?: string;
     };
+    console.log("[ReplayController.listSessions] Response received: sessions count=", result.sessions.length, "nextCursor=", result.nextCursor);
     return result;
   }
 
@@ -485,6 +487,7 @@ export class ReplayController {
     this.emitTraffic("in", envelope);
 
     if (envelope.type === "bridge_status") {
+      console.log("[ReplayController.handleEnvelope] bridge_status received:", envelope.status);
       this.state.bridgeStatus = envelope.status;
       this.emitStatusChange();
       return;
@@ -492,10 +495,12 @@ export class ReplayController {
 
     if (envelope.type === "replay_metadata") {
       // Informational — no action needed beyond logging / traffic
+      console.log("[ReplayController.handleEnvelope] replay_metadata received");
       return;
     }
 
     if (envelope.type === "acp_payload") {
+      console.log("[ReplayController.handleEnvelope] acp_payload received");
       this.handleAcpPayload(envelope.payload);
     }
   }
