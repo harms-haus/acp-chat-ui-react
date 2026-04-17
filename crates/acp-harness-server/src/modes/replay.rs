@@ -848,14 +848,17 @@ async fn handle_json_rpc_request(
                 }
             }));
 
-            let envelope = BridgeEnvelope::new(
-                BridgeMessage::acp_payload(response),
-                now_ms(),
-            );
-            ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
-            *is_initialized = true;
-            tracing::info!("Client initialized");
-        }
+let envelope = BridgeEnvelope::new(
+BridgeMessage::acp_payload(response),
+now_ms(),
+);
+ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
+*is_initialized = true;
+tracing::info!("Client initialized");
+
+// Send bridge_status to trigger ReplayController state update
+send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
+}
 
 "session/new" => {
             let request_id = request.id.unwrap_or(0);
