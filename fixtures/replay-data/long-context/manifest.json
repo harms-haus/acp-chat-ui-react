@@ -4,6 +4,7 @@
     {
       "demoType": "long-context",
       "sessionId": "lc-analysis-001",
+      "path": "session-1",
       "modes": [
         "analyze",
         "summarize",
@@ -24,6 +25,7 @@
     {
       "demoType": "long-context",
       "sessionId": "lc-docs-002",
+      "path": "session-2",
       "modes": [
         "document",
         "summarize",

@@ -98,6 +98,9 @@ pub struct ManifestSession {
 	/// Unique identifier for the session.
 	#[serde(rename = "sessionId")]
 	pub session_id: String,
+	/// Optional path to session directory (defaults to session_id if not provided).
+	#[serde(default)]
+	pub path: Option<String>,
 	/// List of modes available for this session.
 	pub modes: Vec<String>,
 	/// List of models used or available for this session.
@@ -944,12 +947,13 @@ async fn handle_json_rpc_request(
                 .map(|s| s.to_string())
                 .or_else(|| active_session_id.clone());
 
-            let demo_type = if let (Some(ref manifest), Some(ref sid)) = (&active_manifest, &session_id) {
+            let (demo_type, session_path) = if let (Some(ref manifest), Some(ref sid)) = (&active_manifest, &session_id) {
                 manifest.sessions.iter()
                     .find(|s| s.session_id == *sid)
-                    .map(|s| s.demo_type.clone())
+                    .map(|s| (s.demo_type.clone(), s.path.clone()))
+                    .unwrap_or_else(|| (active_demo_type.clone(), None))
             } else {
-                active_demo_type.clone()
+                (active_demo_type.clone(), None)
             };
 
             match (demo_type, session_id) {
@@ -957,7 +961,11 @@ async fn handle_json_rpc_request(
                     *active_demo_type = Some(dt.clone());
                     *active_session_id = Some(sid.clone());
 
-                    let base_dir = resolve_base_dir(&dt, &sid, active_file_path.as_ref());
+                    let base_dir = if let Some(ref path) = session_path {
+                        PathBuf::from(active_replay_data_path.as_ref().unwrap_or(&String::new())).join(path)
+                    } else {
+                        resolve_base_dir(&dt, &sid, active_file_path.as_ref())
+                    };
 
                     if let Some(ref manifest) = active_manifest {
                         let session_valid = manifest.sessions.iter().any(|s| s.session_id == sid);
