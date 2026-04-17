@@ -197,13 +197,18 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
       }, replayDataPath);
 
       // Store capabilities from initialize response
-      const capabilities = initResult as {
-        sessions?: Array<{ sessionId: string; description?: string }>;
-        availableModes?: string[];
-        availableModels?: string[];
+      const result = initResult as {
+        protocolVersion?: number;
+        capabilities?: {
+          sessions?: Array<{ sessionId: string; description?: string }>;
+          availableModes?: string[];
+          availableModels?: string[];
+        };
       };
+      
+      const capabilities = result.capabilities;
 
-      if (capabilities.sessions) {
+      if (capabilities?.sessions) {
         const sessions: SessionInfo[] = capabilities.sessions.map((s: { sessionId: string; description?: string }) => ({
           id: s.sessionId,
           name: s.description || s.sessionId,
@@ -215,7 +220,7 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
         }
       }
 
-      if (capabilities.availableModes) {
+      if (capabilities?.availableModes) {
         const modes: SessionInfo[] = capabilities.availableModes.map((id: string) => ({
           id,
           name: id.charAt(0).toUpperCase() + id.slice(1),
@@ -227,7 +232,7 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
         }
       }
 
-      if (capabilities.availableModels) {
+      if (capabilities?.availableModels) {
         const models: SessionInfo[] = capabilities.availableModels.map((id: string) => ({
           id,
           name: id.charAt(0).toUpperCase() + id.slice(1),
