@@ -555,15 +555,13 @@ async fn start_replay_streaming(
         WebSocketStream<tokio::net::TcpStream>,
         Message,
     >,
+    base_dir: &std::path::PathBuf,
     demo_type: &str,
     session_id: &str,
-    file_path: Option<&String>,
     shutdown_rx: &mut broadcast::Receiver<()>,
     tps: Arc<AtomicU64>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let base_dir = resolve_base_dir(demo_type, session_id, file_path);
-    
-    let events = load_replay_events(&base_dir)?;
+    let events = load_replay_events(base_dir)?;
     tracing::info!("Starting replay stream: {}/{} ({} events)", demo_type, session_id, events.len());
 
     let (_dummy_tx, mut dummy_rx) = tokio::sync::mpsc::channel::<PermissionResponse>(1);
@@ -909,24 +907,13 @@ async fn handle_json_rpc_request(
 
                     send_envelope(ws_tx, BridgeMessage::bridge_status(BridgeStatus::Connected)).await?;
 
-                    let response = json_rpc_response(request_id, serde_json::json!({
-                        "sessionId": sid,
-                        "cwd": params.get("cwd").and_then(|v| v.as_str()).unwrap_or("/"),
-                    }));
-
-                    let envelope = BridgeEnvelope::new(
-                        BridgeMessage::acp_payload(response),
-                        now_ms(),
-                    );
-                    ws_tx.send(to_text(serde_json::to_string(&envelope)?)).await?;
-
                     tracing::info!("Session created: {}/{} ({} events loaded)", dt, sid, total);
 
                     let _ = start_replay_streaming(
                         ws_tx,
+                        &base_dir,
                         &dt,
                         &sid,
-                        active_file_path.as_ref(),
                         shutdown_rx,
                         tps.clone(),
                     ).await;
@@ -1032,9 +1019,9 @@ tracing::info!("Session loaded: {}/{} ({} events loaded, {} config options)", dt
 
                     let _ = start_replay_streaming(
                         ws_tx,
+                        &base_dir,
                         &dt,
                         &sid,
-                        active_file_path.as_ref(),
                         shutdown_rx,
                         tps.clone(),
                     ).await;
@@ -1061,11 +1048,12 @@ tracing::info!("Session loaded: {}/{} ({} events loaded, {} config options)", dt
 
             match (active_demo_type.as_ref(), active_session_id.as_ref()) {
                 (Some(dt), Some(sid)) => {
+                    let base_dir = resolve_base_dir(dt, sid, active_file_path.as_ref());
                     let _ = start_replay_streaming(
                         ws_tx,
+                        &base_dir,
                         dt,
                         sid,
-                        active_file_path.as_ref(),
                         shutdown_rx,
                         tps.clone(),
                     ).await;
