@@ -950,8 +950,8 @@ async fn handle_json_rpc_request(
             let (demo_type, session_path) = if let (Some(ref manifest), Some(ref sid)) = (&active_manifest, &session_id) {
                 manifest.sessions.iter()
                     .find(|s| s.session_id == *sid)
-                    .map(|s| (s.demo_type.clone(), s.path.clone()))
-                    .unwrap_or_else(|| (active_demo_type.clone(), None))
+                    .map(|s| (Some(s.demo_type.clone()), s.path.clone()))
+                    .unwrap_or((None, None))
             } else {
                 (active_demo_type.clone(), None)
             };
