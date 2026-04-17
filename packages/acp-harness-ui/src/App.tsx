@@ -424,6 +424,11 @@ controller.startAgent(startAgentConfig).catch((err: unknown) => {
     _setReplayController(controller);  // Force re-render with controller
 
 if (controller) {
+    const state = controller.getState();
+    setConnectionStatus(state.connectionStatus as ConnectionStatus);
+    setBridgeStatus(state.bridgeStatus as string);
+    setIsInitialized(state.initialized);
+    
     const _store = new AcpStore(controller as unknown as SessionController, { enableBatching: false });
     storeRef.current = _store;
     setActiveStore(_store);
