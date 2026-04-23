@@ -60,15 +60,15 @@ export const ContentRenderer = memo(function ContentRenderer({
      data-acp-content-block-index={index}
      className="acp-content-renderer__block"
     >
-     {block.type === "text" ? (
-      <TextContent text={(block as TextContentBlock).text} />
-     ) : block.type === "resource" ? (
-      <ResourceContent block={block as ResourceContentBlock} />
-     ) : block.type === "resource_link" ? (
-      <ResourceLinkContent block={block as ResourceLinkContentBlock} />
-     ) : (
-      <UnsupportedContent type={block.type} />
-     )}
+ {block.type === "text" ? (
+ <TextContent text={(block as TextContentBlock).text} />
+ ) : block.type === "resource" ? (
+ <ResourceContent block={block as ResourceContentBlock} />
+ ) : block.type === "resource_link" ? (
+ <ResourceLinkContent block={block as ResourceLinkContentBlock} />
+ ) : (
+ <UnsupportedContent type={(block as ContentBlock).type} />
+ )}
     </div>
    ))}
   </div>
