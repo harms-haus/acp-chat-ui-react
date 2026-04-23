@@ -81,9 +81,6 @@ importers:
         specifier: ^0.18.1
         version: 0.18.2(zod@4.3.6)
     devDependencies:
-      '@harms-haus/acp-ws-bridge':
-        specifier: workspace:*
-        version: link:../acp-ws-bridge
       '@vitest/coverage-v8':
         specifier: ^2.1.9
         version: 2.1.9(vitest@2.1.9(@types/node@25.5.0)(jsdom@29.0.1(canvas@3.2.3)))
