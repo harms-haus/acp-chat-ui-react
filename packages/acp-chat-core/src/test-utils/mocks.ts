@@ -1,154 +1,138 @@
 /**
  * Mock implementations for testing ACP Chat Core.
  *
- * This module provides mock implementations of TransportClient and SessionController
+ * This module provides mock implementations of Transport and SessionController
  * for testing purposes. These mocks support event emission and basic state management.
  */
 
-import type { BridgeEnvelope } from '../generated/index.js';
-import type { ConnectionStatus, TransportConfig } from '../transport/client.js';
+import type { Transport, ConnectionStatus } from '../transport/transport-interface.js';
+import type { ACPRequest, ACPResponse, ACPNotification } from '../protocol/types.js';
 import type { SessionControllerState, PermissionOption } from '../session/controller.js';
 
 /**
- * Mock transport client for testing WebSocket connections.
- *
- * Simulates a TransportClient with event emission capabilities.
+ * Bridge envelope type for testing.
+ * Defined locally to avoid circular dependency with acp-ws-bridge.
  */
-export class MockTransportClient {
-  public status: ConnectionStatus = 'disconnected';
-  private handlers: {
-    statusChange: Set<(status: ConnectionStatus) => void>;
-    envelope: Set<(envelope: BridgeEnvelope) => void>;
-    error: Set<(error: Error) => void>;
-  } = {
-    statusChange: new Set(),
-    envelope: new Set(),
-    error: new Set(),
-  };
+export interface BridgeEnvelope {
+  version: number;
+  seq: number;
+  timestamp_ms: number;
+  type: 'acp_payload' | 'bridge_status' | 'stderr' | 'process_exit' | 'replay_metadata' | 'start_agent';
+  payload?: unknown;
+  status?: string;
+  line?: string;
+  code?: number | null;
+  signal?: string | null;
+  captured_at_ms?: number;
+  total_envelopes?: number;
+  description?: string | null;
+  command?: string;
+  args?: string[];
+  cwd?: string | null;
+  env?: Array<[string, string]>;
+}
 
-  constructor(public config: TransportConfig) {}
+/**
+ * Mock transport implementation for testing.
+ * Implements the Transport interface with event emission capabilities.
+ */
+export class MockTransport implements Transport {
+ public status: ConnectionStatus = 'disconnected';
+ public lastSent: string | null = null;
+ public lastRequestId: number | null = null;
+ private statusHandlers = new Set<(status: ConnectionStatus) => void>();
+ private notificationHandlers = new Set<(notification: ACPNotification) => void>();
+ private errorHandlers = new Set<(error: Error) => void>();
+ private requestHandler?: (request: ACPRequest) => Promise<unknown>;
+ private responseHandlers = new Set<(response: ACPResponse<unknown>) => void>();
 
-  /**
-   * Register an event handler.
-   * @returns Unsubscribe function
-   */
-  on(event: 'statusChange', handler: (status: ConnectionStatus) => void): () => void;
-  on(event: 'envelope', handler: (envelope: BridgeEnvelope) => void): () => void;
-  on(event: 'error', handler: (error: Error) => void): () => void;
-  on(event: string, handler: unknown): () => void {
-    switch (event) {
-      case 'statusChange':
-        this.handlers.statusChange.add(handler as (status: ConnectionStatus) => void);
-        break;
-      case 'envelope':
-        this.handlers.envelope.add(handler as (envelope: BridgeEnvelope) => void);
-        break;
-      case 'error':
-        this.handlers.error.add(handler as (error: Error) => void);
-        break;
-    }
-    return () => {
-      switch (event) {
-        case 'statusChange':
-          this.handlers.statusChange.delete(
-            handler as (status: ConnectionStatus) => void
-          );
-          break;
-        case 'envelope':
-          this.handlers.envelope.delete(
-            handler as (envelope: BridgeEnvelope) => void
-          );
-          break;
-        case 'error':
-          this.handlers.error.delete(handler as (error: Error) => void);
-          break;
-      }
-    };
+ constructor(handler?: (request: ACPRequest) => Promise<unknown>) {
+  if (handler) {
+   this.requestHandler = handler;
   }
+ }
 
-  /**
-   * Unregister an event handler.
-   */
-  off(event: 'statusChange', handler: (status: ConnectionStatus) => void): void;
-  off(event: 'envelope', handler: (envelope: BridgeEnvelope) => void): void;
-  off(event: 'error', handler: (error: Error) => void): void;
-  off(event: string, handler: unknown): void {
-    switch (event) {
-      case 'statusChange':
-        this.handlers.statusChange.delete(
-          handler as (status: ConnectionStatus) => void
-        );
-        break;
-      case 'envelope':
-        this.handlers.envelope.delete(
-          handler as (envelope: BridgeEnvelope) => void
-        );
-        break;
-      case 'error':
-        this.handlers.error.delete(handler as (error: Error) => void);
-        break;
-    }
-  }
+ connect(): Promise<void> {
+  this.setStatus('connected');
+  return Promise.resolve();
+ }
 
-  /**
-   * Simulate connection.
-   */
-  connect() {
-    this.setStatus('connected');
-  }
+ disconnect(): Promise<void> {
+  this.setStatus('disconnected');
+  return Promise.resolve();
+ }
 
-  /**
-   * Simulate disconnection.
-   */
-  disconnect() {
-    this.setStatus('disconnected');
-  }
+ getStatus(): ConnectionStatus {
+  return this.status;
+ }
 
-  /**
-   * Simulate sending data (no-op for mock).
-   */
-  send(_data: string): void {
-    // No-op for mock
+ async sendRequest<T = unknown>(request: ACPRequest): Promise<ACPResponse<T>> {
+  this.lastSent = JSON.stringify(request);
+  if (request.id) {
+   this.lastRequestId = typeof request.id === 'number' ? request.id : parseInt(request.id as string, 10);
   }
+  if (this.requestHandler) {
+   const result = await this.requestHandler(request);
+   // If result is already an ACPResponse (has jsonrpc and id), return it as-is
+   if (result && typeof result === 'object' && 'jsonrpc' in result && 'id' in result) {
+    return result as ACPResponse<T>;
+   }
+   // Otherwise wrap it in a response
+   return { jsonrpc: '2.0', id: request.id ?? 0, result: result as T } as ACPResponse<T>;
+  }
+  return { jsonrpc: '2.0', id: request.id ?? 0, result: {} as T };
+ }
 
-  /**
-   * Update status and emit event.
-   */
-  setStatus(status: ConnectionStatus) {
-    this.status = status;
-    this.handlers.statusChange.forEach((h) => {
-      h(status);
-    });
-  }
+ sendNotification(notification: ACPNotification): void {
+  this.lastSent = JSON.stringify(notification);
+ }
 
-  /**
-   * Emit a bridge envelope event.
-   */
-  emitEnvelope(envelope: BridgeEnvelope) {
-    this.handlers.envelope.forEach((h) => {
-      h(envelope);
-    });
-  }
+ sendResponse<T = unknown>(response: ACPResponse<T>): void {
+  this.lastSent = JSON.stringify(response);
+  this.responseHandlers.forEach(h => h(response));
+ }
 
-  /**
-   * Emit an error event.
-   */
-  emitError(error: Error) {
-    this.handlers.error.forEach((h) => {
-      h(error);
-    });
+ onNotification(handler: (notification: ACPNotification) => void): () => void {
+  this.notificationHandlers.add(handler);
+  return () => this.notificationHandlers.delete(handler);
+ }
+
+ onError(handler: (error: Error) => void): () => void {
+  this.errorHandlers.add(handler);
+  return () => this.errorHandlers.delete(handler);
+ }
+
+ onStatusChange(handler: (status: ConnectionStatus) => void): () => void {
+  this.statusHandlers.add(handler);
+  return () => this.statusHandlers.delete(handler);
+ }
+
+ setStatus(status: ConnectionStatus) {
+  this.status = status;
+  this.statusHandlers.forEach(h => h(status));
+ }
+
+ emitNotification(notification: ACPNotification) {
+  this.notificationHandlers.forEach(h => h(notification));
+ }
+
+ emitError(error: Error) {
+  this.errorHandlers.forEach(h => h(error));
+ }
+
+ emitEnvelope(envelope: BridgeEnvelope) {
+  if (envelope.type === 'acp_payload' && envelope.payload) {
+   this.emitNotification(envelope.payload as ACPNotification);
   }
+ }
 }
 
 /**
  * Mock session controller for testing ACP session management.
- *
- * Simulates a SessionController with event emission capabilities.
  */
 export class MockSessionController {
   public state: SessionControllerState = {
     connectionStatus: 'disconnected',
-    bridgeStatus: 'disconnected',
     sessionId: null,
     initialized: false,
     capabilities: null,
@@ -161,13 +145,7 @@ export class MockSessionController {
     traffic: Set<(direction: 'in' | 'out', data: unknown) => void>;
     error: Set<(error: Error) => void>;
     sessionClearing: Set<() => void>;
-    permissionRequest: Set<
-      (params: {
-        sessionId: string;
-        toolCall: { toolCallId: string };
-        options: PermissionOption[];
-      }) => void
-    >;
+    permissionRequest: Set<(params: { sessionId: string; toolCall: { toolCallId: string }; options: PermissionOption[] }) => void>;
   } = {
     statusChange: new Set(),
     sessionUpdate: new Set(),
@@ -177,86 +155,37 @@ export class MockSessionController {
     permissionRequest: new Set(),
   };
 
-  /**
-   * Register an event handler.
-   * @returns Unsubscribe function
-   */
   on(event: 'statusChange', handler: (state: SessionControllerState) => void): () => void;
   on(event: 'sessionUpdate', handler: (params: unknown) => void): () => void;
   on(event: 'traffic', handler: (direction: 'in' | 'out', data: unknown) => void): () => void;
   on(event: 'error', handler: (error: Error) => void): () => void;
   on(event: 'sessionClearing', handler: () => void): () => void;
-  on(event: 'permissionRequest', handler: (params: {
-    sessionId: string;
-    toolCall: { toolCallId: string };
-    options: PermissionOption[];
-  }) => void): () => void;
+  on(event: 'permissionRequest', handler: (params: { sessionId: string; toolCall: { toolCallId: string }; options: PermissionOption[] }) => void): () => void;
   on(event: string, handler: unknown): () => void {
     switch (event) {
       case 'statusChange':
         this.handlers.statusChange.add(handler as (state: SessionControllerState) => void);
-        break;
+        return () => this.handlers.statusChange.delete(handler as (state: SessionControllerState) => void);
       case 'sessionUpdate':
         this.handlers.sessionUpdate.add(handler as (params: unknown) => void);
-        break;
+        return () => this.handlers.sessionUpdate.delete(handler as (params: unknown) => void);
       case 'traffic':
         this.handlers.traffic.add(handler as (direction: 'in' | 'out', data: unknown) => void);
-        break;
+        return () => this.handlers.traffic.delete(handler as (direction: 'in' | 'out', data: unknown) => void);
       case 'error':
         this.handlers.error.add(handler as (error: Error) => void);
-        break;
+        return () => this.handlers.error.delete(handler as (error: Error) => void);
       case 'sessionClearing':
         this.handlers.sessionClearing.add(handler as () => void);
-        break;
+        return () => this.handlers.sessionClearing.delete(handler as () => void);
       case 'permissionRequest':
-        this.handlers.permissionRequest.add(handler as (params: {
-          sessionId: string;
-          toolCall: { toolCallId: string };
-          options: PermissionOption[];
-        }) => void);
-        break;
+        this.handlers.permissionRequest.add(handler as (params: { sessionId: string; toolCall: { toolCallId: string }; options: PermissionOption[] }) => void);
+        return () => this.handlers.permissionRequest.delete(handler as (params: { sessionId: string; toolCall: { toolCallId: string }; options: PermissionOption[] }) => void);
+      default:
+        return () => {};
     }
-    return () => {
-      switch (event) {
-        case 'statusChange':
-          this.handlers.statusChange.delete(handler as (state: SessionControllerState) => void);
-          break;
-        case 'sessionUpdate':
-          this.handlers.sessionUpdate.delete(handler as (params: unknown) => void);
-          break;
-        case 'traffic':
-          this.handlers.traffic.delete(handler as (direction: 'in' | 'out', data: unknown) => void);
-          break;
-        case 'error':
-          this.handlers.error.delete(handler as (error: Error) => void);
-          break;
-        case 'sessionClearing':
-          this.handlers.sessionClearing.delete(handler as () => void);
-          break;
-        case 'permissionRequest':
-          this.handlers.permissionRequest.delete(handler as (params: {
-            sessionId: string;
-            toolCall: { toolCallId: string };
-            options: PermissionOption[];
-          }) => void);
-          break;
-      }
-    };
   }
 
-  /**
-   * Unregister an event handler.
-   */
-  off(event: 'statusChange', handler: (state: SessionControllerState) => void): void;
-  off(event: 'sessionUpdate', handler: (params: unknown) => void): void;
-  off(event: 'traffic', handler: (direction: 'in' | 'out', data: unknown) => void): void;
-  off(event: 'error', handler: (error: Error) => void): void;
-  off(event: 'sessionClearing', handler: () => void): void;
-  off(event: 'permissionRequest', handler: (params: {
-    sessionId: string;
-    toolCall: { toolCallId: string };
-    options: PermissionOption[];
-  }) => void): void;
   off(event: string, handler: unknown): void {
     switch (event) {
       case 'statusChange':
@@ -275,133 +204,58 @@ export class MockSessionController {
         this.handlers.sessionClearing.delete(handler as () => void);
         break;
       case 'permissionRequest':
-        this.handlers.permissionRequest.delete(handler as (params: {
-          sessionId: string;
-          toolCall: { toolCallId: string };
-          options: PermissionOption[];
-        }) => void);
+        this.handlers.permissionRequest.delete(handler as (params: { sessionId: string; toolCall: { toolCallId: string }; options: PermissionOption[] }) => void);
         break;
     }
   }
 
-  /**
-   * Simulate connection.
-   */
   connect() {
     this.state.connectionStatus = 'connected';
-    this.state.bridgeStatus = 'connected';
     this.emitStatus();
   }
 
-  /**
-   * Simulate disconnection.
-   */
   disconnect() {
     this.state.connectionStatus = 'disconnected';
-    this.state.bridgeStatus = 'disconnected';
     this.emitStatus();
   }
 
-  /**
-   * Get the current state.
-   */
   getState(): SessionControllerState {
     return { ...this.state };
   }
 
-  /**
-   * Emit a status change event.
-   */
   emitStatus() {
-    this.handlers.statusChange.forEach((h) => {
-      h(this.getState());
-    });
+    this.handlers.statusChange.forEach((h) => h(this.getState()));
   }
 
-  /**
-   * Emit a traffic event.
-   */
   emitTraffic(direction: 'in' | 'out', data: unknown) {
-    this.handlers.traffic.forEach((h) => {
-      h(direction, data);
-    });
+    this.handlers.traffic.forEach((h) => h(direction, data));
   }
 
-  /**
-   * Emit a session update event.
-   */
   emitSessionUpdate(params: unknown) {
-    this.handlers.sessionUpdate.forEach((h) => {
-      h(params);
-    });
+    this.handlers.sessionUpdate.forEach((h) => h(params));
   }
 
-  /**
-   * Emit an error event.
-   */
   emitError(error: Error) {
-    this.handlers.error.forEach((h) => {
-      h(error);
-    });
+    this.handlers.error.forEach((h) => h(error));
   }
 
-  /**
-   * Emit a session clearing event.
-   */
   emitSessionClearing() {
-    this.handlers.sessionClearing.forEach((h) => {
-      h();
-    });
+    this.handlers.sessionClearing.forEach((h) => h());
   }
 
-  /**
-   * Emit a permission request event.
-   */
-  emitPermissionRequest(params: {
-    sessionId: string;
-    toolCall: { toolCallId: string };
-    options: PermissionOption[];
-  }) {
-    this.handlers.permissionRequest.forEach((h) => {
-      h(params);
-    });
+  emitPermissionRequest(params: { sessionId: string; toolCall: { toolCallId: string }; options: PermissionOption[] }) {
+    this.handlers.permissionRequest.forEach((h) => h(params));
   }
 }
 
-/**
- * Create a mock transport client with default configuration.
- */
-export function createMockTransport(
-  config?: Partial<TransportConfig>
-): MockTransportClient {
-  const transportConfig: TransportConfig = {
-    url: config?.url ?? 'ws://localhost:8080/mock',
-    ...(config?.reconnect !== undefined && { reconnect: config.reconnect }),
-    ...(config?.maxReconnectAttempts !== undefined && {
-      maxReconnectAttempts: config.maxReconnectAttempts,
-    }),
-    ...(config?.baseReconnectDelayMs !== undefined && {
-      baseReconnectDelayMs: config.baseReconnectDelayMs,
-    }),
-    ...(config?.maxReconnectDelayMs !== undefined && {
-      maxReconnectDelayMs: config.maxReconnectDelayMs,
-    }),
-  };
-  return new MockTransportClient(transportConfig);
+export function createMockTransport(handler?: (request: ACPRequest) => Promise<ACPResponse<unknown>>): MockTransport {
+  return new MockTransport(handler);
 }
 
-/**
- * Create a mock session controller with default state.
- */
-export function createMockController(
-  initialState?: Partial<SessionControllerState>
-): MockSessionController {
+export function createMockController(initialState?: Partial<SessionControllerState>): MockSessionController {
   const controller = new MockSessionController();
   if (initialState) {
-    controller.state = {
-      ...controller.state,
-      ...initialState,
-    };
+    controller.state = { ...controller.state, ...initialState };
   }
   return controller;
 }

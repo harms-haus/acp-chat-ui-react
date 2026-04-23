@@ -8,12 +8,10 @@
 import type {
   BridgeEnvelope,
   BridgeMessage,
-  BridgeStatus
-} from "@harms-haus/acp-chat-core";
+  BridgeStatus,
+  JsonValue,
+} from "./generated/index.js";
 
-// JsonValue is defined in generated types but not exported from main index
-// Define locally for test code to match the generated type signature
-type JsonValue = number | string | boolean | Array<JsonValue> | { [key in string]?: JsonValue } | null;
 
 /**
  * Mock WebSocket implementation for testing.

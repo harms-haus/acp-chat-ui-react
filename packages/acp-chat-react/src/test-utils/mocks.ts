@@ -16,7 +16,6 @@ import type { SessionControllerState, PermissionOption } from '@harms-haus/acp-c
 export class MockSessionController {
   public state: SessionControllerState = {
     connectionStatus: 'disconnected',
-    bridgeStatus: 'disconnected',
     sessionId: null,
     initialized: false,
     capabilities: null,
@@ -125,13 +124,11 @@ export class MockSessionController {
 
   connect() {
     this.state.connectionStatus = 'connected';
-    this.state.bridgeStatus = 'connected';
     this.emitStatus();
   }
 
   disconnect() {
     this.state.connectionStatus = 'disconnected';
-    this.state.bridgeStatus = 'disconnected';
     this.emitStatus();
   }
 

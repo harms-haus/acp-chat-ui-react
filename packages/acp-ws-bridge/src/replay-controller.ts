@@ -1,11 +1,11 @@
-import type { BridgeEnvelope } from "../generated/index.js";
-import { TransportClient } from "../transport/client.js";
-import type { ConnectionStatus } from "../transport/client.js";
+import type { BridgeEnvelope } from "./generated/index.js";
+import { TransportClient } from "./client.js";
+import type { ConnectionStatus } from "./client.js";
 import type {
   SessionControllerState,
   PermissionRequestParams,
   PermissionOption,
-} from "./controller.js";
+} from "@harms-haus/acp-chat-core";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -62,6 +62,7 @@ type PendingRequest = {
 };
 
 export interface ReplayControllerState extends SessionControllerState {
+  bridgeStatus: string;
   modes: ReplayMode[];
   models: ReplayModel[];
 }

@@ -1,13 +1,42 @@
 /**
  * Replay data schema and TypeScript types for ACP chat replay functionality.
+ * 
+ * Note: These types are stored in core, but the actual envelope data is
+ * a wire-format concern. The ws-bridge package handles the conversion.
  */
 
-import type { BridgeEnvelope } from '../generated/BridgeEnvelope';
+import type {
+  ACPNotification,
+  ACPResponse,
+} from '../protocol/types';
 import type {
   NormalizedMessage,
   NormalizedThought,
   NormalizedToolCall,
 } from '../normalization/store';
+
+/**
+ * A generic replay event that can contain any wire-format data.
+ * The actual envelope format is defined by the transport layer (ws-bridge).
+ * Core only cares about the extracted ACP notification.
+ */
+export interface ReplayEvent {
+  /** The raw event data as received from transport layer */
+  raw: unknown;
+  /** Pre-computed estimated token count for this event */
+  tokenCount: number;
+}
+
+/**
+ * Typed replay event with extracted ACP notification.
+ * Used when the transport layer has already extracted the ACP payload.
+ */
+export interface ACPReplayEvent {
+  /** The ACP notification or response */
+  acpEvent: ACPNotification | ACPResponse<unknown>;
+  /** Pre-computed estimated token count for this event */
+  tokenCount: number;
+}
 
 /**
  * Metadata describing a replay session.
@@ -46,16 +75,6 @@ export interface ReplaySessionData {
   sessionId: string;
   /** The working directory for the session */
   cwd: string;
-}
-
-/**
- * A replay event wrapping a BridgeEnvelope with pre-computed metadata.
- */
-export interface ReplayEvent {
-  /** The original bridge envelope */
-  envelope: BridgeEnvelope;
-  /** Pre-computed estimated token count for this event */
-  tokenCount: number;
 }
 
 /**

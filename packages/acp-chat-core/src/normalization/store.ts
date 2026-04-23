@@ -15,9 +15,9 @@ export interface ResourceContentBlock {
   type: "resource";
   resource: {
     uri: string;
-    mimeType?: string | undefined;
-    text?: string | undefined;
-    blob?: string | undefined;
+    mimeType?: string | null;
+    text?: string;
+    blob?: string;
   };
 }
 
@@ -25,7 +25,7 @@ export interface ResourceLinkContentBlock {
   type: "resource_link";
   resourceLink: {
     uri: string;
-    mimeType?: string | undefined;
+    mimeType?: string | null;
   };
 }
 
@@ -457,15 +457,24 @@ function parseContentBlock(item: Record<string, unknown>): ContentBlock | null {
 
   if (type === "resource" && typeof item.resource === "object" && item.resource !== null) {
     const resource = item.resource as Record<string, unknown>;
-    return {
+    const result: ResourceContentBlock = {
       type: "resource",
       resource: {
         uri: typeof resource.uri === "string" ? resource.uri : "",
-        mimeType: typeof resource.mimeType === "string" ? resource.mimeType : undefined,
-        text: typeof resource.text === "string" ? resource.text : undefined,
-        blob: typeof resource.blob === "string" ? resource.blob : undefined,
       },
     };
+    if (typeof resource.mimeType === "string") {
+      result.resource.mimeType = resource.mimeType;
+    } else {
+      result.resource.mimeType = null;
+    }
+    if (typeof resource.text === "string") {
+      result.resource.text = resource.text;
+    }
+    if (typeof resource.blob === "string") {
+      result.resource.blob = resource.blob;
+    }
+    return result;
   }
 
   if (type === "resource_link" && typeof item.resourceLink === "object" && item.resourceLink !== null) {
@@ -474,7 +483,7 @@ function parseContentBlock(item: Record<string, unknown>): ContentBlock | null {
       type: "resource_link",
       resourceLink: {
         uri: typeof resourceLink.uri === "string" ? resourceLink.uri : "",
-        mimeType: typeof resourceLink.mimeType === "string" ? resourceLink.mimeType : undefined,
+        mimeType: typeof resourceLink.mimeType === "string" ? resourceLink.mimeType : null,
       },
     };
   }

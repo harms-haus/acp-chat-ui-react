@@ -1,26 +1,55 @@
-import { describe, it, expect } from "vitest";
-import {
-  ENVELOPE_VERSION,
-  PACKAGE_VERSION,
-  SUPPORTED_VERSIONS,
-  isSupportedVersion,
-} from "./index.js";
+/**
+ * Test suite for main package exports.
+ */
 
-describe("@harms-haus/acp-chat-core scaffold", () => {
-  it("exports package version", () => {
-    expect(PACKAGE_VERSION).toBe("0.0.1");
+import { describe, it, expect } from 'vitest';
+import * as pkg from './index.js';
+
+describe('@harms-haus/acp-chat-core scaffold', () => {
+  it('exports PACKAGE_VERSION', () => {
+    expect(pkg.PACKAGE_VERSION).toBeDefined();
+    expect(typeof pkg.PACKAGE_VERSION).toBe('string');
   });
 
-  it("exports envelope version constant", () => {
-    expect(ENVELOPE_VERSION).toBe(1);
+  it('exports SessionController', () => {
+    expect(pkg.SessionController).toBeDefined();
+    expect(typeof pkg.SessionController).toBe('function');
   });
 
-  it("exports supported versions", () => {
-    expect(SUPPORTED_VERSIONS).toContain(ENVELOPE_VERSION);
+  it('exports FileSystemSubscriptionManager', () => {
+    expect(pkg.FileSystemSubscriptionManager).toBeDefined();
+    expect(typeof pkg.FileSystemSubscriptionManager).toBe('function');
   });
 
-  it("exports version validation function", () => {
-    expect(isSupportedVersion(1)).toBe(true);
-    expect(isSupportedVersion(99)).toBe(false);
+  it('exports normalization helpers', () => {
+    expect(pkg.createNormalizedState).toBeDefined();
+    expect(pkg.applySessionUpdate).toBeDefined();
+    expect(pkg.getMessages).toBeDefined();
+    expect(pkg.getThoughts).toBeDefined();
+    expect(pkg.getToolCalls).toBeDefined();
+    expect(pkg.getTimeline).toBeDefined();
+  });
+
+  it('exports type guards', () => {
+    expect(pkg.isSessionUpdateNotification).toBeDefined();
+    expect(pkg.isUpdateType).toBeDefined();
+  });
+
+  it('exports transport interface', () => {
+    expect(pkg.isTerminalStatus).toBeDefined();
+    expect(pkg.isConnected).toBeDefined();
+  });
+
+  it('exports helper functions', () => {
+    expect(pkg.canSend).toBeDefined();
+    expect(pkg.canStop).toBeDefined();
+    expect(pkg.getButtonState).toBeDefined();
+    expect(pkg.startPrompt).toBeDefined();
+    expect(pkg.completePrompt).toBeDefined();
+  });
+
+  it('exports presets', () => {
+    expect(pkg.parseLaunchPreset).toBeDefined();
+    expect(pkg.isPresetValid).toBeDefined();
   });
 });

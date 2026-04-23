@@ -5,7 +5,8 @@ export const ResourceLinkContent = memo(function ResourceLinkContent({
   block,
   className = "",
 }: ResourceLinkContentProps) {
-  const resourceLink = block.resourceLink;
+  // Type assertion to ensure TypeScript uses the correct type
+  const resourceLink = (block as unknown as import("@harms-haus/acp-chat-core").ResourceLinkContentBlock).resourceLink;
   const displayMimeType = useMemo(
     () => resourceLink.mimeType ?? "unknown",
     [resourceLink.mimeType]

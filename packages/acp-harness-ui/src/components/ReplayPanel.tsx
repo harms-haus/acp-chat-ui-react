@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@base-ui-components/react/button";
-import { ReplayController } from "@harms-haus/acp-chat-core";
-import type { ReplayControllerState } from "@harms-haus/acp-chat-core";
+import { ReplayController } from "@harms-haus/acp-ws-bridge";
+import type { ReplayControllerState } from "@harms-haus/acp-ws-bridge";
 import { SpeedSlider } from "./SpeedSlider";
 
 const DEFAULT_REPLAY_SPEED = 65;
