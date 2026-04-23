@@ -6,10 +6,6 @@
  * and the default implementation that wraps a SessionController.
  */
 
-import type {
-  BridgeEnvelope
-} from '../generated/index.js';
-
 import {
   estimateTokenCount
 } from '../replay/types.js';
@@ -47,12 +43,13 @@ export interface CapturedSession {
 }
 
 /**
- * A captured event wrapping a BridgeEnvelope with pre-computed metadata.
- * This is a capture-specific version of ReplayEvent.
+ * A captured event wrapping raw wire data with pre-computed metadata.
+ * The actual wire format is defined by the transport layer - core just stores
+ * the data opaquely and extracts ACP events when needed.
  */
 export interface CapturedEvent {
-  /** The original bridge envelope */
-  envelope: BridgeEnvelope;
+  /** The raw event data from the transport layer. Bridge-specific format. */
+  raw: unknown;
 
   /** Pre-computed estimated token count for this event */
   tokenCount: number;
@@ -239,11 +236,10 @@ export class DefaultSessionCaptureInterceptor implements SessionCaptureIntercept
   private recordEvent(direction: 'in' | 'out', data: unknown): void {
     if (!this.state) return;
 
-    const envelope = data as BridgeEnvelope;
     const tokenCount = estimateTokenCount(JSON.stringify(data));
 
     this.state.events.push({
-      envelope,
+      raw: data,
       tokenCount,
       timestamp: Date.now(),
       direction,
@@ -298,14 +294,14 @@ export class DefaultSessionCaptureInterceptor implements SessionCaptureIntercept
     };
     fs.writeFileSync(path.join(dir, 'session-data.json'), JSON.stringify(sessionData, null, 2), 'utf-8');
 
-    const lines = session.events.map((e) =>
-      JSON.stringify({
-        envelope: e.envelope,
-        tokenCount: e.tokenCount,
-        timestamp: e.timestamp,
-        direction: e.direction,
-      }),
-    );
+  const lines = session.events.map((e) =>
+    JSON.stringify({
+      raw: e.raw,
+      tokenCount: e.tokenCount,
+      timestamp: e.timestamp,
+      direction: e.direction,
+    }),
+  );
     fs.writeFileSync(path.join(dir, 'replay-events.jsonl'), lines.join('\n') + '\n', 'utf-8');
   }
 }

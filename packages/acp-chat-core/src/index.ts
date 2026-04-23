@@ -1,41 +1,78 @@
 /**
  * @harms-haus/acp-chat-core
  *
- * Internal TypeScript package for generated bridge types, ACP transport client,
- * session controller, dev-launch preset parsing, and incremental normalization.
+ * Pure ACP protocol implementation. Session control, incremental normalization.
+ * NO bridge protocol - transport layer is the responsibility of acp-ws-bridge.
+ * 
+ * This package provides:
+ * - ACP standard types and interfaces
+ * - Transport interface (abstract only)
+ * - SessionController (ACP protocol only)
+ * - Normalization layer (ACP events → UI state)
+ * - Capture infrastructure (test data generation)
+ * 
+ * For actual transport, use @harms-haus/acp-ws-bridge which provides:
+ * - WebSocket transport
+ * - Bridge envelope protocol
+ * - Replay infrastructure
  */
 
 export const PACKAGE_VERSION = "0.0.1";
 
-// Re-export generated types from TS-RS
+// Protocol types (ACP standard only)
 export type {
-  BridgeEnvelope,
-  BridgeMessage,
-  BridgeStatus,
-  UnsupportedVersionError,
-} from "./generated/index.js";
+  ACPMethod,
+  ACPUpdateType,
+  ACPRequest,
+  ACPResponse,
+  ACPNotification,
+  SessionUpdateNotification,
+  SessionId,
+  ContentBlock,
+  TextContent,
+  ImageContent,
+  AudioContent,
+  ResourceLink,
+  EmbeddedResource,
+  ToolCall,
+  PermissionRequest,
+  StopReason,
+} from './protocol/types.js';
 
-// Re-export bridge parser utilities
 export {
-  BridgeVersionError,
-  ENVELOPE_VERSION,
-  SUPPORTED_VERSIONS,
-  createUnsupportedVersionError,
-  isSupportedVersion,
-  parseEnvelope,
-  parseEnvelopeSafe,
-  validateEnvelope,
-} from "./bridge/index.js";
+  isSessionUpdateNotification,
+  isUpdateType,
+} from './protocol/types.js';
 
-// Transport client
-export { TransportClient } from "./transport/index.js";
-export type { ConnectionStatus, TransportConfig, TransportEvents, InitSuccess } from "./transport/index.js";
+// Transport interface (abstract - implementations in transport packages)
+export type { Transport, ConnectionStatus } from './transport/transport-interface.js';
+export { isTerminalStatus, isConnected } from './transport/transport-interface.js';
 
-// Session controller
-export { SessionController, DefaultSessionCaptureInterceptor, ReplayController } from "./session/index.js";
-export type { SessionControllerState, StartAgentConfig, PermissionRequestParams, PermissionOption, ConfigOption } from "./session/index.js";
-export type { CapturedSession, CapturedEvent, SessionCaptureInterceptor } from "./session/index.js";
-export type { ReplayControllerOptions, ReplayControllerState, ReplayMode, ReplayModel } from "./session/index.js";
+// Session controller (ACP protocol only)
+export { SessionController } from "./session/index.js";
+export type { 
+  SessionControllerState, 
+  StartAgentConfig, 
+  PermissionRequestParams, 
+  PermissionOption, 
+  ConfigOption,
+  ConfigOptionValue,
+} from "./session/index.js";
+
+// Factory functions (deprecated - use @harms-haus/acp-ws-bridge instead)
+// These temporarily bridge the gap during migration
+export { 
+  createSessionController, 
+  createSessionControllerWithTransport 
+} from './session/factory.js';
+
+// Capture infrastructure (for testing)
+export { DefaultSessionCaptureInterceptor } from "./session/index.js";
+export type { 
+  CapturedSession, 
+  CapturedEvent, 
+  SessionCaptureInterceptor 
+} from "./session/index.js";
 
 // Normalization
 export {
@@ -63,7 +100,7 @@ export type {
   ThoughtStatus,
   ToolCallKind,
   ToolCallStatus,
-  ContentBlock,
+  ContentBlock as NormalizedContentBlock,
   ContentBlockType,
   TextContentBlock,
   ResourceContentBlock,
@@ -78,15 +115,17 @@ export type {
 export { parseLaunchPreset, isPresetValid } from "./presets/index.js";
 export type { LaunchPreset } from "./presets/index.js";
 
+// Replay types (useful for testing with ws-bridge)
 export { estimateTokenCount } from "./replay/types.js";
 export type {
   ReplaySessionMetadata,
   ReplaySessionData,
   ReplayEvent,
+  ACPReplayEvent,
   ReplayManifest,
 } from "./replay/types.js";
 
-// Pure helpers (moved from Svelte package)
+// Pure helpers
 export {
   shouldSendOnKeydown,
   canSend,

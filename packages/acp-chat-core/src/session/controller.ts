@@ -1,6 +1,4 @@
-import type { BridgeEnvelope } from "../generated/index.js";
-import { TransportClient } from "../transport/client.js";
-import type { ConnectionStatus, InitSuccess } from "../transport/client.js";
+import type { Transport } from "../transport/transport-interface.js";
 import { FileSystemSubscriptionManager } from "../filesystem/subscription-manager.js";
 import type {
   FileReadRequest,
@@ -86,37 +84,60 @@ type PermissionRequestHandler = (params: PermissionRequestParams & { requestId: 
 type ConfigOptionsHandler = (configOptions: ConfigOption[]) => void;
 
 export class SessionController {
-    private transport: TransportClient;
-    private nextRequestId = 1;
-    private pendingRequests = new Map<number, PendingRequest>();
-    private requestTimeoutMs: number;
-    private state: SessionControllerState;
-  private statusHandlers = new Set<StatusHandler>();
-  private sessionUpdateHandlers = new Set<SessionUpdateHandler>();
-  private trafficHandlers = new Set<TrafficHandler>();
-  private errorHandlers = new Set<ErrorHandler>();
-  private sessionClearingHandlers = new Set<SessionClearingHandler>();
-  private permissionRequestHandlers = new Set<PermissionRequestHandler>();
-  private configOptionsHandlers = new Set<ConfigOptionsHandler>();
-  private fileSystemManager: FileSystemSubscriptionManager;
+ private transport: Transport;
+ private nextRequestId = 1;
+ private pendingRequests = new Map<number, PendingRequest>();
+ private requestTimeoutMs: number;
+ private state: SessionControllerState;
+ private statusHandlers = new Set<StatusHandler>();
+ private sessionUpdateHandlers = new Set<SessionUpdateHandler>();
+ private trafficHandlers = new Set<TrafficHandler>();
+ private errorHandlers = new Set<ErrorHandler>();
+ private sessionClearingHandlers = new Set<SessionClearingHandler>();
+ private permissionRequestHandlers = new Set<PermissionRequestHandler>();
+ private configOptionsHandlers = new Set<ConfigOptionsHandler>();
+ private fileSystemManager: FileSystemSubscriptionManager;
 
-  constructor(bridgeUrl: string, requestTimeoutMs = 30000) {
-    this.requestTimeoutMs = requestTimeoutMs;
-    this.transport = new TransportClient({ url: bridgeUrl, reconnect: true });
-    this.state = {
-      connectionStatus: "disconnected",
-      bridgeStatus: "disconnected",
-      sessionId: null,
-      initialized: false,
-      capabilities: null,
-      configOptions: null,
-    };
-    this.fileSystemManager = new FileSystemSubscriptionManager();
+ /**
+  * Create a SessionController with a transport.
+  * 
+  * @param transportOrUrl - Transport instance or WebSocket URL string.
+  *                         If string, creates a DefaultTransport (deprecated).
+  * @param requestTimeoutMs - Request timeout in milliseconds (default: 30000)
+  * 
+  * @deprecated String constructor is deprecated. Use factory functions:
+  * - createSessionController(url) - for WebSocket
+  * - createSessionControllerWithTransport(transport) - for custom transport
+  */
+ constructor(transportOrUrl: Transport | string, requestTimeoutMs = 30000) {
+   this.requestTimeoutMs = requestTimeoutMs;
+   
+   // Backward compatibility: accept string URL and create DefaultTransport
+   if (typeof transportOrUrl === 'string') {
+     console.warn(
+       'SessionController constructor with string URL is deprecated. ' +
+       'Use createSessionController() from ./factory.js instead.'
+     );
+     const DefaultTransport = require('../transport/default-transport.js').DefaultTransport;
+     this.transport = new DefaultTransport(transportOrUrl);
+   } else {
+     this.transport = transportOrUrl;
+   }
+   
+   this.state = {
+     connectionStatus: "disconnected",
+     bridgeStatus: "disconnected",
+     sessionId: null,
+     initialized: false,
+     capabilities: null,
+     configOptions: null,
+   };
+   this.fileSystemManager = new FileSystemSubscriptionManager();
 
-        this.transport.on("statusChange", (status: ConnectionStatus) => this.handleTransportStatus(status));
-        this.transport.on("envelope", (envelope: BridgeEnvelope) => this.handleEnvelope(envelope));
-        this.transport.on("error", (error: Error) => this.handleError(error));
-    }
+   this.transport.on("statusChange", (status: ConnectionStatus) => this.handleTransportStatus(status));
+   this.transport.on("envelope", (envelope: BridgeEnvelope) => this.handleEnvelope(envelope));
+   this.transport.on("error", (error: Error) => this.handleError(error));
+ }
 
   on(event: "statusChange", handler: StatusHandler): () => void;
   on(event: "sessionUpdate", handler: SessionUpdateHandler): () => void;

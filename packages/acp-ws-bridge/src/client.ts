@@ -1,5 +1,5 @@
-import type { BridgeEnvelope } from "@harms-haus/acp-chat-core";
-import { parseEnvelopeSafe, BridgeVersionError } from "@harms-haus/acp-chat-core";
+import type { BridgeEnvelope } from "./generated/index.js";
+import { parseEnvelopeSafe, BridgeVersionError } from "./bridge/index.js";
 
 export type ConnectionStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "error";
 
