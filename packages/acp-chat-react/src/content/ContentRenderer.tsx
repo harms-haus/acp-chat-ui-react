@@ -7,24 +7,26 @@ import { ResourceLinkContent } from "./ResourceLinkContent.js";
 import { UnsupportedContent } from "./UnsupportedContent.js";
 
 function getBlockStableId(block: ContentBlock, index: number): string {
-  const type = block.type;
-
-  if (type === "text") {
+  if (block.type === "text") {
     const textHash = block.text.slice(0, 50);
     const textLength = block.text.length;
     return `text-${textHash}-${textLength}`;
   }
 
-  if (type === "resource") {
-    const uri = block.resource.uri;
-    const mimeType = block.resource.mimeType ?? "unknown";
-    const hasContent = block.resource.text ? "text" : block.resource.blob ? "blob" : "empty";
+  if (block.type === "resource") {
+    // Type assertion to help TypeScript narrow correctly
+    const resBlock = block as unknown as import("@harms-haus/acp-chat-core").ResourceContentBlock;
+    const uri = resBlock.resource.uri;
+    const mimeType = resBlock.resource.mimeType ?? "unknown";
+    const hasContent = resBlock.resource.text ? "text" : resBlock.resource.blob ? "blob" : "empty";
     return `resource-${uri}-${mimeType}-${hasContent}`;
   }
 
-  if (type === "resource_link") {
-    const uri = block.resourceLink.uri;
-    const mimeType = block.resourceLink.mimeType ?? "unknown";
+  if (block.type === "resource_link") {
+    // Type assertion to help TypeScript narrow correctly
+    const linkBlock = block as unknown as import("@harms-haus/acp-chat-core").ResourceLinkContentBlock;
+    const uri = linkBlock.resourceLink.uri;
+    const mimeType = linkBlock.resourceLink.mimeType ?? "unknown";
     return `link-${uri}-${mimeType}`;
   }
 
@@ -61,11 +63,11 @@ export const ContentRenderer = memo(function ContentRenderer({
           className="acp-content-renderer__block"
         >
           {block.type === "text" ? (
-            <TextContent text={block.text} />
+            <TextContent text={(block as unknown as import("@harms-haus/acp-chat-core").TextContentBlock).text} />
           ) : block.type === "resource" ? (
-            <ResourceContent block={block} />
+            <ResourceContent block={block as unknown as import("@harms-haus/acp-chat-core").ResourceContentBlock} />
           ) : block.type === "resource_link" ? (
-            <ResourceLinkContent block={block} />
+            <ResourceLinkContent block={block as unknown as import("@harms-haus/acp-chat-core").ResourceLinkContentBlock} />
           ) : (
             <UnsupportedContent type={(block as { type: string }).type} />
           )}

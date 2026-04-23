@@ -1,4 +1,4 @@
-import type { Transport } from "../transport/transport-interface.js";
+import type { Transport, ConnectionStatus } from "../transport/transport-interface.js";
 import { FileSystemSubscriptionManager } from "../filesystem/subscription-manager.js";
 import type {
   FileReadRequest,
@@ -9,6 +9,7 @@ import type {
   FileWriteHandler,
   FileSystemSubscription,
 } from "../filesystem/types.js";
+import type { ACPNotification, ACPResponse } from "../protocol/types.js";
 
 export interface StartAgentConfig {
   command: string;
@@ -24,12 +25,6 @@ interface JsonRpcRequest {
     params?: unknown;
 }
 
-interface JsonRpcNotification {
-    jsonrpc: "2.0";
-    method: string;
-    params?: unknown;
-}
-
 type PendingRequest = {
     resolve: (value: unknown) => void;
     reject: (error: Error) => void;
@@ -38,7 +33,6 @@ type PendingRequest = {
 
 export interface SessionControllerState {
   connectionStatus: ConnectionStatus;
-  bridgeStatus: string;
   sessionId: string | null;
   initialized: boolean;
   capabilities: unknown | null;
@@ -101,32 +95,15 @@ export class SessionController {
  /**
   * Create a SessionController with a transport.
   * 
-  * @param transportOrUrl - Transport instance or WebSocket URL string.
-  *                         If string, creates a DefaultTransport (deprecated).
+  * @param transport - Transport implementation
   * @param requestTimeoutMs - Request timeout in milliseconds (default: 30000)
-  * 
-  * @deprecated String constructor is deprecated. Use factory functions:
-  * - createSessionController(url) - for WebSocket
-  * - createSessionControllerWithTransport(transport) - for custom transport
   */
- constructor(transportOrUrl: Transport | string, requestTimeoutMs = 30000) {
+ constructor(transport: Transport, requestTimeoutMs = 30000) {
    this.requestTimeoutMs = requestTimeoutMs;
-   
-   // Backward compatibility: accept string URL and create DefaultTransport
-   if (typeof transportOrUrl === 'string') {
-     console.warn(
-       'SessionController constructor with string URL is deprecated. ' +
-       'Use createSessionController() from ./factory.js instead.'
-     );
-     const DefaultTransport = require('../transport/default-transport.js').DefaultTransport;
-     this.transport = new DefaultTransport(transportOrUrl);
-   } else {
-     this.transport = transportOrUrl;
-   }
+   this.transport = transport;
    
    this.state = {
      connectionStatus: "disconnected",
-     bridgeStatus: "disconnected",
      sessionId: null,
      initialized: false,
      capabilities: null,
@@ -134,9 +111,10 @@ export class SessionController {
    };
    this.fileSystemManager = new FileSystemSubscriptionManager();
 
-   this.transport.on("statusChange", (status: ConnectionStatus) => this.handleTransportStatus(status));
-   this.transport.on("envelope", (envelope: BridgeEnvelope) => this.handleEnvelope(envelope));
-   this.transport.on("error", (error: Error) => this.handleError(error));
+   // Wire up transport event handlers using the proper interface methods
+   this.transport.onStatusChange((status) => this.handleTransportStatus(status));
+   this.transport.onNotification((notification) => this.handleNotification(notification));
+   this.transport.onError((error) => this.handleError(error));
  }
 
   on(event: "statusChange", handler: StatusHandler): () => void;
@@ -304,101 +282,62 @@ export class SessionController {
  	this.sendResponse(requestId, { outcome: { outcome: "cancelled" } });
  }
 
-  async startAgent(config: StartAgentConfig): Promise<void> {
-    const envelope: BridgeEnvelope = {
-      version: 1,
-      seq: 0,
-      timestamp_ms: Date.now(),
-      type: "start_agent",
-      command: config.command,
-      args: config.args ?? [],
-      cwd: config.cwd ?? null,
-      env: config.env ?? [],
-    };
-    const json = JSON.stringify(envelope);
-    
-    // Wait for WebSocket to be connected before sending
-    if (this.transport.getStatus() !== "connected") {
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("Connection timeout")), 5000);
-        const unsubscribe = this.transport.on("statusChange", (status) => {
-          if (status === "connected") {
-            clearTimeout(timeout);
-            unsubscribe();
-            resolve();
-          } else if (status === "error") {
-            clearTimeout(timeout);
-            unsubscribe();
-            reject(new Error("Connection failed"));
-          }
-        });
-      });
-    }
-    
-    this.transport.send(json);
-    this.emitTraffic("out", envelope);
-  }
-
-  async initLive(command: string, args: string[], cwd: string): Promise<InitSuccess> {
-    return this.transport.initLive(command, args, cwd);
-  }
-
   private sendNotification(method: string, params: unknown): void {
-    const notification: JsonRpcNotification = { jsonrpc: "2.0", method, params };
-    const json = JSON.stringify(notification);
-    this.transport.send(json);
+    const notification: JsonRpcRequest = { jsonrpc: "2.0", id: 0, method, params };
     this.emitTraffic("out", notification);
+    // Use the transport's sendNotification method
+    this.transport.sendNotification(notification as never);
   }
 
   private sendResponse(id: number, result: unknown): void {
-    const response: { jsonrpc: "2.0"; id: number; result: unknown } = { jsonrpc: "2.0", id, result };
-    const json = JSON.stringify(response);
-    this.transport.send(json);
+    const response: ACPResponse<unknown> = { jsonrpc: "2.0", id, result };
     this.emitTraffic("out", response);
+    this.transport.sendResponse(response);
   }
 
-    private sendRequest(method: string, params: unknown): Promise<unknown> {
-        return new Promise((resolve, reject) => {
-            const id = this.nextRequestId++;
-            const request: JsonRpcRequest = { jsonrpc: "2.0", id, method, params };
+  private async sendRequest(method: string, params: unknown): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      const id = this.nextRequestId++;
+      const request = { jsonrpc: "2.0" as const, id, method, params };
 
-            const timeout = setTimeout(() => {
-                this.pendingRequests.delete(id);
-                reject(new Error(`Request ${id} (${method}) timed out`));
-            }, this.requestTimeoutMs);
+      const timeout = setTimeout(() => {
+        this.pendingRequests.delete(id);
+        reject(new Error(`Request ${id} (${method}) timed out`));
+      }, this.requestTimeoutMs);
 
-            this.pendingRequests.set(id, { resolve, reject, timeout });
+      this.pendingRequests.set(id, { resolve, reject, timeout });
 
-            const json = JSON.stringify(request);
-            this.transport.send(json);
-            this.emitTraffic("out", request);
-        });
-    }
+      // Emit traffic for outgoing request
+      this.emitTraffic("out", request);
+
+      // Use the transport's sendRequest method
+      this.transport.sendRequest(request as never)
+      .then((response: ACPResponse<unknown>) => {
+        clearTimeout(timeout);
+        this.pendingRequests.delete(id);
+        if (response.error) {
+          reject(new Error(response.error.message));
+        } else {
+          resolve(response.result);
+        }
+      })
+      .catch((error: Error) => {
+        clearTimeout(timeout);
+        this.pendingRequests.delete(id);
+        reject(error);
+      });
+    });
+  }
 
     private handleTransportStatus(status: ConnectionStatus): void {
         this.state.connectionStatus = status;
         this.emitStatusChange();
     }
 
-    private handleEnvelope(envelope: BridgeEnvelope): void {
-        this.emitTraffic("in", envelope);
-
-        // Validate envelope has required fields
-        if (!envelope.type) {
-            this.emitError(new Error("Invalid envelope: missing type field"));
-            return;
-        }
-
-        if (envelope.type === "bridge_status") {
-            this.state.bridgeStatus = envelope.status;
-            this.emitStatusChange();
-            return;
-        }
-
-        if (envelope.type === "acp_payload") {
-            this.handleAcpPayload(envelope.payload);
+    private handleNotification(notification: ACPNotification): void {
+        this.emitTraffic("in", notification);
+        this.handleAcpPayload(notification);
     }
-  }
 
   public subscribeToFileReads(handler: FileReadHandler): FileSystemSubscription {
     return this.fileSystemManager.subscribeToFileReads(handler);
@@ -479,39 +418,42 @@ export class SessionController {
       // Don't return - let JSON-RPC responses also be processed if they have both method and id
     }
     
-    // Check for JSON-RPC responses (id-based)
-    if ("id" in obj && typeof obj.id === "number") {
-      const pending = this.pendingRequests.get(obj.id);
-      
-      // Emit session updates for result messages even if there's no pending request
-      // (e.g., server-initiated results from replay/capture)
-      if (obj.result) {
-        const result = obj.result as Record<string, unknown>;
-
-        if (Array.isArray(result.messages)) {
-          for (const msg of result.messages) {
-            this.emitSessionUpdate({ sessionId: result.sessionId, update: msg });
-          }
-        }
-        if (Array.isArray(result.thoughts)) {
-          for (const thought of result.thoughts) {
-            this.emitSessionUpdate({ sessionId: result.sessionId, update: thought });
-          }
+  // Check for JSON-RPC responses (id-based)
+  if ("id" in obj && typeof obj.id === "number") {
+    const pending = this.pendingRequests.get(obj.id);
+    
+    // Emit session updates for result messages even if there's no pending request
+    // (e.g., server-initiated results from replay/capture)
+    if (obj.result) {
+      const result = obj.result as Record<string, unknown>;
+  
+      if (Array.isArray(result.messages)) {
+        for (const msg of result.messages) {
+          this.emitSessionUpdate({ sessionId: result.sessionId, update: msg });
         }
       }
-      
-      if (pending) {
-        clearTimeout(pending.timeout);
-        this.pendingRequests.delete(obj.id);
-
-        if ("error" in obj && obj.error) {
-          const err = obj.error as { message: string };
-          pending.reject(new Error(err.message));
-        } else {
-          pending.resolve(obj.result);
+      if (Array.isArray(result.thoughts)) {
+        for (const thought of result.thoughts) {
+          this.emitSessionUpdate({ sessionId: result.sessionId, update: thought });
         }
       }
     }
+    
+    // Handle errors - emit error event even if there's no pending request
+    if ("error" in obj && obj.error) {
+      const err = obj.error as { message: string };
+      this.emitError(new Error(err.message));
+    }
+    
+    if (pending) {
+      clearTimeout(pending.timeout);
+      this.pendingRequests.delete(obj.id);
+  
+      if (!("error" in obj && obj.error)) {
+        pending.resolve(obj.result);
+      }
+    }
+  }
     }
 
   private validatePath(path: string): boolean {
@@ -590,7 +532,7 @@ export class SessionController {
       error,
     };
     this.emitTraffic("out", payload);
-    this.transport.send(JSON.stringify(payload));
+    console.warn("sendJsonRpcErrorResponse: Transport interface doesn't support raw JSON sending yet");
   }
 
   private async sendJsonRpcResponse(requestId: number, result: FileReadResponse | FileWriteResponse): Promise<void> {
@@ -600,7 +542,7 @@ export class SessionController {
       result,
     };
     this.emitTraffic("out", payload);
-    this.transport.send(JSON.stringify(payload));
+    console.warn("sendJsonRpcResponse: Transport interface doesn't support raw JSON sending yet");
   }
 
     private handleError(error: Error): void {

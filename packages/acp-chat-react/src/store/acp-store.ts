@@ -167,7 +167,6 @@ export class AcpStore {
     return {
       session: {
         connectionStatus: "disconnected",
-        bridgeStatus: "disconnected",
         sessionId: null,
         initialized: false,
         capabilities: null,

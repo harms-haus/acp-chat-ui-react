@@ -7,32 +7,6 @@
 
 import { SessionController } from './controller.js';
 import type { Transport } from '../transport/transport-interface.js';
-import { DefaultTransport } from '../transport/default-transport.js';
-
-/**
- * Create a SessionController with default WebSocket transport.
- * 
- * This is the simplest way to create a SessionController for WebSocket usage.
- * It uses the default transport configuration with automatic reconnection.
- * 
- * @param url - WebSocket URL (e.g., 'ws://localhost:8765')
- * @returns Configured SessionController
- * 
- * @example
- * ```typescript
- * const controller = createSessionController('ws://localhost:8765');
- * await controller.connect();
- * ```
- * 
- * @deprecated For WebSocket usage, import from @harms-haus/acp-ws-bridge instead:
- * ```typescript
- * import { createSessionController } from '@harms-haus/acp-ws-bridge';
- * ```
- */
-export function createSessionController(url: string): SessionController {
-  const transport = new DefaultTransport(url);
-  return new SessionController(transport);
-}
 
 /**
  * Create a SessionController with custom transport.

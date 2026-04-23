@@ -1,6 +1,5 @@
 export { SessionController } from "./controller.js";
 export type { SessionControllerState, StartAgentConfig, PermissionRequestParams, PermissionOption, ConfigOption, ConfigOptionValue } from "./controller.js";
-export type { InitSuccess } from "../transport/index.js";
 export { DefaultSessionCaptureInterceptor } from "./capture-interceptor.js";
 export type { CapturedSession, CapturedEvent, SessionCaptureInterceptor } from "./capture-interceptor.js";
 

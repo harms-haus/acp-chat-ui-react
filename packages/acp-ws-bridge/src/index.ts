@@ -18,14 +18,14 @@ export type {
   ConnectionStatus,
   ACPMethod,
   ACPUpdateType,
-  SessionUpdateNotification,
+  SessionNotification,
   ACPRequest,
   ACPResponse,
   ACPNotification,
   SessionId,
   ContentBlock,
   ToolCall,
-  PermissionRequest,
+  StopReason,
 } from "@harms-haus/acp-chat-core";
 
 export type {

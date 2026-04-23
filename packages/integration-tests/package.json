@@ -9,7 +9,8 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@harms-haus/acp-chat-core": "workspace:*"
+    "@harms-haus/acp-chat-core": "workspace:*",
+    "@harms-haus/acp-ws-bridge": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

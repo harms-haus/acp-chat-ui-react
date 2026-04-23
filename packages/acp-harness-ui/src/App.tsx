@@ -14,15 +14,15 @@ import {
   type AcpMode,
   type AcpModel,
 } from "@harms-haus/acp-chat-react";
-import {
+import { 
   PACKAGE_VERSION,
   SessionController,
+  type SessionControllerState,
+  type SessionCaptureInterceptor,
+} from "@harms-haus/acp-chat-core";
+import {
   type ReplayController,
-} from "@harms-haus/acp-chat-core";
-import type {
-  SessionControllerState,
-  SessionCaptureInterceptor,
-} from "@harms-haus/acp-chat-core";
+} from "@harms-haus/acp-ws-bridge";
 import { SettingsRow } from "./SettingsRow.js";
 import { ReplayPanel } from "./components/ReplayPanel.js";
 import { LivePanel } from "./components/LivePanel.js";

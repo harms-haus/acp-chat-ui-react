@@ -1,4 +1,4 @@
-export { PACKAGE_VERSION, ENVELOPE_VERSION, SUPPORTED_VERSIONS, isSupportedVersion } from "@harms-haus/acp-chat-core";
+export { PACKAGE_VERSION } from "@harms-haus/acp-chat-core";
 
 export { AcpStore, createAcpStore } from "./store/index.js";
 export type {

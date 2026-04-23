@@ -62,6 +62,7 @@ type PendingRequest = {
 };
 
 export interface ReplayControllerState extends SessionControllerState {
+  bridgeStatus: string;
   modes: ReplayMode[];
   models: ReplayModel[];
 }

@@ -147,6 +147,16 @@ export interface Transport {
    * @returns Unsubscribe function
    */
   onStatusChange(handler: (status: ConnectionStatus) => void): () => void;
+  
+  /**
+   * Send an ACP response (for permission requests, etc.).
+   * 
+   * Responses are sent to acknowledge requests that require a response
+   * (e.g., permission requests, file operations).
+   * 
+   * @param response - ACP response object
+   */
+  sendResponse<T = unknown>(response: ACPResponse<T>): void;
 }
 
 /**

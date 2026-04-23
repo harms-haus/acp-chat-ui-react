@@ -108,7 +108,7 @@ export class WsTransport implements CoreTransport {
     // Extract ACP notification from bridge envelope
     if (envelope.type !== 'acp_payload') return;
 
-    const payload = envelope.payload as ACPNotification | ACPResponse<unknown>;
+    const payload = envelope.payload as unknown as ACPNotification | ACPResponse<unknown>;
 
     // Check if it's a response to a pending request
     if ('id' in payload && this.pendingRequests.has(payload.id)) {
@@ -144,5 +144,9 @@ export class WsTransport implements CoreTransport {
    */
   setReplaySpeed(speed: number): void {
     this.client.setReplaySpeed(speed);
+  }
+
+  sendResponse<T = unknown>(response: ACPResponse<T>): void {
+    this.client.send(JSON.stringify(response));
   }
 }

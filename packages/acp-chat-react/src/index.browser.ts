@@ -10,17 +10,15 @@
  * 
  * @example
  * // In your client-side React app:
- * import { createBrowserAcpStore, useAcpConnection } from '@harms-haus/acp-chat-react/browser';
+ * import {  createBrowserAcpStore, useAcpConnection } from '@harms-haus/acp-chat-react/browser';
  *
  * // SSR-safe main index.ts is imported by default for server environments
- * import { AcpStore, useMessages } from '@harms-haus/acp-chat-react';
+ * import {  AcpStore, useMessages } from '@harms-haus/acp-chat-react';
  */
 
 import { useEffect, useRef, useState } from "react";
-import {
-  SessionController,
-  type SessionControllerState,
-} from "@harms-haus/acp-chat-core";
+import { createSessionController } from "@harms-haus/acp-ws-bridge";
+import { SessionController, type SessionControllerState } from "@harms-haus/acp-chat-core";
 import { createAcpStore, type AcpStoreConfig } from "./store/index.js";
 import type { AcpStore } from "./store/index.js";
 
@@ -68,7 +66,7 @@ export function createBrowserAcpStore(config: BrowserAcpConfig): {
   connect: () => void;
   disconnect: () => void;
 } {
-  const controller = new SessionController(config.bridgeUrl);
+  const controller = createSessionController(config.bridgeUrl);
   const store = createAcpStore(controller, config.storeConfig);
 
   return {
@@ -109,7 +107,7 @@ export function useAcpConnection(config: BrowserAcpConfig): {
 
   useEffect(() => {
     // Create controller and store
-    const controller = new SessionController(config.bridgeUrl);
+    const controller = createSessionController(config.bridgeUrl);
     const acpStore = createAcpStore(controller, config.storeConfig);
     
     controllerRef.current = controller;

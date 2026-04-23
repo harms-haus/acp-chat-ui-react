@@ -26,7 +26,7 @@ export type {
   ACPRequest,
   ACPResponse,
   ACPNotification,
-  SessionUpdateNotification,
+  SessionNotification,
   SessionId,
   ContentBlock,
   TextContent,
@@ -35,7 +35,6 @@ export type {
   ResourceLink,
   EmbeddedResource,
   ToolCall,
-  PermissionRequest,
   StopReason,
 } from './protocol/types.js';
 
@@ -59,11 +58,9 @@ export type {
   ConfigOptionValue,
 } from "./session/index.js";
 
-// Factory functions (deprecated - use @harms-haus/acp-ws-bridge instead)
-// These temporarily bridge the gap during migration
+// Factory functions
 export { 
-  createSessionController, 
-  createSessionControllerWithTransport 
+  createSessionControllerWithTransport
 } from './session/factory.js';
 
 // Capture infrastructure (for testing)

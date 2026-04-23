@@ -5,7 +5,8 @@ export const ResourceContent = memo(function ResourceContent({
   block,
   className = "",
 }: ResourceContentProps) {
-  const resource = block.resource;
+  // Type assertion to ensure TypeScript uses the correct type
+  const resource = (block as unknown as import("@harms-haus/acp-chat-core").ResourceContentBlock).resource;
   const hasText = !!resource.text;
   const hasBlob = !!resource.blob;
   const displayMimeType = resource.mimeType ?? "application/octet-stream";

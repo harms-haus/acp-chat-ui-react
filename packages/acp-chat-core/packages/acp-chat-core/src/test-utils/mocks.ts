@@ -78,7 +78,6 @@ export class MockTransport implements Transport {
 
   sendNotification(notification: ACPNotification): void {
     this.lastSent = JSON.stringify(notification);
-    this.notificationHandlers.forEach(h => h(notification));
   }
 
   onNotification(handler: (notification: ACPNotification) => void): () => void {
@@ -113,10 +112,6 @@ export class MockTransport implements Transport {
     if (envelope.type === 'acp_payload' && envelope.payload) {
       this.emitNotification(envelope.payload as ACPNotification);
     }
-  }
-
-  sendResponse<T = unknown>(response: ACPResponse<T>): void {
-    this.lastSent = JSON.stringify(response);
   }
 }
 

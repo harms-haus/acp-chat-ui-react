@@ -1,115 +1,185 @@
 /**
- * ACP Protocol Types - Pure ACP standard types only
- * Based on: https://agentclientprotocol.com/protocol/schema
+ * ACP Protocol Types - Re-exported from @agentclientprotocol/sdk
  * 
- * These types represent the official ACP protocol specification.
- * No transport-specific or implementation-specific types should be added here.
+ * This module re-exports the official ACP SDK types for standardized
+ * communication between code editors and AI-powered coding agents.
+ * 
+ * Custom types that extend beyond the standard ACP spec are defined here.
  * 
  * @see https://agentclientprotocol.com/protocol/schema
  * @see https://agentclientprotocol.com/protocol/overview
- * @see https://agentclientprotocol.com/protocol/prompt-turn
  */
 
-// ============================================================================
-// Standard ACP Methods (Client → Agent)
-// ============================================================================
+// =============================================================================
+// ACP Standard Types (from official SDK)
+// =============================================================================
+
+export type {
+  // Core types
+  AgentCapabilities,
+  ClientCapabilities,
+  SessionId,
+  StopReason,
+  
+  // Content types
+  Content,
+  ContentBlock,
+  TextContent,
+  ImageContent,
+  AudioContent,
+  BlobResourceContents,
+  TextResourceContents,
+  ResourceLink,
+  EmbeddedResource,
+  
+  // Tool/Call types
+  ToolCall,
+  ToolCallUpdate,
+  
+  // Session types
+  NewSessionRequest,
+  NewSessionResponse,
+  LoadSessionRequest,
+  LoadSessionResponse,
+  CloseSessionRequest,
+  CloseSessionResponse,
+  ListSessionsRequest,
+  ListSessionsResponse,
+  PromptRequest,
+  SessionNotification,
+  SessionUpdate,
+  SessionInfo,
+  SessionInfoUpdate,
+  SessionMode,
+  SessionModeState,
+  SessionConfigOption,
+  ConfigOptionUpdate,
+  
+  // Permission types
+  PermissionOption,
+  PermissionOptionId,
+  PermissionOptionKind,
+  RequestPermissionRequest,
+  RequestPermissionResponse,
+  RequestPermissionOutcome,
+  
+  // File system types
+  ReadTextFileRequest,
+  ReadTextFileResponse,
+  WriteTextFileRequest,
+  WriteTextFileResponse,
+  
+  // Terminal types
+  CreateTerminalRequest,
+  CreateTerminalResponse,
+  KillTerminalRequest,
+  KillTerminalResponse,
+  TerminalOutputRequest,
+  TerminalOutputResponse,
+  ReleaseTerminalRequest,
+  ReleaseTerminalResponse,
+  WaitForTerminalExitRequest,
+  WaitForTerminalExitResponse,
+  
+  // Initialization
+  InitializeRequest,
+  InitializeResponse,
+  
+  // Plan and commands
+  Plan,
+  PlanEntry,
+  PlanEntryStatus,
+  PlanEntryPriority,
+  AvailableCommand,
+  AvailableCommandsUpdate,
+  CurrentModeUpdate,
+  
+  // Other useful types
+  Annotations,
+  Cost,
+  Usage,
+  UsageUpdate,
+  ModelId,
+  ModelInfo,
+} from "@agentclientprotocol/sdk";
+
+// =============================================================================
+// Custom Types (Non-standard ACP extensions specific to this project)
+// =============================================================================
 
 /**
- * All ACP methods that a client can call on an agent.
- * Based on the official ACP schema and actual usage in this codebase.
- * 
- * Core session methods (REQUIRED for all agents):
- * - initialize, session/new, session/load, session/prompt, session/cancel
- * 
- * Optional capabilities (agent-dependent):
- * - session/list, session/set_mode, session/set_config_option
- * - authenticate (if authentication required)
- * - fs/* (if filesystem capability)
- * - terminal/* (if terminal capability)
- */
-export type ACPMethod =
-  // Core methods (always available)
-  | 'initialize'
-  | 'session/new'
-  | 'session/load'
-  | 'session/prompt'
-  | 'session/cancel'
-  
-  // Session management (optional capabilities)
-  | 'session/list'
-  | 'session/set_mode'
-  | 'session/set_config_option'
-  
-  // Authentication (if required by agent)
-  | 'authenticate'
-  
-  // File system operations (if filesystem capability)
-  | 'fs/read_text_file'
-  | 'fs/write_text_file'
-  
-  // Terminal operations (if terminal capability)
-  | 'terminal/create'
-  | 'terminal/kill'
-  | 'terminal/output'
-  | 'terminal/release'
-  | 'terminal/wait_for_exit';
-
-// ============================================================================
-// Standard ACP Notification Types (Agent → Client)
-// ============================================================================
-
-/**
- * All session/update notification types that an agent can send.
- * These are sent via the session/update notification method.
- * 
- * Based on actual usage in this codebase (normalization/store.ts):
- * - user_message / user_message_chunk - User message content
- * - agent_message_chunk - Agent response chunks
- * - agent_thought_chunk - Agent thinking/reasoning
- * - tool_call - Tool invocation
- * - tool_call_update - Tool call status change
- * - permission_request - Permission request for tool call
- * 
- * Note: The following ACP standard types are NOT yet handled in this codebase:
- * - plan_entry_update
- * - available_commands_update
- * - current_mode_update
- * - config_option_update
- * - session_info_update
+ * Session update type classification.
+ * These are the specific update types we handle in our normalization layer.
+ * Maps to ACP SessionUpdate.type and other agent→client notifications.
+ * @see https://agentclientprotocol.com/protocol/prompt-turn#3-agent-reports-output
  */
 export type ACPUpdateType =
   // Message content
-  | 'user_message'
-  | 'user_message_chunk'
-  | 'agent_message_chunk'
-  | 'agent_thought_chunk'
-  
+  | "user_message"
+  | "user_message_chunk"
+  | "agent_message_chunk"
+  | "agent_thought_chunk"
   // Tool calls
-  | 'tool_call'
-  | 'tool_call_update'
-  
+  | "tool_call"
+  | "tool_call_update"
   // Permission requests
-  | 'permission_request';
-
-// ============================================================================
-// ACP JSON-RPC Base Types
-// ============================================================================
+  | "permission_request"
+  // Plan and commands
+  | "plan_entry_update"
+  | "available_commands_update"
+  | "commands_update"
+  // Session state
+  | "current_mode_update"
+  | "config_option_update"
+  | "session_info_update"
+  // Other updates
+  | "cancelled"
+  | string; // Allow extensibility
 
 /**
- * JSON-RPC 2.0 request structure for ACP methods.
+ * ACP Method names (client → agent)
+ * Based on the official ACP schema
+ */
+export type ACPMethod =
+  // Core methods
+  | "initialize"
+  | "authenticate"
+  // Session methods
+  | "session/new"
+  | "session/load"
+  | "session/list"
+  | "session/prompt"
+  | "session/cancel"
+  | "session/set_mode"
+  | "session/set_config_option"
+  // File system methods (if capability enabled)
+  | "fs/read_text_file"
+  | "fs/write_text_file"
+  // Terminal methods (if capability enabled)
+  | "terminal/create"
+  | "terminal/kill"
+  | "terminal/output"
+  | "terminal/release"
+  | "terminal/wait_for_exit";
+
+/**
+ * ACP Request structure (JSON-RPC 2.0)
+ * Wrapper around AgentRequest with typed method field.
+ * @see https://agentclientprotocol.com/protocol/schema
  */
 export interface ACPRequest<T = unknown> {
-  jsonrpc: '2.0';
+  jsonrpc: "2.0";
   id: number | string;
   method: ACPMethod;
   params?: T;
 }
 
 /**
- * JSON-RPC 2.0 response structure for ACP methods.
+ * ACP Response structure (JSON-RPC 2.0)
+ * Wrapper around AgentResponse with typed error field.
  */
 export interface ACPResponse<T = unknown> {
-  jsonrpc: '2.0';
+  jsonrpc: "2.0";
   id: number | string;
   result?: T;
   error?: {
@@ -120,56 +190,44 @@ export interface ACPResponse<T = unknown> {
 }
 
 /**
- * JSON-RPC 2.0 notification structure (one-way, no response expected).
+ * ACP Notification structure (JSON-RPC 2.0)
+ * One-way message, no response expected.
+ * Wrapper around AgentNotification/ClientNotification with typed method field.
  */
 export interface ACPNotification<T = unknown> {
-  jsonrpc: '2.0';
+  jsonrpc: "2.0";
   method: string;
   params?: T;
 }
 
-// ============================================================================
-// Session Update Notification
-// ============================================================================
+// =============================================================================
+// Type Guards and Helpers
+// =============================================================================
 
 /**
- * Session update notification sent by the agent.
- * 
- * All agent→client progress updates are sent via this notification.
- * The update type determines how to interpret the payload.
- * 
- * @see https://agentclientprotocol.com/protocol/prompt-turn#3-agent-reports-output
- */
-export interface SessionUpdateNotification {
-  jsonrpc: '2.0';
-  method: 'session/update';
-  params: {
-    sessionId: string;
-    update: {
-      type: ACPUpdateType;
-      [key: string]: unknown;
-    };
-  };
-}
-
-/**
- * Type guard to check if a notification is a session update.
+ * Type guard to check if a notification is a session/update notification.
+ * Session updates are the primary way agents report output to clients.
  */
 export function isSessionUpdateNotification(
   notification: ACPNotification
-): notification is SessionUpdateNotification {
+): notification is ACPNotification<{
+  sessionId: string;
+  update: { type: ACPUpdateType; [key: string]: unknown };
+}> {
   return (
-    notification.method === 'session/update' &&
-    'params' in notification &&
-    typeof notification.params === 'object' &&
-    'update' in notification.params &&
-    typeof notification.params.update === 'object' &&
-    'type' in notification.params.update
+    notification.method === "session/update" &&
+    typeof notification.params === "object" &&
+    notification.params !== null &&
+    "update" in notification.params &&
+    typeof notification.params.update === "object" &&
+    notification.params.update !== null &&
+    "type" in notification.params.update
   );
 }
 
 /**
  * Type guard to check if an update matches a specific type.
+ * Used in switch statements for handling different update types.
  */
 export function isUpdateType<T extends ACPUpdateType>(
   update: { type: string },
@@ -177,95 +235,3 @@ export function isUpdateType<T extends ACPUpdateType>(
 ): update is { type: T } & Record<string, unknown> {
   return update.type === type;
 }
-
-// ============================================================================
-// Common ACP Types (from schema)
-// ============================================================================
-
-/**
- * Session identifier format.
- * @see https://agentclientprotocol.com/protocol/schema#sessionid
- */
-export type SessionId = string;
-
-/**
- * Content block types that can appear in messages.
- * @see https://agentclientprotocol.com/protocol/content
- */
-export type ContentBlock =
-  | TextContent
-  | ImageContent
-  | AudioContent
-  | ResourceLink
-  | EmbeddedResource;
-
-export interface TextContent {
-  type: 'text';
-  text: string;
-}
-
-export interface ImageContent {
-  type: 'image';
-  data: string; // base64 encoded
-  mimeType: string;
-}
-
-export interface AudioContent {
-  type: 'audio';
-  data: string; // base64 encoded
-  mimeType: string;
-}
-
-export interface ResourceLink {
-  type: 'resource';
-  resource: {
-    uri: string;
-    mimeType?: string;
-    name?: string;
-    description?: string;
-  };
-}
-
-export interface EmbeddedResource {
-  type: 'resource';
-  resource: {
-    uri: string;
-    mimeType: string;
-    text?: string;
-    blob?: string;
-  };
-}
-
-/**
- * Tool call structure.
- * @see https://agentclientprotocol.com/protocol/tool-calls
- */
-export interface ToolCall {
-  toolCallId: string;
-  name: string;
-  arguments?: unknown;
-  status: 'pending' | 'running' | 'completed' | 'failed';
-}
-
-/**
- * Permission request structure.
- * @see https://agentclientprotocol.com/protocol/tool-calls#permission-requests
- */
-export interface PermissionRequest {
-  toolCallId: string;
-  options: Array<{
-    optionId: string;
-    name: string;
-    kind: 'allow_once' | 'allow_always' | 'deny' | 'deny_always';
-  }>;
-}
-
-/**
- * Stop reason for prompt completion.
- * @see https://agentclientprotocol.com/protocol/schema#stopreason
- */
-export type StopReason =
-  | 'end_turn'
-  | 'end_session'
-  | 'cancel'
-  | 'error';
