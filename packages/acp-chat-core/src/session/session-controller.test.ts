@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SessionController } from "./controller.js";
 import { MockTransport } from "../test-utils/mocks.js";
-import type { BridgeEnvelope } from "../test-utils/mocks.js";
 
 describe("SessionController", () => {
   let controller: SessionController;
@@ -184,7 +183,7 @@ describe("SessionController", () => {
 
   describe("session management", () => {
     it("createSession creates new session and sets sessionId", async () => {
-      mockTransport = new MockTransport(async () => ({ jsonrpc: "2.0", id: 1, result: { sessionId: "new-session-123" } }));
+      mockTransport = new MockTransport(async () => ({ sessionId: "new-session-123" }));
       controller = new SessionController(mockTransport, 30000);
       await controller.createSession("/workspace");
       expect(controller.getState().sessionId).toBe("new-session-123");
@@ -192,20 +191,20 @@ describe("SessionController", () => {
 
     it("createSession accepts mcpServers parameter", async () => {
       let capturedParams: any;
-      mockTransport = new MockTransport(async (req) => { capturedParams = req.params; return { jsonrpc: "2.0", id: req.id ?? 1, result: { sessionId: "session-1" } }; });
+      mockTransport = new MockTransport(async (req) => { capturedParams = req.params; return { sessionId: "session-1" }; });
       controller = new SessionController(mockTransport, 30000);
       await controller.createSession("/workspace", [{ name: "server1" }]);
       expect(capturedParams).toEqual(expect.objectContaining({ mcpServers: [{ name: "server1" }] }));
     });
 
-it("createSession emits statusChange", async () => {
-  mockTransport = new MockTransport(async () => ({ jsonrpc: "2.0", id: 1, result: { sessionId: "session-1" } }));
-  controller = new SessionController(mockTransport, 30000);
-  const handler = vi.fn();
-  controller.on("statusChange", handler);
-  await controller.createSession("/workspace");
-  expect(handler).toHaveBeenCalled();
-});
+    it("createSession emits statusChange", async () => {
+      mockTransport = new MockTransport(async () => ({ sessionId: "session-1" }));
+      controller = new SessionController(mockTransport, 30000);
+      const handler = vi.fn();
+      controller.on("statusChange", handler);
+      await controller.createSession("/workspace");
+      expect(handler).toHaveBeenCalled();
+    });
 
     it("loadSession emits sessionClearing before loading", async () => {
       const handler = vi.fn();
@@ -216,14 +215,14 @@ it("createSession emits statusChange", async () => {
 
     it("loadSession accepts optional mcpServers", async () => {
       let capturedParams: any;
-      mockTransport = new MockTransport(async (req) => { capturedParams = req.params; return { jsonrpc: "2.0", id: req.id ?? 1, result: {} }; });
+      mockTransport = new MockTransport(async (req) => { capturedParams = req.params; return {}; });
       controller = new SessionController(mockTransport, 30000);
       await controller.loadSession("session-1", "/workspace", [{ name: "server1" }]);
       expect(capturedParams).toEqual(expect.objectContaining({ mcpServers: [{ name: "server1" }] }));
     });
 
     it("listSessions returns sessions list", async () => {
-      mockTransport = new MockTransport(async () => ({ jsonrpc: "2.0", id: 1, result: { sessions: [{ sessionId: "s1", cwd: "/w1" }, { sessionId: "s2", cwd: "/w2" }] } }));
+      mockTransport = new MockTransport(async () => ({ sessions: [{ sessionId: "s1", cwd: "/w1" }, { sessionId: "s2", cwd: "/w2" }] }));
       controller = new SessionController(mockTransport, 30000);
       const result = await controller.listSessions();
       expect(result.sessions).toHaveLength(2);
@@ -231,7 +230,7 @@ it("createSession emits statusChange", async () => {
 
     it("listSessions accepts cursor and cwd parameters", async () => {
       let capturedParams: any;
-      mockTransport = new MockTransport(async (req) => { capturedParams = req.params; return { jsonrpc: "2.0", id: req.id ?? 1, result: { sessions: [] } }; });
+      mockTransport = new MockTransport(async (req) => { capturedParams = req.params; return { sessions: [] }; });
       controller = new SessionController(mockTransport, 30000);
       await controller.listSessions("cursor-123", "/workspace");
       expect(capturedParams).toEqual({ cursor: "cursor-123", cwd: "/workspace" });
@@ -252,12 +251,12 @@ it("createSession emits statusChange", async () => {
       expect(handler).toHaveBeenCalledWith("out", expect.any(Object));
     });
 
-    it("cancelPrompt sends notification without id", () => {
-      controller.cancelPrompt("session-1");
-      const parsed = JSON.parse(getLastSentData());
-      expect(parsed.method).toBe("session/cancel");
-      expect(parsed.id).toBe(0);
-    });
+ it("cancelPrompt sends notification without id", () => {
+  controller.cancelPrompt("session-1");
+  const parsed = JSON.parse(getLastSentData());
+  expect(parsed.method).toBe("session/cancel");
+  expect(parsed.id).toBeUndefined();
+ });
 
     it("cancelPrompt tracks outgoing traffic", () => {
       const handler = vi.fn();

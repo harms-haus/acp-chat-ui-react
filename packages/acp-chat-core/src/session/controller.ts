@@ -1,31 +1,24 @@
 import type { Transport, ConnectionStatus } from "../transport/transport-interface.js";
 import { FileSystemSubscriptionManager } from "../filesystem/subscription-manager.js";
 import type {
-  FileReadRequest,
-  FileReadResponse,
-  FileWriteRequest,
-  FileWriteResponse,
-  FileReadHandler,
-  FileWriteHandler,
-  FileSystemSubscription,
+ FileReadRequest,
+ FileReadResponse,
+ FileWriteRequest,
+ FileWriteResponse,
+ FileReadHandler,
+ FileWriteHandler,
+ FileSystemSubscription,
 } from "../filesystem/types.js";
 import type { ACPNotification, ACPResponse } from "../protocol/types.js";
 
 export interface StartAgentConfig {
-  command: string;
-  args?: string[];
-  cwd?: string;
-  env?: Array<[string, string]>;
+ command: string;
+ args?: string[];
+ cwd?: string;
+ env?: Array<[string, string]>;
 }
 
-interface JsonRpcRequest {
-    jsonrpc: "2.0";
-    id: number;
-    method: string;
-    params?: unknown;
-}
-
-type PendingRequest = {
+interface PendingRequest {
     resolve: (value: unknown) => void;
     reject: (error: Error) => void;
     timeout: ReturnType<typeof setTimeout>;
@@ -282,12 +275,12 @@ export class SessionController {
  	this.sendResponse(requestId, { outcome: { outcome: "cancelled" } });
  }
 
-  private sendNotification(method: string, params: unknown): void {
-    const notification: JsonRpcRequest = { jsonrpc: "2.0", id: 0, method, params };
-    this.emitTraffic("out", notification);
-    // Use the transport's sendNotification method
-    this.transport.sendNotification(notification as never);
-  }
+ private sendNotification(method: string, params: unknown): void {
+  const notification: ACPNotification = { jsonrpc: "2.0", method, params };
+  this.emitTraffic("out", notification);
+  // Use the transport's sendNotification method
+  this.transport.sendNotification(notification as never);
+ }
 
   private sendResponse(id: number, result: unknown): void {
     const response: ACPResponse<unknown> = { jsonrpc: "2.0", id, result };

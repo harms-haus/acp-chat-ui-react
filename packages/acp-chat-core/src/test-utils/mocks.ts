@@ -37,87 +37,94 @@ export interface BridgeEnvelope {
  * Implements the Transport interface with event emission capabilities.
  */
 export class MockTransport implements Transport {
-  public status: ConnectionStatus = 'disconnected';
-  public lastSent: string | null = null;
-  public lastRequestId: number | null = null;
-  private statusHandlers = new Set<(status: ConnectionStatus) => void>();
-  private notificationHandlers = new Set<(notification: ACPNotification) => void>();
-  private errorHandlers = new Set<(error: Error) => void>();
-  private requestHandler?: (request: ACPRequest) => Promise<ACPResponse<unknown>>;
+ public status: ConnectionStatus = 'disconnected';
+ public lastSent: string | null = null;
+ public lastRequestId: number | null = null;
+ private statusHandlers = new Set<(status: ConnectionStatus) => void>();
+ private notificationHandlers = new Set<(notification: ACPNotification) => void>();
+ private errorHandlers = new Set<(error: Error) => void>();
+ private requestHandler?: (request: ACPRequest) => Promise<unknown>;
+ private responseHandlers = new Set<(response: ACPResponse<unknown>) => void>();
 
-  constructor(handler?: (request: ACPRequest) => Promise<ACPResponse<unknown>>) {
-    if (handler) {
-      this.requestHandler = handler;
-    }
+ constructor(handler?: (request: ACPRequest) => Promise<unknown>) {
+  if (handler) {
+   this.requestHandler = handler;
   }
+ }
 
-  connect(): Promise<void> {
-    this.setStatus('connected');
-    return Promise.resolve();
-  }
+ connect(): Promise<void> {
+  this.setStatus('connected');
+  return Promise.resolve();
+ }
 
-  disconnect(): Promise<void> {
-    this.setStatus('disconnected');
-    return Promise.resolve();
-  }
+ disconnect(): Promise<void> {
+  this.setStatus('disconnected');
+  return Promise.resolve();
+ }
 
-  getStatus(): ConnectionStatus {
-    return this.status;
-  }
+ getStatus(): ConnectionStatus {
+  return this.status;
+ }
 
-  async sendRequest<T = unknown>(request: ACPRequest): Promise<ACPResponse<T>> {
-    this.lastSent = JSON.stringify(request);
-    if (request.id) {
-      this.lastRequestId = typeof request.id === 'number' ? request.id : parseInt(request.id as string, 10);
-    }
-    if (this.requestHandler) {
-      return this.requestHandler(request) as Promise<ACPResponse<T>>;
-    }
-    return { jsonrpc: '2.0', id: request.id ?? 0, result: {} as T };
+ async sendRequest<T = unknown>(request: ACPRequest): Promise<ACPResponse<T>> {
+  this.lastSent = JSON.stringify(request);
+  if (request.id) {
+   this.lastRequestId = typeof request.id === 'number' ? request.id : parseInt(request.id as string, 10);
   }
+  if (this.requestHandler) {
+   const result = await this.requestHandler(request);
+   // If result is already an ACPResponse (has jsonrpc and id), return it as-is
+   if (result && typeof result === 'object' && 'jsonrpc' in result && 'id' in result) {
+    return result as ACPResponse<T>;
+   }
+   // Otherwise wrap it in a response
+   return { jsonrpc: '2.0', id: request.id ?? 0, result: result as T } as ACPResponse<T>;
+  }
+  return { jsonrpc: '2.0', id: request.id ?? 0, result: {} as T };
+ }
 
-  sendNotification(notification: ACPNotification): void {
-    this.lastSent = JSON.stringify(notification);
-    this.notificationHandlers.forEach(h => h(notification));
-  }
+ sendNotification(notification: ACPNotification): void {
+  this.lastSent = JSON.stringify(notification);
+ }
 
-  onNotification(handler: (notification: ACPNotification) => void): () => void {
-    this.notificationHandlers.add(handler);
-    return () => this.notificationHandlers.delete(handler);
-  }
+ sendResponse<T = unknown>(response: ACPResponse<T>): void {
+  this.lastSent = JSON.stringify(response);
+  this.responseHandlers.forEach(h => h(response));
+ }
 
-  onError(handler: (error: Error) => void): () => void {
-    this.errorHandlers.add(handler);
-    return () => this.errorHandlers.delete(handler);
-  }
+ onNotification(handler: (notification: ACPNotification) => void): () => void {
+  this.notificationHandlers.add(handler);
+  return () => this.notificationHandlers.delete(handler);
+ }
 
-  onStatusChange(handler: (status: ConnectionStatus) => void): () => void {
-    this.statusHandlers.add(handler);
-    return () => this.statusHandlers.delete(handler);
-  }
+ onError(handler: (error: Error) => void): () => void {
+  this.errorHandlers.add(handler);
+  return () => this.errorHandlers.delete(handler);
+ }
 
-  setStatus(status: ConnectionStatus) {
-    this.status = status;
-    this.statusHandlers.forEach(h => h(status));
-  }
+ onStatusChange(handler: (status: ConnectionStatus) => void): () => void {
+  this.statusHandlers.add(handler);
+  return () => this.statusHandlers.delete(handler);
+ }
 
-  emitNotification(notification: ACPNotification) {
-    this.notificationHandlers.forEach(h => h(notification));
-  }
+ setStatus(status: ConnectionStatus) {
+  this.status = status;
+  this.statusHandlers.forEach(h => h(status));
+ }
 
-  emitError(error: Error) {
-    this.errorHandlers.forEach(h => h(error));
-  }
+ emitNotification(notification: ACPNotification) {
+  this.notificationHandlers.forEach(h => h(notification));
+ }
 
-  emitEnvelope(envelope: BridgeEnvelope) {
-    if (envelope.type === 'acp_payload' && envelope.payload) {
-      this.emitNotification(envelope.payload as ACPNotification);
-    }
-  }
+ emitError(error: Error) {
+  this.errorHandlers.forEach(h => h(error));
+ }
 
-  sendResponse<T = unknown>(response: ACPResponse<T>): void {
-    this.lastSent = JSON.stringify(response);
+ emitEnvelope(envelope: BridgeEnvelope) {
+  if (envelope.type === 'acp_payload' && envelope.payload) {
+   this.emitNotification(envelope.payload as ACPNotification);
   }
+ }
 }
 
 /**
