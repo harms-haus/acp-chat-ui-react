@@ -6,15 +6,39 @@
  * and the default implementation that wraps a SessionController.
  */
 
-import {
-  estimateTokenCount
-} from '../replay/types.js';
-
-import type {
-  ReplaySessionData
-} from '../replay/types.js';
+import { estimateTokenCount } from '../helpers/token-estimation.js';
 
 import type { SessionController } from './controller.js';
+
+/**
+ * Pre-existing session state captured at the start of a capture session.
+ * This represents the state before any new events are captured.
+ */
+export interface CapturedSessionState {
+  /** Array of messages that existed at capture start */
+  messages: Array<{
+    id: string;
+    role: string;
+    content: string;
+    turnId?: string;
+  }>;
+  /** Array of thoughts that existed at capture start */
+  thoughts: Array<{
+    id: string;
+    content: string;
+    turnId?: string;
+  }>;
+  /** Array of tool calls that existed at capture start */
+  toolCalls: Array<{
+    toolCallId: string;
+    kind: string;
+    title: string;
+  }>;
+  /** The session ID */
+  sessionId: string;
+  /** The working directory for the session */
+  cwd: string;
+}
 
 /**
  * A captured ACP session with all events and metadata.
@@ -33,7 +57,7 @@ export interface CapturedSession {
   events: CapturedEvent[];
 
   /** Pre-existing session state at the start of capture */
-  preExistingState: ReplaySessionData | null;
+  preExistingState: CapturedSessionState | null;
 
   /** List of modes active during the session */
   modes: string[];
@@ -75,7 +99,7 @@ export interface SessionCaptureInterceptor {
    * @param initialState - Optional pre-existing session state at capture start
    * @throws Error if capture is already active
    */
-  startCapture(sessionId: string, initialState?: ReplaySessionData): void;
+  startCapture(sessionId: string, initialState?: CapturedSessionState): void;
 
   /**
    * Stops the current capture session.
@@ -115,7 +139,7 @@ interface CaptureState {
   startTime: number;
   endTime: number | null;
   events: CapturedEvent[];
-  preExistingState: ReplaySessionData | null;
+  preExistingState: CapturedSessionState | null;
   modes: Set<string>;
   models: Set<string>;
 }
@@ -149,7 +173,7 @@ export class DefaultSessionCaptureInterceptor implements SessionCaptureIntercept
     this.controller = controller;
   }
 
-  startCapture(sessionId: string, initialState?: ReplaySessionData): void {
+  startCapture(sessionId: string, initialState?: CapturedSessionState): void {
     if (this.capturing) {
       throw new Error('Capture is already active');
     }

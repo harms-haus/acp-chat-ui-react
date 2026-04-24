@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { estimateTokenCount } from "../replay/types.js";
+import { estimateTokenCount } from "../helpers/token-estimation.js";
 
 describe("token timing utilities", () => {
   describe("estimateTokenCount", () => {
