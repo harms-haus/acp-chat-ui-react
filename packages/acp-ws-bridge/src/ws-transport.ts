@@ -10,7 +10,8 @@
  * Replay control lives exclusively in the Rust controller.
  */
 
-import type { BridgeEnvelope } from "./generated/index.js";
+import type { BridgeEnvelope, BridgeStatus } from "./generated/index.js";
+export type { BridgeStatus } from "./generated/index.js";
 import { TransportClient } from "./client.js";
 
 // Minimal ACP types for ws-bridge (transport layer only)
@@ -46,6 +47,11 @@ export interface Transport {
   onNotification(handler: (notification: ACPNotification) => void): () => void;
   onError(handler: (error: Error) => void): () => void;
   onStatusChange(handler: (status: ConnectionStatus) => void): () => void;
+  /**
+   * Subscribe to bridge lifecycle status changes (BridgeMessage::BridgeStatus).
+   * These are sent by the bridge as part of the bridge protocol.
+   */
+  onBridgeStatus?(handler: (status: BridgeStatus) => void): () => void;
 }
 
 export type ConnectionStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "error";
@@ -87,6 +93,7 @@ export class WsTransport implements Transport {
   private notificationHandlers = new Set<(notification: ACPNotification) => void>();
   private errorHandlers = new Set<(error: Error) => void>();
   private statusHandlers = new Set<(status: ConnectionStatus) => void>();
+  private bridgeStatusHandlers = new Set<(status: BridgeStatus) => void>();
 
  constructor(url: string) {
   this.client = new TransportClient({ url, reconnect: true });
@@ -172,7 +179,19 @@ export class WsTransport implements Transport {
     return () => this.statusHandlers.delete(handler);
   }
 
+  onBridgeStatus(handler: (status: BridgeStatus) => void): () => void {
+    this.bridgeStatusHandlers.add(handler);
+    return () => this.bridgeStatusHandlers.delete(handler);
+  }
+
   private handleBridgeEnvelope(envelope: BridgeEnvelope): void {
+    // Handle bridge_status messages (bridge protocol lifecycle events)
+    if (envelope.type === 'bridge_status') {
+      const status = envelope.status;
+      this.bridgeStatusHandlers.forEach(h => h(status));
+      return;
+    }
+
     // Extract ACP notification from bridge envelope
     if (envelope.type !== 'acp_payload') return;
 
