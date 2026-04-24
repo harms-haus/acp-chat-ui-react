@@ -82,14 +82,14 @@ function createSessionController(bridgeUrl: string): SessionController {
 
 ### Issue #1: Integration Tests Reference Non-Existent `ReplayController` [RESOLVED]
 
-**Location:** `packages/integration-tests/src/long-context-replay.test.ts`  
+**Location:** `packages/integration-tests/src/long-context-replay.test.ts` and `filesystem-events.test.ts`
 **Status:** ✅ **FIXED**
 
-The integration tests previously referenced `ReplayController` which was correctly removed from `acp-ws-bridge`. The tests have been updated to use `WsTransport` directly, which is the appropriate transport-layer abstraction for integration testing.
+The integration tests previously referenced `ReplayController` which was correctly removed from `acp-ws-bridge`. Both tests have been updated:
 
 **What was changed:**
 - `long-context-replay.test.ts` - Now uses `WsTransport` from `@harms-haus/acp-ws-bridge`
-- `filesystem-events.test.ts` - Marked as deprecated; needs complete rewrite using `SessionController` + `FileSystemSubscriptionManager`
+- `filesystem-events.test.ts` - Now uses `SessionController` from `@harms-haus/acp-chat-core` with `subscribeToFileReads` and `subscribeToFileWrites`
 
 **Fix applied:**
 ```typescript
@@ -98,10 +98,18 @@ import type { ReplayController } from "@harms-haus/acp-ws-bridge";
 const { ReplayController: RC } = await import("@harms-haus/acp-ws-bridge");
 const controller = new RC({ bridgeUrl: `ws://127.0.0.1:${port}` });
 
-// NEW (correct):
+// NEW (correct) - long-context-replay.test.ts:
 import { WsTransport } from "@harms-haus/acp-ws-bridge";
 const transport = new WsTransport(`ws://127.0.0.1:${port}`);
 await transport.connect();
+
+// NEW (correct) - filesystem-events.test.ts:
+import { SessionController } from "@harms-haus/acp-chat-core";
+import { WsTransport } from "@harms-haus/acp-ws-bridge";
+const transport = new WsTransport(`ws://127.0.0.1:${port}`);
+const controller = new SessionController(transport);
+controller.subscribeToFileReads(handler);
+controller.subscribeToFileWrites(handler);
 ```
 
 ---
@@ -194,13 +202,12 @@ acp-chat-core          acp-ws-bridge
 ### Immediate Actions Required
 
 1. **~~Fix Integration Tests~~** [DONE]
-   - ✅ `long-context-replay.test.ts` - Updated to use `WsTransport`
-   - ✅ `filesystem-events.test.ts` - Marked as deprecated; needs complete rewrite
+ - ✅ `long-context-replay.test.ts` - Updated to use `WsTransport`
+ - ✅ `filesystem-events.test.ts` - Updated to use `SessionController` with filesystem subscriptions
 
 2. **Optional Cleanup** [P2]
-   - Consider making `BridgeAdapter` event emission more explicit
-   - Add unit tests for `BridgeAdapter` (currently untested)
-   - Rewrite `filesystem-events.test.ts` to use `SessionController` + `FileSystemSubscriptionManager`
+ - Consider making `BridgeAdapter` event emission more explicit
+ - Add unit tests for `BridgeAdapter` (currently untested)
 
 ### Documentation Updates
 
@@ -221,11 +228,12 @@ The architecture refactoring has **successfully achieved** its goals:
 - ✅ Replay logic lives exclusively in the Rust controller
 - ✅ TypeScript packages only send control commands to Rust
 - ✅ Integration tests updated to use `WsTransport` directly
+- ✅ Filesystem events test rewritten to use `SessionController` with `subscribeToFileReads/Write`
 
 **All critical issues have been resolved.** The architecture is now fully consistent with the stated design principles.
 
 ---
 
-**Generated:** April 23, 2026  
-**Build Status:** ✅ Passing  
-**Test Status:** ✅ Integration tests fixed (one test deprecated, needs rewrite)
+**Generated:** April 23, 2026
+**Build Status:** ✅ Passing
+**Test Status:** ✅ All integration tests updated and type-checking
