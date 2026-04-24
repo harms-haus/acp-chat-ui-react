@@ -27,7 +27,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@harms-haus/acp-chat-core": "workspace:*"
+    "@agentclientprotocol/sdk": "^0.18.1"
   },
   "devDependencies": {
     "typescript": "^5.7.0",

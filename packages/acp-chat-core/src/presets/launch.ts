@@ -1,11 +1,22 @@
+/**
+ * Launch preset configuration for ACP Chat Core.
+ * 
+ * This module provides environment-based configuration for connecting
+ * to ACP agents. Core only handles generic connection config - 
+ * mode-specific logic (proxy, replay, live) lives in harness-ui.
+ */
+
 export interface LaunchPreset {
+    /** Command to launch the agent (e.g., "npx @agentclientprotocol/claude") */
     launchCmd: string | null;
+    /** Pre-existing session ID to load */
     sessionId: string | null;
+    /** Working directory for the session */
     cwd: string | null;
-    bridgeMode: "proxy" | "replay" | null;
+    /** Whether to auto-connect on initialization */
     autoConnect: boolean;
+    /** WebSocket URL for bridge connection */
     bridgeUrl: string;
-    replayFile: string | null;
 }
 
 const BRIDGE_URL_DEFAULT = "ws://127.0.0.1:8765";
@@ -32,21 +43,27 @@ function _getEnvVar(key: string, fallback: string | null = null): string | null 
     return fallback;
 }
 
+/**
+ * Parse launch preset from environment variables.
+ * 
+ * Supported environment variables:
+ * - ACP_LAUNCH_CMD: Command to launch the agent
+ * - ACP_SESSION_ID: Pre-existing session ID to load
+ * - ACP_CWD: Working directory for the session
+ * - ACP_AUTO_CONNECT: Whether to auto-connect (true/1)
+ * - ACP_BRIDGE_URL: WebSocket URL for bridge connection
+ * 
+ * @param envOverride - Optional environment override for testing
+ * @returns Parsed launch preset
+ */
 export function parseLaunchPreset(envOverride?: Record<string, string | undefined>): LaunchPreset {
     const env = envOverride ?? getEnvVarAsRecord();
     
     const launchCmd = env.ACP_LAUNCH_CMD ?? null;
     const sessionId = env.ACP_SESSION_ID ?? null;
     const cwd = env.ACP_CWD ?? null;
-    const bridgeModeRaw = env.ACP_BRIDGE_MODE ?? null;
     const autoConnectRaw = env.ACP_AUTO_CONNECT ?? null;
     const bridgeUrl = env.ACP_BRIDGE_URL ?? BRIDGE_URL_DEFAULT;
-    const replayFile = env.ACP_REPLAY_FILE ?? null;
-
-    let bridgeMode: "proxy" | "replay" | null = null;
-    if (bridgeModeRaw === "proxy" || bridgeModeRaw === "replay") {
-        bridgeMode = bridgeModeRaw;
-    }
 
     const autoConnect = autoConnectRaw === "true" || autoConnectRaw === "1";
 
@@ -54,10 +71,8 @@ export function parseLaunchPreset(envOverride?: Record<string, string | undefine
         launchCmd,
         sessionId,
         cwd,
-        bridgeMode,
         autoConnect,
         bridgeUrl,
-        replayFile,
     };
 }
 
@@ -83,16 +98,14 @@ function getEnvVarAsRecord(): Record<string, string | undefined> {
     return {};
 }
 
-export function isPresetValid(preset: LaunchPreset): { valid: boolean; reason?: string } {
-    if (preset.bridgeMode === "proxy") {
-        if (!preset.launchCmd) {
-            return { valid: false, reason: "ACP_LAUNCH_CMD is required for proxy mode" };
-        }
-    } else if (preset.bridgeMode === "replay") {
-        if (!preset.replayFile) {
-            return { valid: false, reason: "ACP_REPLAY_FILE is required for replay mode" };
-        }
-    }
-
+/**
+ * Validate a launch preset.
+ * 
+ * @param preset - The preset to validate
+ * @returns Validation result with optional error reason
+ */
+export function isPresetValid(_preset: LaunchPreset): { valid: boolean; reason?: string } {
+    // Basic validation - all fields are optional
+    // Specific mode validation (proxy/replay/live) is handled by harness-ui
     return { valid: true };
 }

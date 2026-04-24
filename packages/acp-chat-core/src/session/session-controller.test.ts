@@ -20,8 +20,8 @@ describe("SessionController", () => {
     return getMockTransport().lastSent;
   }
 
-  function emitEnvelope(envelope: BridgeEnvelope) {
-    getMockTransport().emitEnvelope(envelope);
+  function emitNotification(notification: any) {
+    getMockTransport().emitNotification(notification);
   }
 
   function emitStatus(status: "disconnected" | "connected") {
@@ -86,39 +86,21 @@ describe("SessionController", () => {
     it("accepts sessionUpdate event handlers", () => {
       const handler = vi.fn();
       controller.on("sessionUpdate", handler);
-      emitEnvelope({
-        type: "acp_payload",
-        version: 1,
-        seq: 0,
-        timestamp_ms: Date.now(),
-        payload: { jsonrpc: "2.0", method: "session/update", params: { sessionId: "test", update: { type: "test" } } }
-      });
+      emitNotification({ jsonrpc: "2.0", method: "session/update", params: { sessionId: "test", update: { type: "test" } } });
       expect(handler).toHaveBeenCalled();
     });
 
     it("accepts traffic event handlers", () => {
       const handler = vi.fn();
       controller.on("traffic", handler);
-      emitEnvelope({
-        type: "acp_payload",
-        version: 1,
-        seq: 0,
-        timestamp_ms: Date.now(),
-        payload: { jsonrpc: "2.0", method: "session/update", params: { sessionId: "test" } }
-      });
+      emitNotification({ jsonrpc: "2.0", method: "session/update", params: { sessionId: "test" } });
       expect(handler).toHaveBeenCalledWith("in", expect.any(Object));
     });
 
     it("accepts error event handlers", () => {
       const handler = vi.fn();
       controller.on("error", handler);
-      emitEnvelope({
-        type: "acp_payload",
-        version: 1,
-        seq: 0,
-        timestamp_ms: Date.now(),
-        payload: { jsonrpc: "2.0", id: 1, error: { code: -32600, message: "Invalid Request" } }
-      });
+      emitNotification({ jsonrpc: "2.0", id: 1, error: { code: -32600, message: "Invalid Request" } });
       expect(handler).toHaveBeenCalled();
     });
 
@@ -132,17 +114,11 @@ describe("SessionController", () => {
     it("accepts permissionRequest event handlers", () => {
       const handler = vi.fn();
       controller.on("permissionRequest", handler);
-      emitEnvelope({
-        type: "acp_payload",
-        version: 1,
-        seq: 0,
-        timestamp_ms: Date.now(),
-        payload: {
-          jsonrpc: "2.0",
-          id: 42,
-          method: "session/request_permission",
-          params: { sessionId: "test", toolCall: { toolCallId: "tool-1" }, options: [{ optionId: "opt-1", name: "Allow", kind: "allow_once" }] }
-        }
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 42,
+        method: "session/request_permission",
+        params: { sessionId: "test", toolCall: { toolCallId: "tool-1" }, options: [{ optionId: "opt-1", name: "Allow", kind: "allow_once" }] }
       });
       expect(handler).toHaveBeenCalledWith(expect.objectContaining({ sessionId: "test", requestId: 42 }));
     });
@@ -291,13 +267,7 @@ describe("SessionController", () => {
     it("handles permission request from server", () => {
       const handler = vi.fn();
       controller.on("permissionRequest", handler);
-      emitEnvelope({
-        type: "acp_payload",
-        version: 1,
-        seq: 0,
-        timestamp_ms: Date.now(),
-        payload: { jsonrpc: "2.0", id: 99, method: "session/request_permission", params: { sessionId: "test", toolCall: { toolCallId: "tool-1" }, options: [{ optionId: "opt-1", name: "Allow", kind: "allow_once" }] } }
-      });
+      emitNotification({ jsonrpc: "2.0", id: 99, method: "session/request_permission", params: { sessionId: "test", toolCall: { toolCallId: "tool-1" }, options: [{ optionId: "opt-1", name: "Allow", kind: "allow_once" }] } });
       expect(handler).toHaveBeenCalledWith(expect.objectContaining({ sessionId: "test", requestId: 99 }));
     });
   });
@@ -322,7 +292,7 @@ describe("SessionController", () => {
       controller.on("traffic", trafficHandler);
       const handler = vi.fn().mockResolvedValue({ content: "test" });
       controller.subscribeToFileReads(handler);
-      emitEnvelope({ type: "acp_payload", version: 1, seq: 0, timestamp_ms: Date.now(), payload: { jsonrpc: "2.0", id: 1, method: "fs/read_text_file", params: { path: "../etc/passwd" } } });
+      emitNotification({ jsonrpc: "2.0", id: 1, method: "fs/read_text_file", params: { path: "../etc/passwd" } });
       await vi.waitFor(() => {
         const errors = trafficHandler.mock.calls.filter((c: any) => c[0] === "out" && c[1].error);
         expect(errors.length).toBeGreaterThan(0);
@@ -334,7 +304,7 @@ describe("SessionController", () => {
       controller.on("traffic", trafficHandler);
       const handler = vi.fn().mockResolvedValue({ content: "test" });
       controller.subscribeToFileReads(handler);
-      emitEnvelope({ type: "acp_payload", version: 1, seq: 0, timestamp_ms: Date.now(), payload: { jsonrpc: "2.0", id: 1, method: "fs/read_text_file", params: { path: "/etc/passwd" } } });
+      emitNotification({ jsonrpc: "2.0", id: 1, method: "fs/read_text_file", params: { path: "/etc/passwd" } });
       await vi.waitFor(() => {
         const errors = trafficHandler.mock.calls.filter((c: any) => c[0] === "out" && c[1].error);
         expect(errors.length).toBeGreaterThan(0);
@@ -346,7 +316,7 @@ describe("SessionController", () => {
       const trafficHandler = vi.fn();
       controller.on("traffic", trafficHandler);
       controller.subscribeToFileReads(handler);
-      emitEnvelope({ type: "acp_payload", version: 1, seq: 0, timestamp_ms: Date.now(), payload: { jsonrpc: "2.0", id: 1, method: "fs/read_text_file", params: { path: "test.txt" } } });
+      emitNotification({ jsonrpc: "2.0", id: 1, method: "fs/read_text_file", params: { path: "test.txt" } });
       await vi.waitFor(() => {
         expect(handler).toHaveBeenCalledWith({ path: "test.txt" });
         const responses = trafficHandler.mock.calls.filter((c: any) => c[0] === "out" && c[1].result);
@@ -357,7 +327,7 @@ describe("SessionController", () => {
     it("handleFileWriteRequest calls subscribed handler and sends response", async () => {
       const handler = vi.fn().mockResolvedValue({ success: true });
       controller.subscribeToFileWrites(handler);
-      emitEnvelope({ type: "acp_payload", version: 1, seq: 0, timestamp_ms: Date.now(), payload: { jsonrpc: "2.0", id: 1, method: "fs/write_text_file", params: { path: "test.txt", content: "new content" } } });
+      emitNotification({ jsonrpc: "2.0", id: 1, method: "fs/write_text_file", params: { path: "test.txt", content: "new content" } });
       await vi.waitFor(() => {
         expect(handler).toHaveBeenCalledWith({ path: "test.txt", content: "new content" });
       });
@@ -368,7 +338,7 @@ describe("SessionController", () => {
       controller.on("traffic", trafficHandler);
       const handler = vi.fn().mockResolvedValue({ success: true });
       controller.subscribeToFileWrites(handler);
-      emitEnvelope({ type: "acp_payload", version: 1, seq: 0, timestamp_ms: Date.now(), payload: { jsonrpc: "2.0", id: 1, method: "fs/write_text_file", params: { path: "../etc/passwd", content: "malicious" } } });
+      emitNotification({ jsonrpc: "2.0", id: 1, method: "fs/write_text_file", params: { path: "../etc/passwd", content: "malicious" } });
       await vi.waitFor(() => {
         const errors = trafficHandler.mock.calls.filter((c: any) => c[0] === "out" && c[1].error);
         expect(errors.length).toBeGreaterThan(0);
@@ -380,27 +350,21 @@ describe("SessionController", () => {
     it("emits sessionUpdate for session/update notifications", () => {
       const handler = vi.fn();
       controller.on("sessionUpdate", handler);
-      emitEnvelope({ type: "acp_payload", version: 1, seq: 0, timestamp_ms: Date.now(), payload: { jsonrpc: "2.0", method: "session/update", params: { sessionId: "test", update: { type: "test_update" } } } });
+      emitNotification({ jsonrpc: "2.0", method: "session/update", params: { sessionId: "test", update: { type: "test_update" } }});
       expect(handler).toHaveBeenCalledWith({ sessionId: "test", update: { type: "test_update" } });
     });
 
     it("handles batched session updates", () => {
       const handler = vi.fn();
       controller.on("sessionUpdate", handler);
-      emitEnvelope({
-        type: "acp_payload",
-        version: 1,
-        seq: 0,
-        timestamp_ms: Date.now(),
-        payload: { jsonrpc: "2.0", method: "session/update", params: { batched: true, updates: [{ params: { sessionId: "test", update: { type: "update1" } } }, { params: { sessionId: "test", update: { type: "update2" } } }] } }
-      });
+      emitNotification({ jsonrpc: "2.0", method: "session/update", params: { batched: true, updates: [{ params: { sessionId: "test", update: { type: "update1" } } }, { params: { sessionId: "test", update: { type: "update2" } } }] } });
       expect(handler).toHaveBeenCalledTimes(2);
     });
 
     it("emits sessionUpdate for result messages", () => {
       const handler = vi.fn();
       controller.on("sessionUpdate", handler);
-      emitEnvelope({ type: "acp_payload", version: 1, seq: 0, timestamp_ms: Date.now(), payload: { jsonrpc: "2.0", id: 1, result: { sessionId: "test", messages: [{ type: "agent_message_chunk", content: "Hello" }], thoughts: [{ type: "agent_thought_chunk", content: "Thinking" }] } } });
+      emitNotification({ jsonrpc: "2.0", id: 1, result: { sessionId: "test", messages: [{ type: "agent_message_chunk", content: "Hello" }], thoughts: [{ type: "agent_thought_chunk", content: "Thinking" }] }});
       expect(handler).toHaveBeenCalled();
     });
   });
@@ -436,7 +400,7 @@ describe("SessionController", () => {
     it("tracks incoming traffic from envelopes", () => {
       const handler = vi.fn();
       controller.on("traffic", handler);
-      emitEnvelope({ type: "acp_payload", version: 1, seq: 0, timestamp_ms: Date.now(), payload: { jsonrpc: "2.0", method: "test" } });
+      emitNotification({ jsonrpc: "2.0", method: "test" });
       expect(handler).toHaveBeenCalledWith("in", expect.any(Object));
     });
 

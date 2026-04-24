@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@base-ui-components/react/button";
-import { ReplayController } from "@harms-haus/acp-ws-bridge";
-import type { ReplayControllerState } from "@harms-haus/acp-ws-bridge";
+import { BridgeAdapter } from "../bridge-adapter";
 import { SpeedSlider } from "./SpeedSlider";
 
 const DEFAULT_REPLAY_SPEED = 65;
@@ -10,7 +9,7 @@ const DEFAULT_BRIDGE_URL = "ws://127.0.0.1:8765";
 type ConnectionStatus = "disconnected" | "connecting" | "initializing" | "connected" | "replaying" | "complete" | "error";
 
 interface ReplayPanelProps {
-  onControllerChange?: (controller: ReplayController | null) => void;
+  onControllerChange?: (controller: BridgeAdapter | null) => void;
   onStatusChange?: (status: ConnectionStatus) => void;
 }
 
@@ -59,7 +58,7 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
   const [isInitializing, setIsInitializing] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected");
 
-  const [controller, setController] = useState<ReplayController | null>(null);
+  const [controller, setController] = useState<BridgeAdapter | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [replaySpeed, setReplaySpeed] = useState<number>(() => {
@@ -98,16 +97,12 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
         setController(null);
       }
 
-      const newController = new ReplayController({
-        bridgeUrl,
-        modes: [],
-        models: [],
-      });
+      const newController = new BridgeAdapter(bridgeUrl);
 
       // Track previous status to avoid stale closures
       let prevStatus: ConnectionStatus = "connecting";
 
-      newController.on("statusChange", (state: ReplayControllerState) => {
+      newController.on("statusChange", (state) => {
         console.log('[ReplayPanel] statusChange:', state);
         if (state.connectionStatus === "connected") {
           if (prevStatus === "connecting" || prevStatus === "error") {
@@ -155,7 +150,7 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
       setIsInitializing(true);
       setConnectionStatus("initializing");
 
-      // Initialize with _meta.replay.replayDataPath
+      // Initialize with replay data path
       await newController.initialize({
         name: "acp-harness-ui",
         version: "0.0.1",
@@ -191,7 +186,8 @@ export function ReplayPanel({ onControllerChange, onStatusChange }: ReplayPanelP
   const handleSpeedChange = useCallback((speed: number) => {
     setReplaySpeed(speed);
     localStorage.setItem("replay-speed", String(speed));
-    controller?.setReplaySpeed(speed);
+    // Send replay speed to Rust controller via config
+    controller?.setConfigOption('replay_speed', speed / 100);
   }, [controller]);
 
   const statusDisplay = useMemo(() => {

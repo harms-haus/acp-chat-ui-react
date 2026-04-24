@@ -111,18 +111,16 @@ export type {
 export { parseLaunchPreset, isPresetValid } from "./presets/index.js";
 export type { LaunchPreset } from "./presets/index.js";
 
-// Replay types (useful for testing with ws-bridge)
-export { estimateTokenCount } from "./replay/types.js";
-export type {
-  ReplaySessionMetadata,
-  ReplaySessionData,
-  ReplayEvent,
-  ACPReplayEvent,
-  ReplayManifest,
-} from "./replay/types.js";
-
 // Pure helpers
 export {
+  estimateTokenCount,
+  ZERO_TOKEN_DELAY_MS,
+  DEFAULT_TPS,
+  BURST_THRESHOLD,
+  CHUNK_SIZE,
+  calculateTokenDelay,
+  shouldSplitBurst,
+  calculateChunkCount,
   shouldSendOnKeydown,
   canSend,
   canStop,

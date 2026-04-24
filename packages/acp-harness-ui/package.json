@@ -5,17 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 4173",
+    "dev:host": "vite --port 4173 --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:visual": "playwright test --project=visual",
     "test:visual:update": "playwright test --project=visual --update-snapshots"
   },
   "dependencies": {
-    "@harms-haus/acp-chat-core": "workspace:*",
-    "@harms-haus/acp-ws-bridge": "workspace:*",
-    "@harms-haus/acp-chat-react": "workspace:*",
     "@base-ui-components/react": "^1.0.0-rc.0",
+    "@harms-haus/acp-chat-core": "workspace:*",
+    "@harms-haus/acp-chat-react": "workspace:*",
+    "@harms-haus/acp-ws-bridge": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
@@ -25,6 +28,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "typescript": "^5.7.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^2.1.9"
   }
 }

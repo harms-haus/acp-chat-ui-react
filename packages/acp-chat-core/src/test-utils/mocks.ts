@@ -10,29 +10,6 @@ import type { ACPRequest, ACPResponse, ACPNotification } from '../protocol/types
 import type { SessionControllerState, PermissionOption } from '../session/controller.js';
 
 /**
- * Bridge envelope type for testing.
- * Defined locally to avoid circular dependency with acp-ws-bridge.
- */
-export interface BridgeEnvelope {
-  version: number;
-  seq: number;
-  timestamp_ms: number;
-  type: 'acp_payload' | 'bridge_status' | 'stderr' | 'process_exit' | 'replay_metadata' | 'start_agent';
-  payload?: unknown;
-  status?: string;
-  line?: string;
-  code?: number | null;
-  signal?: string | null;
-  captured_at_ms?: number;
-  total_envelopes?: number;
-  description?: string | null;
-  command?: string;
-  args?: string[];
-  cwd?: string | null;
-  env?: Array<[string, string]>;
-}
-
-/**
  * Mock transport implementation for testing.
  * Implements the Transport interface with event emission capabilities.
  */
@@ -118,12 +95,6 @@ export class MockTransport implements Transport {
 
  emitError(error: Error) {
   this.errorHandlers.forEach(h => h(error));
- }
-
- emitEnvelope(envelope: BridgeEnvelope) {
-  if (envelope.type === 'acp_payload' && envelope.payload) {
-   this.emitNotification(envelope.payload as ACPNotification);
-  }
  }
 }
 

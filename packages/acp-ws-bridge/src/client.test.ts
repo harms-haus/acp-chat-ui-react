@@ -9,23 +9,6 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { TransportClient, type ConnectionStatus } from "./client";
 import { MockWebSocket } from "./test-utils";
 
-// Mock the acp-chat-core imports
-vi.mock("@harms-haus/acp-chat-core", () => ({
-  parseEnvelopeSafe: vi.fn(() => ({
-    version: 1,
-    seq: 0,
-    timestamp_ms: 1234567890,
-    type: "acp_payload",
-    payload: { jsonrpc: "2.0", id: 1, method: "test", params: {} },
-  })),
-  BridgeVersionError: class BridgeVersionError extends Error {
-    constructor(message?: string) {
-      super(message);
-      this.name = "BridgeVersionError";
-    }
-  },
-}));
-
 describe("TransportClient", () => {
   let originalWebSocket: typeof WebSocket;
 
@@ -313,55 +296,23 @@ describe("TransportClient", () => {
       );
     });
 
-    it("should resolve pending init promises on WebSocket error", async () => {
-      const client = new TransportClient({ url: "ws://localhost:8080" });
+  it("should emit error on failed WebSocket constructor", () => {
+    const client = new TransportClient({ url: "ws://localhost:8080" });
+    const errorHandler = vi.fn();
 
-      client.connect();
-      const mockWs = (client as unknown as { ws: MockWebSocket }).ws;
-      mockWs.simulateOpen();
+    client.on("error", errorHandler);
 
-      // Start init request
-      const initPromise = client.initLive("node", [], "/workspace");
+    // Mock WebSocket to throw
+    
+    global.WebSocket = vi.fn(() => {
+      throw new TypeError("TypeError: Failed to construct 'WebSocket'");
+    }) as any;
 
-      // Trigger error before response
-      mockWs.simulateError();
+    client.connect();
 
-      await expect(initPromise).rejects.toThrow("WebSocket error");
-    });
-
-    it("should resolve pending init promises on WebSocket close", async () => {
-      const client = new TransportClient({ url: "ws://localhost:8080" });
-
-      client.connect();
-      const mockWs = (client as unknown as { ws: MockWebSocket }).ws;
-      mockWs.simulateOpen();
-
-      // Start init request
-      const initPromise = client.initLive("node", [], "/workspace");
-
-      // Trigger close before response
-      mockWs.simulateClose(1006, "Connection lost");
-
-      await expect(initPromise).rejects.toThrow("WebSocket connection closed");
-    });
-
-    it("should emit error on failed WebSocket constructor", () => {
-      const client = new TransportClient({ url: "ws://localhost:8080" });
-      const errorHandler = vi.fn();
-
-      client.on("error", errorHandler);
-
-      // Mock WebSocket to throw
-       
-      global.WebSocket = vi.fn(() => {
-        throw new TypeError("TypeError: Failed to construct 'WebSocket'");
-      }) as any;
-
-      client.connect();
-
-      expect(errorHandler).toHaveBeenCalledTimes(1);
-    });
+    expect(errorHandler).toHaveBeenCalledTimes(1);
   });
+});
 
   describe("Auto-Reconnect Logic", () => {
     it("should not reconnect when reconnect is disabled", () => {
@@ -738,190 +689,4 @@ describe("TransportClient", () => {
     });
   });
 
-  describe("Init Methods", () => {
-    describe("initReplay", () => {
-      it("should send init request for replay mode", async () => {
-        const client = new TransportClient({ url: "ws://localhost:8080" });
-
-        client.connect();
-        const mockWs = (client as unknown as { ws: MockWebSocket }).ws;
-        mockWs.simulateOpen();
-
-        // Start init replay request
-        const initPromise = client.initReplay("script.json", "test-session");
-
-        // Verify init request was sent
-        const sentMessages = mockWs.getSentMessages();
-        expect(sentMessages).toHaveLength(1);
-        const sentData = JSON.parse(sentMessages[0]!);
-        expect(sentData).toMatchObject({
-          type: "init",
-          mode: "replay",
-          script: "script.json",
-          sessionId: "test-session",
-        });
-        expect(sentData.initId).toBeDefined();
-
-        // Send success response
-        mockWs.simulateMessageJson({
-          type: "init",
-          initId: sentData.initId,
-          status: "success",
-          mode: "replay",
-        });
-
-        const result = await initPromise;
-        expect(result).toMatchObject({ status: "success", mode: "replay" });
-      });
-
-      it("should include replaySpeed in init request", async () => {
-        const client = new TransportClient({ url: "ws://localhost:8080" });
-
-        client.connect();
-        const mockWs = (client as unknown as { ws: MockWebSocket }).ws;
-        mockWs.simulateOpen();
-
-        const initPromise = client.initReplay("script.json", "test-session", 2.0);
-
-        const sentMessages = mockWs.getSentMessages();
-        const sentData = JSON.parse(sentMessages[0]!);
-        expect(sentData.replaySpeed).toBe(2.0);
-
-        // Send success response
-        mockWs.simulateMessageJson({
-          type: "init",
-          initId: sentData.initId,
-          status: "success",
-          mode: "replay",
-        });
-
-        await expect(initPromise).resolves.toMatchObject({
-          status: "success",
-          mode: "replay",
-        });
-      });
-
-      it("should reject on init error response", async () => {
-        const client = new TransportClient({ url: "ws://localhost:8080" });
-
-        client.connect();
-        const mockWs = (client as unknown as { ws: MockWebSocket }).ws;
-        mockWs.simulateOpen();
-
-        const initPromise = client.initReplay("script.json", "test-session");
-
-        const sentMessages = mockWs.getSentMessages();
-        const sentData = JSON.parse(sentMessages[0]!);
-
-        // Send error response
-        mockWs.simulateMessageJson({
-          type: "init",
-          initId: sentData.initId,
-          status: "error",
-          message: "Script not found",
-        });
-
-        await expect(initPromise).rejects.toThrow("Script not found");
-      });
-    });
-
-    describe("initLive", () => {
-      it("should send init request for live mode", async () => {
-        const client = new TransportClient({ url: "ws://localhost:8080" });
-
-        client.connect();
-        const mockWs = (client as unknown as { ws: MockWebSocket }).ws;
-        mockWs.simulateOpen();
-
-        const initPromise = client.initLive("node", ["script.js"], "/workspace");
-
-        const sentMessages = mockWs.getSentMessages();
-        expect(sentMessages).toHaveLength(1);
-        const sentData = JSON.parse(sentMessages[0]!);
-        expect(sentData).toMatchObject({
-          type: "init",
-          mode: "live",
-          command: "node",
-          args: ["script.js"],
-          cwd: "/workspace",
-        });
-
-        // Send success response
-        mockWs.simulateMessageJson({
-          type: "init",
-          initId: sentData.initId,
-          status: "success",
-          mode: "live",
-        });
-
-        const result = await initPromise;
-        expect(result).toMatchObject({ status: "success", mode: "live" });
-      });
-
-      it("should reject on init error response", async () => {
-        const client = new TransportClient({ url: "ws://localhost:8080" });
-
-        client.connect();
-        const mockWs = (client as unknown as { ws: MockWebSocket }).ws;
-        mockWs.simulateOpen();
-
-        const initPromise = client.initLive("node", ["script.js"], "/workspace");
-
-        const sentMessages = mockWs.getSentMessages();
-        const sentData = JSON.parse(sentMessages[0]!);
-
-        // Send error response
-        mockWs.simulateMessageJson({
-          type: "init",
-          initId: sentData.initId,
-          status: "error",
-          message: "Live mode not enabled",
-        });
-
-        await expect(initPromise).rejects.toThrow("Live mode not enabled");
-      });
-    });
-  });
-
-  describe("setReplaySpeed", () => {
-    it("should send replay speed update when connected", () => {
-      const client = new TransportClient({ url: "ws://localhost:8080" });
-
-      client.connect();
-      const mockWs = (client as unknown as { ws: MockWebSocket }).ws;
-      mockWs.simulateOpen();
-
-      client.setReplaySpeed(2.0);
-
-      const sentMessages = mockWs.getSentMessages();
-      expect(sentMessages).toHaveLength(1);
-      const sentData = JSON.parse(sentMessages[0]!);
-      expect(sentData).toEqual({
-        jsonrpc: "2.0",
-        method: "set_replay_speed",
-        params: {
-          replaySpeed: 2.0,
-        },
-      });
-    });
-
-    it("should throw when transport not connected", () => {
-      const client = new TransportClient({ url: "ws://localhost:8080" });
-
-      expect(() => client.setReplaySpeed(2.0)).toThrow("transport not connected");
-    });
-
-    it("should throw when speed is not a finite positive number", () => {
-      const client = new TransportClient({ url: "ws://localhost:8080" });
-
-      client.connect();
-      const mockWs = (client as unknown as { ws: MockWebSocket }).ws;
-      mockWs.simulateOpen();
-
-      expect(() => client.setReplaySpeed(0)).toThrow("speed must be a finite positive number");
-      expect(() => client.setReplaySpeed(-1)).toThrow("speed must be a finite positive number");
-      expect(() => client.setReplaySpeed(NaN)).toThrow("speed must be a finite positive number");
-      expect(() => client.setReplaySpeed(Infinity)).toThrow("speed must be a finite positive number");
-    });
-  });
 });

@@ -14,15 +14,13 @@ import {
   type AcpMode,
   type AcpModel,
 } from "@harms-haus/acp-chat-react";
-import { 
+import {
   PACKAGE_VERSION,
   SessionController,
   type SessionControllerState,
   type SessionCaptureInterceptor,
 } from "@harms-haus/acp-chat-core";
-import {
-  type ReplayController,
-} from "@harms-haus/acp-ws-bridge";
+import { type BridgeAdapter } from "./bridge-adapter";
 import { SettingsRow } from "./SettingsRow.js";
 import { ReplayPanel } from "./components/ReplayPanel.js";
 import { LivePanel } from "./components/LivePanel.js";
@@ -151,7 +149,7 @@ function ThreadPanel({
   renderSettingsRow,
 }: {
   store: AcpStore;
-  controller: SessionController | ReplayController;
+  controller: SessionController | BridgeAdapter;
   renderSettingsRow?: (props: SettingsRowRenderProps) => React.ReactNode;
 }) {
   const handlePermissionRespond = useCallback((requestId: number, optionId: string) => {
@@ -208,7 +206,7 @@ function SessionsSidebar({
   onSessionLoaded,
   onSessionLoadError,
 }: {
-  controller: SessionController | ReplayController | null;
+  controller: SessionController | BridgeAdapter | null;
   isConnected: boolean;
   onSessionLoaded?: (session: SessionItem) => void;
   onSessionLoadError?: (error: Error, session: SessionItem) => void;
@@ -302,10 +300,10 @@ export default function App() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | undefined>(undefined);
   const [_availableSessions, _setAvailableSessions] = useState<SessionItem[]>([]);
 
-  const [_replayController, _setReplayController] = useState<ReplayController | null>(null);
+  const [_replayController, _setReplayController] = useState<BridgeAdapter | null>(null);
 
   const controllerRef = useRef<SessionController | null>(null);
-  const replayControllerRef = useRef<ReplayController | null>(null);
+  const replayControllerRef = useRef<BridgeAdapter | null>(null);
   const captureInterceptorRef = useRef<SessionCaptureInterceptor | null>(null);
   const storeRef = useRef<AcpStore | null>(null);
   const [activeStore, setActiveStore] = useState<AcpStore | null>(null);
@@ -419,19 +417,19 @@ controller.startAgent(startAgentConfig).catch((err: unknown) => {
     setSource(newSource);
   }, [connectionStatus, disconnect, source]);
 
-  const handleReplayControllerChange = useCallback((controller: ReplayController | null) => {
+  const handleReplayControllerChange = useCallback((controller: BridgeAdapter | null) => {
     replayControllerRef.current = controller;
-    _setReplayController(controller);  // Force re-render with controller
+    _setReplayController(controller); // Force re-render with controller
 
-if (controller) {
-    const state = controller.getState();
-    setConnectionStatus(state.connectionStatus as ConnectionStatus);
-    setBridgeStatus(state.bridgeStatus as string);
-    setIsInitialized(state.initialized);
-    
-    const _store = new AcpStore(controller as unknown as SessionController, { enableBatching: false });
-    storeRef.current = _store;
-    setActiveStore(_store);
+    if (controller) {
+      const state = controller.getState();
+      setConnectionStatus(state.connectionStatus as ConnectionStatus);
+      setBridgeStatus(state.bridgeStatus as string);
+      setIsInitialized(state.initialized);
+      
+      const _store = new AcpStore(controller as unknown as SessionController, { enableBatching: false });
+      storeRef.current = _store;
+      setActiveStore(_store);
 
       const unsubStatus = controller.on("statusChange", (state) => {
         setConnectionStatus(state.connectionStatus as ConnectionStatus);

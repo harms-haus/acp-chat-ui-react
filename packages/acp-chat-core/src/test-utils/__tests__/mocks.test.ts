@@ -9,7 +9,6 @@ import {
   createMockTransport, 
   createMockController 
 } from '../mocks.js';
-import type { BridgeEnvelope } from '../mocks.js';
 
 describe('mocks', () => {
   describe('MockTransport', () => {
@@ -122,7 +121,7 @@ describe('mocks', () => {
       });
 
       it('sendRequest returns mock response', async () => {
-        const request = { jsonrpc: '2.0' as const, id: 1, method: 'test', params: {} };
+        const request = { jsonrpc: '2.0' as const, id: 1, method: 'initialize' as const, params: {} };
         const response = await transport.sendRequest(request);
         
         expect(response).toEqual({ jsonrpc: '2.0', id: 1, result: {} });
@@ -131,40 +130,6 @@ describe('mocks', () => {
       it('sendNotification is no-op', () => {
         expect(() => transport.sendNotification({ jsonrpc: '2.0' as const, method: 'test' }))
           .not.toThrow();
-      });
-    });
-
-    describe('emitEnvelope', () => {
-      it('emits acp_payload as notification', () => {
-        const handler = vi.fn();
-        transport.onNotification(handler);
-        
-        const envelope: BridgeEnvelope = {
-          type: 'acp_payload',
-          version: 1,
-          seq: 0,
-          timestamp_ms: Date.now(),
-          payload: { jsonrpc: '2.0', method: 'test' }
-        };
-        
-        transport.emitEnvelope(envelope);
-        expect(handler).toHaveBeenCalledWith({ jsonrpc: '2.0', method: 'test' });
-      });
-
-      it('ignores non-acp_payload envelopes', () => {
-        const handler = vi.fn();
-        transport.onNotification(handler);
-        
-        const envelope: BridgeEnvelope = {
-          type: 'bridge_status',
-          version: 1,
-          seq: 0,
-          timestamp_ms: Date.now(),
-          status: 'connected'
-        };
-        
-        transport.emitEnvelope(envelope);
-        expect(handler).not.toHaveBeenCalled();
       });
     });
   });
