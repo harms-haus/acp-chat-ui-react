@@ -3,67 +3,50 @@
  *
  * WebSocket bridge implementation for ACP communication.
  * This package provides:
- * - WebSocket transport (WsTransport)
- * - Session controller factories
+ * - WebSocket transport (WsTransport, TransportClient)
  * - Bridge protocol types and utilities
- * - Replay controller for testing
+ * - Generic custom event support
  *
  * The bridge protocol wraps ACP JSON-RPC messages for transport over WebSocket.
- * All bridge-specific logic lives here - core package sees only pure ACP events.
+ * This package is transport-only - it has NO knowledge of ACP protocol semantics.
+ * ACP types are from @agentclientprotocol/sdk.
  */
 
-// Re-export ACP types from core (single source of truth)
+// Re-export ACP types from official SDK
 export type {
-  Transport,
-  ConnectionStatus,
-  ACPMethod,
-  ACPUpdateType,
-  SessionNotification,
-  ACPRequest,
-  ACPResponse,
-  ACPNotification,
+  AgentNotification as ACPNotification,
+  AgentRequest as ACPRequest,
+  AgentResponse as ACPResponse,
   SessionId,
-  ContentBlock,
+  TextContent as ContentBlock,
   ToolCall,
   StopReason,
-} from "@harms-haus/acp-chat-core";
+} from "@agentclientprotocol/sdk";
 
-export type {
-  SessionControllerState,
-  PermissionRequestParams,
-  PermissionOption,
-  ConfigOption,
-} from "@harms-haus/acp-chat-core";
+// Transport interface and implementation
+export { WsTransport, type Transport, type ConnectionStatus } from "./ws-transport.js";
 
-// WebSocket transport implementation
-export { WsTransport } from "./ws-transport.js";
+// ACP method and update type enums
+export type { ACPMethod, ACPUpdateType } from "./ws-transport.js";
+
+// Session notification type
+export type { SessionNotification } from "./ws-transport.js";
 
 // Low-level WebSocket client (advanced usage)
 export {
   TransportClient,
   type TransportConfig,
   type TransportEvents,
-  type InitSuccess,
-  type InitError,
   type DisconnectSuccess,
 } from "./client.js";
 
 // Factory functions
 export {
-  createSessionController,
-  createSessionControllerWithTransport,
+  createWsTransport,
+  createTransportWithConfig,
 } from "./factory.js";
 
-// Replay controller (bridge-specific feature for testing)
-export { ReplayController } from "./replay-controller.js";
-export type {
-  ReplayControllerOptions,
-  ReplayControllerState,
-  ReplayMode,
-  ReplayModel,
-} from "./replay-controller.js";
-
-// Bridge protocol types (NOT ACP - transport layer concerns)
+// Bridge protocol types (transport layer concerns)
 export type {
   BridgeEnvelope,
   BridgeMessage,

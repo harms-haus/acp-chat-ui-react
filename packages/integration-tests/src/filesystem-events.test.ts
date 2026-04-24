@@ -1,201 +1,55 @@
 /**
  * Filesystem events integration test
- *
- * Tests that SessionController correctly handles fs/read_text_file and fs/write_text_file
- * events through the replay system and that registered handlers are invoked.
  * 
- * @deprecated This test uses ReplayController which doesn't have subscribeToFileReads/subscribeToFileWrites.
- * These methods are only available on SessionController. Test needs to be rewritten.
+ * DEPRECATED - This test needs to be rewritten for the new architecture.
+ * 
+ * In the new architecture:
+ * - Replay logic lives exclusively in the Rust controller
+ * - WsTransport is a pure transport with no replay logic
+ * - SessionController (acp-chat-core) handles ACP protocol and filesystem events
+ * - Filesystem event subscription is handled by SessionController, not the transport
+ * 
+ * To test filesystem events in the new architecture:
+ * 1. Use SessionController with WsTransport directly
+ * 2. Register fs/read_text_file and fs/write_text_file handlers on SessionController
+ * 3. The Rust controller handles replay; TypeScript handles protocol responses
+ * 
+ * @see acp-chat-core/src/filesystem/subscription-manager.ts
+ * @see acp-chat-core/src/session/controller.ts
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { setupWebSocketPolyfill } from "./helpers/websocket-polyfill.js";
-import { spawnBridge, killBridge, findAvailablePort } from "./helpers/bridge.js";
-import type { ReplayController } from "@harms-haus/acp-ws-bridge";
-import type { ChildProcess } from "node:child_process";
+import { describe, it, expect } from "vitest";
 
-interface TrafficEntry {
-  direction: "in" | "out";
-  data: unknown;
-}
-
-describe.skip("filesystem events", () => {
-  let bridgeProcess: ChildProcess;
-  let port: number;
-  let controller: ReplayController;
-  let trafficLog: TrafficEntry[] = [];
-  let errorEvents: Error[] = [];
-
-  beforeAll(async () => {
-    process.on("uncaughtException", () => {});
-    process.on("unhandledRejection", () => {});
-
-    await setupWebSocketPolyfill();
-
-    const { ReplayController: RC } = await import("@harms-haus/acp-ws-bridge");
-
-    port = await findAvailablePort(29876);
-    bridgeProcess = await spawnBridge(port);
-
-    controller = new RC({ bridgeUrl: `ws://127.0.0.1:${port}` });
-
-    trafficLog = [];
-    errorEvents = [];
-
-    controller.on("traffic", (direction: "in" | "out", data: unknown) => {
-      trafficLog.push({ direction, data });
-    });
-
-    controller.on("error", (error: Error) => {
-      errorEvents.push(error);
-    });
-  }, 120_000);
-
-  afterAll(async () => {
-    if (controller) {
-      try {
-        await controller.disconnect();
-      } catch {
-        // Bridge may already be dead
-      }
-    }
-    if (bridgeProcess) {
-      await killBridge(bridgeProcess);
-    }
+describe.skip("filesystem events - DEPRECATED", () => {
+  it.skip("needs rewrite for new architecture", () => {
+    // This test used ReplayController which has been removed.
+    // The test needs to be rewritten to use:
+    // 1. SessionController from @harms-haus/acp-chat-core
+    // 2. WsTransport from @harms-haus/acp-ws-bridge
+    // 3. FileSystemSubscriptionManager for handling fs events
+    //
+    // Example structure (not yet implemented):
+    // ```typescript
+    // import { SessionController } from "@harms-haus/acp-chat-core";
+    // import { WsTransport } from "@harms-haus/acp-ws-bridge";
+    // import { FileSystemSubscriptionManager } from "@harms-haus/acp-chat-core";
+    //
+    // const transport = new WsTransport(`ws://localhost:${port}`);
+    // const controller = new SessionController(transport);
+    // const fsManager = new FileSystemSubscriptionManager(controller);
+    //
+    // fsManager.onFileRead((request) => { ... });
+    // fsManager.onFileWrite((request) => { ... });
+    //
+    // controller.connect();
+    // await controller.initialize();
+    // // Send command to Rust to start replay...
+    // ```
+    //
+    // The key difference from the old ReplayController approach:
+    // - Replay control (start/stop/speed) is done via commands to Rust
+    // - Protocol handling (fs events, permissions, etc.) is done by SessionController
+    // - Transport is purely for message transmission
+    expect(true).toBe(true);
   });
-
-  it("should trigger filesystem read and write handlers during replay", async () => {
-    controller.connect();
-
-    // Wait for connection to be established
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error("Timeout waiting for connection"));
-      }, 10_000);
-
-      const checkStatus = () => {
-        const state = controller.getState();
-        if (state.connectionStatus === "connected" || state.bridgeStatus === "connected") {
-          clearTimeout(timeout);
-          resolve();
-        } else {
-          setTimeout(checkStatus, 100);
-        }
-      };
-
-      checkStatus();
-    });
-
-    // Register filesystem handlers
-    const readRequests: Array<{ path: string; line?: number; limit?: number }> = [];
-    const writeRequests: Array<{ path: string; content: unknown }> = [];
-    
-    (controller as any).subscribeToFileReads(async (request: { path: string; line?: number; limit?: number }) => {
-      readRequests.push(request);
-      return { content: JSON.stringify(request) };
-    });
-    
-    (controller as any).subscribeToFileWrites(async (request: { path: string; content: unknown }) => {
-      writeRequests.push(request);
-      return { success: true };
-    });
-
-    // Init replay - this triggers the bridge to start streaming events
-    await controller.initReplay("filesystem-test", "fs-test-session");
-
-    // Wait for replay to complete
-    await new Promise<void>((resolve, reject) => {
-      const deadline = Date.now() + 30_000;
-
-      const check = () => {
-        const hasDisconnected = trafficLog.some(
-          (t) =>
-            t.direction === "in" &&
-            (t.data as Record<string, unknown>)?.type === "bridge_status" &&
-            (t.data as Record<string, unknown>)?.status === "disconnected",
-        );
-
-        if (hasDisconnected) {
-          resolve();
-          return;
-        }
-
-        if (Date.now() > deadline) {
-          reject(
-            new Error(
-              "Timed out waiting for bridge_status:disconnected after 30s",
-            ),
-          );
-          return;
-        }
-
-        setTimeout(check, 200);
-      };
-
-      check();
-    });
-
-    // Filter out expected WebSocket disconnection errors
-    const unexpectedErrors = errorEvents.filter(
-      (e) => {
-        const isWebSocketDisconnection =
-          e.message.includes("WebSocket") && e.message.includes("disconnected");
-        const isExpected = e.message === "WebSocket disconnected" ||
-                           e.message.includes("WebSocket connection closed");
-        // Only suppress WebSocket disconnection errors, not all errors
-        return !isWebSocketDisconnection || isExpected;
-      },
-    );
-
-    expect(unexpectedErrors).toHaveLength(0);
-
-    // Verify fs read request was made
-    const inboundEvents = trafficLog.filter((t) => t.direction === "in");
-    const acpPayloads = inboundEvents.filter(
-      (t) => (t.data as Record<string, unknown>)?.type === "acp_payload",
-    );
-
-    const fsReadPayloads = acpPayloads.filter(
-      (t) => (t.data as Record<string, unknown>)?.method === "fs/read_text_file",
-    );
-
-    expect(fsReadPayloads).toHaveLength(1);
-
-    const fsReadPayload = fsReadPayloads[0]!.data as Record<string, unknown>;
-    const fsReadParams = fsReadPayload.params as Record<string, unknown>;
-
-    // Verify request parameters match the XML script
-    expect(fsReadParams).toHaveProperty("path");
-    expect(fsReadParams!.path).toBe("config.json");
-
-    // Verify fs read response was sent
-    const fsWritePayloads = acpPayloads.filter(
-      (t) => (t.data as Record<string, unknown>)?.method === "fs/write_text_file",
-    );
-
-    expect(fsWritePayloads).toHaveLength(1);
-
-    const fsWritePayload = fsWritePayloads[0]!.data as Record<string, unknown>;
-    const fsWriteParams = fsWritePayload.params as Record<string, unknown>;
-
-    // Verify write request parameters
-    expect(fsWriteParams).toHaveProperty("path");
-    expect(fsWriteParams!.path).toBe("config.json");
-    expect(fsWriteParams).toHaveProperty("content");
-    expect(fsWriteParams!.content).toBe('{"debug": false}');
-
-    // Verify handlers were called with correct params
-    expect(readRequests).toHaveLength(1);
-    expect(readRequests[0]).toEqual({
-      path: "config.json",
-    });
-
-    expect(writeRequests).toHaveLength(1);
-      expect(writeRequests[0]).toEqual({
-        path: "config.json",
-        content: '{"debug": false}',
-      });
-    },
-    30_000,
-  );
 });

@@ -1,48 +1,113 @@
-import type {
-  Transport as CoreTransport,
-  ConnectionStatus as CoreConnectionStatus,
-  ACPRequest,
-  ACPResponse,
-  ACPNotification,
-} from "@harms-haus/acp-chat-core";
-import type {
-  BridgeEnvelope,
-} from "./generated/index.js";
-import { parseEnvelopeSafe, BridgeVersionError } from "./bridge/index.js";
+/**
+ * WebSocket transport implementation for ACP.
+ * 
+ * This transport layer:
+ * - Wraps TransportClient for ACP-specific operations
+ * - Handles bridge envelope parsing
+ * - Provides request/response semantics for ACP JSON-RPC
+ * 
+ * NO REPLAY LOGIC: This transport does not initiate or control replays.
+ * Replay control lives exclusively in the Rust controller.
+ */
+
+import type { BridgeEnvelope } from "./generated/index.js";
 import { TransportClient } from "./client.js";
+
+// Minimal ACP types for ws-bridge (transport layer only)
+// Full ACP types live in @agentclientprotocol/sdk
+export type ACPRequest = {
+  jsonrpc: "2.0";
+  id: number | string;
+  method: string;
+  params?: unknown;
+};
+
+export type ACPResponse<T = unknown> = {
+  jsonrpc: "2.0";
+  id: number | string;
+  result?: T;
+  error?: { code: number; message: string; data?: unknown };
+};
+
+export type ACPNotification = {
+  jsonrpc: "2.0";
+  method: string;
+  params?: unknown;
+};
+
+// Transport interface
+export interface Transport {
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  getStatus(): ConnectionStatus;
+  sendRequest<T>(request: ACPRequest): Promise<ACPResponse<T>>;
+  sendNotification(notification: ACPNotification): void;
+  sendResponse<T>(response: ACPResponse<T>): void;
+  onNotification(handler: (notification: ACPNotification) => void): () => void;
+  onError(handler: (error: Error) => void): () => void;
+  onStatusChange(handler: (status: ConnectionStatus) => void): () => void;
+}
+
+export type ConnectionStatus = "disconnected" | "connecting" | "connected" | "reconnecting" | "error";
+
+// ACP method names
+export type ACPMethod =
+  | "initialize"
+  | "session/new"
+  | "session/load"
+  | "session/list"
+  | "session/prompt"
+  | "session/cancel"
+  | "session/update"
+  | "session/request_permission"
+  | string;
+
+// ACP update types
+export type ACPUpdateType =
+  | "agent_message_chunk"
+  | "agent_thought_chunk"
+  | "user_message"
+  | "user_message_chunk"
+  | "tool_call"
+  | "tool_call_update"
+  | "permission_request"
+  | string;
+
+// Session notification type
+export type SessionNotification = ACPNotification & { method: "session/update" };
 
 /**
  * WebSocket transport implementation for ACP.
- * Implements the core Transport interface while handling bridge envelope parsing.
+ * Implements the Transport interface while handling bridge envelope parsing.
  */
-export class WsTransport implements CoreTransport {
+export class WsTransport implements Transport {
   private client: TransportClient;
   private requestId = 0;
   private pendingRequests = new Map<string | number, { resolve: Function; reject: Function }>();
   private notificationHandlers = new Set<(notification: ACPNotification) => void>();
   private errorHandlers = new Set<(error: Error) => void>();
-  private statusHandlers = new Set<(status: CoreConnectionStatus) => void>();
+  private statusHandlers = new Set<(status: ConnectionStatus) => void>();
 
-  constructor(url: string) {
-    this.client = new TransportClient({ url, reconnect: true });
+ constructor(url: string) {
+  this.client = new TransportClient({ url, reconnect: true });
 
-    // Subscribe to transport events
-    const unsubscribeEnvelope = this.client.on('envelope', (envelope: BridgeEnvelope) => {
-      this.handleBridgeEnvelope(envelope);
-    });
+  // Subscribe to transport events
+  this.client.on('envelope', (envelope: BridgeEnvelope) => {
+   this.handleBridgeEnvelope(envelope);
+  });
 
-    const unsubscribeError = this.client.on('error', (error: Error) => {
-      this.errorHandlers.forEach(h => h(error));
-    });
+  this.client.on('error', (error: Error) => {
+   this.errorHandlers.forEach(h => h(error));
+  });
 
-    const unsubscribeStatus = this.client.on('statusChange', (status: CoreConnectionStatus) => {
-      this.statusHandlers.forEach(h => h(status));
-    });
-  }
+  this.client.on('statusChange', (status: ConnectionStatus) => {
+   this.statusHandlers.forEach(h => h(status));
+  });
+ }
 
   async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const unsubscribe = this.client.on('statusChange', (status: CoreConnectionStatus) => {
+      const unsubscribe = this.client.on('statusChange', (status: ConnectionStatus) => {
         if (status === 'connected') {
           unsubscribe();
           resolve();
@@ -59,18 +124,21 @@ export class WsTransport implements CoreTransport {
     await this.client.disconnect();
   }
 
-  getStatus(): CoreConnectionStatus {
+  getStatus(): ConnectionStatus {
     return this.client.getStatus();
   }
 
   async sendRequest<T>(request: ACPRequest): Promise<ACPResponse<T>> {
+    const id = this.requestId++;
+    request.id = id;
+
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        this.pendingRequests.delete(request.id);
+        this.pendingRequests.delete(id);
         reject(new Error('Request timeout'));
       }, 30000);
 
-      this.pendingRequests.set(request.id, {
+      this.pendingRequests.set(id, {
         resolve: (response: ACPResponse<T>) => {
           clearTimeout(timeout);
           resolve(response);
@@ -99,7 +167,7 @@ export class WsTransport implements CoreTransport {
     return () => this.errorHandlers.delete(handler);
   }
 
-  onStatusChange(handler: (status: CoreConnectionStatus) => void): () => void {
+  onStatusChange(handler: (status: ConnectionStatus) => void): () => void {
     this.statusHandlers.add(handler);
     return () => this.statusHandlers.delete(handler);
   }
@@ -120,30 +188,6 @@ export class WsTransport implements CoreTransport {
 
     // Otherwise, it's a notification
     this.notificationHandlers.forEach(handler => handler(payload as ACPNotification));
-  }
-
-  /**
-   * Initialize replay mode.
-   * @deprecated Use initReplay on harness-server instead (ws-bridge specific)
-   */
-  async initReplay(script: string, sessionId: string, replaySpeed?: number): Promise<{ status: 'success'; mode: 'replay' | 'live' }> {
-    return this.client.initReplay(script, sessionId, replaySpeed);
-  }
-
-  /**
-   * Initialize live mode.
-   * @deprecated Use initLive on harness-server instead (ws-bridge specific)
-   */
-  async initLive(command: string, args: string[], cwd: string): Promise<{ status: 'success'; mode: 'replay' | 'live' }> {
-    return this.client.initLive(command, args, cwd);
-  }
-
-  /**
-   * Set replay speed.
-   * @deprecated WebSocket specific - not standard ACP
-   */
-  setReplaySpeed(speed: number): void {
-    this.client.setReplaySpeed(speed);
   }
 
   sendResponse<T = unknown>(response: ACPResponse<T>): void {

@@ -197,9 +197,9 @@ importers:
 
   packages/acp-ws-bridge:
     dependencies:
-      '@harms-haus/acp-chat-core':
-        specifier: workspace:*
-        version: link:../acp-chat-core
+      '@agentclientprotocol/sdk':
+        specifier: ^0.18.1
+        version: 0.18.2(zod@4.3.6)
     devDependencies:
       typescript:
         specifier: ^5.7.0

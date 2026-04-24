@@ -1,31 +1,29 @@
 /**
- * Factory functions for creating SessionControllers with WebSocket transport.
+ * Factory functions for creating WebSocket transports.
+ * 
+ * Note: SessionController creation moved to acp-harness-ui.
+ * Use BridgeAdapter in harness-ui to connect WsTransport to SessionController.
  */
-import type { Transport as CoreTransport } from "@harms-haus/acp-chat-core";
-import { SessionController } from "@harms-haus/acp-chat-core";
+
+import type { Transport } from "./ws-transport.js";
 import { WsTransport } from "./ws-transport.js";
 
 /**
- * Create SessionController with WebSocket transport.
- *
- * This is the recommended way to create a SessionController for WebSocket usage.
+ * Create WebSocket transport.
  *
  * @param url WebSocket URL (e.g., 'ws://localhost:8765')
- * @returns Configured SessionController
+ * @returns Configured WsTransport
  */
-export function createSessionController(url: string): SessionController {
-  const transport = new WsTransport(url);
-  return new SessionController(transport);
+export function createWsTransport(url: string): WsTransport {
+  return new WsTransport(url);
 }
 
 /**
- * Create SessionController with custom transport.
- *
+ * Create transport with custom configuration.
+ * 
  * @param transport Transport implementation
- * @returns Configured SessionController
+ * @returns The transport (passthrough for convenience)
  */
-export function createSessionControllerWithTransport(
-  transport: CoreTransport
-): SessionController {
-  return new SessionController(transport);
+export function createTransportWithConfig(transport: Transport): Transport {
+  return transport;
 }

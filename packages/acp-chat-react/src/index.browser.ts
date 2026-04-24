@@ -17,10 +17,16 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { createSessionController } from "@harms-haus/acp-ws-bridge";
 import { SessionController, type SessionControllerState } from "@harms-haus/acp-chat-core";
 import { createAcpStore, type AcpStoreConfig } from "./store/index.js";
 import type { AcpStore } from "./store/index.js";
+import { WsTransport } from "@harms-haus/acp-ws-bridge";
+
+// Helper to create a SessionController with WebSocket transport
+function createSessionController(bridgeUrl: string): SessionController {
+  const transport = new WsTransport(bridgeUrl);
+  return new SessionController(transport);
+}
 
 export { SessionController } from "@harms-haus/acp-chat-core";
 export type { SessionControllerState } from "@harms-haus/acp-chat-core";
