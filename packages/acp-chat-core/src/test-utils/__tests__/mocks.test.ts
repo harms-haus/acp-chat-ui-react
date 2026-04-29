@@ -131,6 +131,11 @@ describe('mocks', () => {
         expect(() => transport.sendNotification({ jsonrpc: '2.0' as const, method: 'test' }))
           .not.toThrow();
       });
+
+      it('sendRawResponse sets lastSent', () => {
+        transport.sendRawResponse({ jsonrpc: '2.0', id: 1, result: { foo: 'bar' } });
+        expect(transport.lastSent).toBe(JSON.stringify({ jsonrpc: '2.0', id: 1, result: { foo: 'bar' } }));
+      });
     });
   });
 

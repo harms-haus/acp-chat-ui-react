@@ -59,7 +59,7 @@ describe("SessionController", () => {
     });
 
     it("disconnect clears pending requests", async () => {
-      const promise = controller.initialize({ name: "test", version: "1.0" });
+      const promise = controller.initialize({ clientInfo: { name: "test", version: "1.0" } });
       controller.disconnect();
       await expect(promise).rejects.toThrow("Disconnected");
     });
@@ -126,7 +126,7 @@ describe("SessionController", () => {
 
   describe("initialization with connection", () => {
     it("initialize sends initialize request and sets initialized flag", async () => {
-      await controller.initialize({ name: "test", version: "1.0" });
+      await controller.initialize({ clientInfo: { name: "test", version: "1.0" } });
       expect(controller.getState().initialized).toBe(true);
       expect(getLastSentData()).toContain("initialize");
     });
@@ -139,21 +139,48 @@ describe("SessionController", () => {
     it("initialize emits statusChange event", async () => {
       const handler = vi.fn();
       controller.on("statusChange", handler);
-      await controller.initialize({ name: "test", version: "1.0" });
+      await controller.initialize({ clientInfo: { name: "test", version: "1.0" } });
       expect(handler).toHaveBeenCalled();
     });
 
     it("initialize rejects on error response", async () => {
       mockTransport = new MockTransport(async () => { throw new Error("Init failed"); });
       controller = new SessionController(mockTransport, 30000);
-      await expect(controller.initialize({ name: "test", version: "1.0" })).rejects.toThrow("Init failed");
+      await expect(controller.initialize({ clientInfo: { name: "test", version: "1.0" } })).rejects.toThrow("Init failed");
     });
 
     it("initialize tracks outgoing traffic", async () => {
       const handler = vi.fn();
       controller.on("traffic", handler);
-      await controller.initialize({ name: "test", version: "1.0" });
+      await controller.initialize({ clientInfo: { name: "test", version: "1.0" } });
       expect(handler).toHaveBeenCalledWith("out", expect.objectContaining({ method: "initialize" }));
+    });
+
+    it("initialize sends clientCapabilities when provided", async () => {
+      let capturedParams: any;
+      mockTransport = new MockTransport(async (req) => {
+        capturedParams = req.params;
+        return {};
+      });
+      controller = new SessionController(mockTransport, 30000);
+      await controller.initialize({
+        clientInfo: { name: "test", version: "1.0" },
+        clientCapabilities: { terminal: true },
+      });
+      expect(capturedParams.clientCapabilities).toEqual({ terminal: true });
+    });
+
+    it("initialize sends empty clientCapabilities when not provided", async () => {
+      let capturedParams: any;
+      mockTransport = new MockTransport(async (req) => {
+        capturedParams = req.params;
+        return {};
+      });
+      controller = new SessionController(mockTransport, 30000);
+      await controller.initialize({
+        clientInfo: { name: "test", version: "1.0" },
+      });
+      expect(capturedParams.clientCapabilities).toEqual({});
     });
   });
 
@@ -373,7 +400,7 @@ describe("SessionController", () => {
     it("rejects requests on error response", async () => {
       mockTransport = new MockTransport(async () => ({ jsonrpc: "2.0", id: 1, error: { code: -32600, message: "Invalid Request" } }));
       controller = new SessionController(mockTransport, 30000);
-      await expect(controller.initialize({ name: "test", version: "1.0" })).rejects.toThrow("Invalid Request");
+      await expect(controller.initialize({ clientInfo: { name: "test", version: "1.0" } })).rejects.toThrow("Invalid Request");
     });
 
     it("emits error for transport errors", () => {
@@ -384,7 +411,7 @@ describe("SessionController", () => {
     });
 
     it("rejects pending requests on disconnect", async () => {
-      const promise = controller.initialize({ name: "test", version: "1.0" });
+      const promise = controller.initialize({ clientInfo: { name: "test", version: "1.0" } });
       controller.disconnect();
       await expect(promise).rejects.toThrow("Disconnected");
     });
@@ -392,7 +419,7 @@ describe("SessionController", () => {
     it("request timeout rejects pending request", async () => {
       mockTransport = new MockTransport(async () => new Promise(() => {}));
       const controllerWithTimeout = new SessionController(mockTransport, 10);
-      await expect(controllerWithTimeout.initialize({ name: "test", version: "1.0" })).rejects.toThrow("timed out");
+      await expect(controllerWithTimeout.initialize({ clientInfo: { name: "test", version: "1.0" } })).rejects.toThrow("timed out");
     });
   });
 
@@ -407,8 +434,443 @@ describe("SessionController", () => {
     it("tracks outgoing traffic from requests", async () => {
       const handler = vi.fn();
       controller.on("traffic", handler);
-      await controller.initialize({ name: "test", version: "1.0" });
+      await controller.initialize({ clientInfo: { name: "test", version: "1.0" } });
       expect(handler).toHaveBeenCalledWith("out", expect.objectContaining({ method: "initialize" }));
+    });
+  });
+
+  describe("terminal operations", () => {
+    it("subscribeToTerminalCreate returns subscription", () => {
+      const handler = vi.fn().mockResolvedValue({ terminalId: "term-1" });
+      const subscription = controller.subscribeToTerminalCreate(handler);
+      expect(subscription).toBeDefined();
+      expect(typeof subscription.unsubscribe).toBe("function");
+    });
+
+    it("subscribeToTerminalOutput returns subscription", () => {
+      const handler = vi.fn().mockResolvedValue({ output: "test output" });
+      const subscription = controller.subscribeToTerminalOutput(handler);
+      expect(subscription).toBeDefined();
+      expect(typeof subscription.unsubscribe).toBe("function");
+    });
+
+    it("subscribeToTerminalWaitForExit returns subscription", () => {
+      const handler = vi.fn().mockResolvedValue({ exitCode: 0 });
+      const subscription = controller.subscribeToTerminalWaitForExit(handler);
+      expect(subscription).toBeDefined();
+      expect(typeof subscription.unsubscribe).toBe("function");
+    });
+
+    it("subscribeToTerminalKill returns subscription", () => {
+      const handler = vi.fn().mockResolvedValue({});
+      const subscription = controller.subscribeToTerminalKill(handler);
+      expect(subscription).toBeDefined();
+      expect(typeof subscription.unsubscribe).toBe("function");
+    });
+
+    it("subscribeToTerminalRelease returns subscription", () => {
+      const handler = vi.fn().mockResolvedValue({});
+      const subscription = controller.subscribeToTerminalRelease(handler);
+      expect(subscription).toBeDefined();
+      expect(typeof subscription.unsubscribe).toBe("function");
+    });
+
+    it("handleTerminalCreateRequest calls subscribed handler and sends response", async () => {
+      const handler = vi.fn().mockResolvedValue({ terminalId: "term-123" });
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      controller.subscribeToTerminalCreate(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: { command: "bash", args: ["-c", "echo hello"] },
+      });
+
+      await vi.waitFor(() => {
+        expect(handler).toHaveBeenCalledWith({
+          command: "bash",
+          args: ["-c", "echo hello"],
+        });
+        const responses = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].result,
+        );
+        expect(responses.length).toBeGreaterThan(0);
+        expect(responses[0][1].result).toEqual({ terminalId: "term-123" });
+      });
+    });
+
+    it("handleTerminalCreateRequest validates command is required", async () => {
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      const handler = vi.fn().mockResolvedValue({ terminalId: "term-1" });
+      controller.subscribeToTerminalCreate(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: {},
+      });
+
+      await vi.waitFor(() => {
+        const errors = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].error,
+        );
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0][1].error.code).toBe(-32602);
+      });
+    });
+
+    it("handleTerminalOutputRequest calls subscribed handler", async () => {
+      const handler = vi.fn().mockResolvedValue({
+        output: "hello world",
+        truncated: false,
+      });
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      controller.subscribeToTerminalOutput(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "terminal/output",
+        params: { sessionId: "sess-1", terminalId: "term-1" },
+      });
+
+      await vi.waitFor(() => {
+        expect(handler).toHaveBeenCalledWith({
+          sessionId: "sess-1",
+          terminalId: "term-1",
+        });
+        const responses = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].result,
+        );
+        expect(responses.length).toBeGreaterThan(0);
+      });
+    });
+
+    it("handleTerminalOutputRequest validates sessionId and terminalId", async () => {
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 2,
+        method: "terminal/output",
+        params: { sessionId: "sess-1" },
+      });
+
+      await vi.waitFor(() => {
+        const errors = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].error,
+        );
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0][1].error.code).toBe(-32602);
+      });
+    });
+
+    it("handleTerminalWaitForExitRequest calls subscribed handler", async () => {
+      const handler = vi.fn().mockResolvedValue({ exitCode: 0 });
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      controller.subscribeToTerminalWaitForExit(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 3,
+        method: "terminal/wait_for_exit",
+        params: { sessionId: "sess-1", terminalId: "term-1" },
+      });
+
+      await vi.waitFor(() => {
+        expect(handler).toHaveBeenCalledWith({
+          sessionId: "sess-1",
+          terminalId: "term-1",
+        });
+      });
+    });
+
+    it("handleTerminalKillRequest calls subscribed handler", async () => {
+      const handler = vi.fn().mockResolvedValue({});
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      controller.subscribeToTerminalKill(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 4,
+        method: "terminal/kill",
+        params: { sessionId: "sess-1", terminalId: "term-1" },
+      });
+
+      await vi.waitFor(() => {
+        expect(handler).toHaveBeenCalledWith({
+          sessionId: "sess-1",
+          terminalId: "term-1",
+        });
+      });
+    });
+
+    it("handleTerminalReleaseRequest calls subscribed handler", async () => {
+      const handler = vi.fn().mockResolvedValue({});
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      controller.subscribeToTerminalRelease(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 5,
+        method: "terminal/release",
+        params: { sessionId: "sess-1", terminalId: "term-1" },
+      });
+
+      await vi.waitFor(() => {
+        expect(handler).toHaveBeenCalledWith({
+          sessionId: "sess-1",
+          terminalId: "term-1",
+        });
+      });
+    });
+
+    it("terminal methods return error when no handlers registered", async () => {
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: { command: "bash" },
+      });
+
+      await vi.waitFor(() => {
+        const errors = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].error,
+        );
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0][1].error.code).toBe(-32601);
+        expect(errors[0][1].error.message).toContain(
+          "No terminal create handlers available",
+        );
+      });
+    });
+
+    it("validates command is not empty string", async () => {
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      const handler = vi.fn().mockResolvedValue({ terminalId: "term-1" });
+      controller.subscribeToTerminalCreate(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: { command: "" },
+      });
+
+      await vi.waitFor(() => {
+        const errors = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].error,
+        );
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0][1].error.code).toBe(-32602);
+        expect(errors[0][1].error.message).toContain("command");
+      });
+    });
+
+    it("validates cwd does not contain path traversal", async () => {
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      const handler = vi.fn().mockResolvedValue({ terminalId: "term-1" });
+      controller.subscribeToTerminalCreate(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: { command: "bash", cwd: "/tmp/../../../etc" },
+      });
+
+      await vi.waitFor(() => {
+        const errors = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].error,
+        );
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0][1].error.code).toBe(-32602);
+        expect(errors[0][1].error.message).toContain("cwd");
+      });
+    });
+
+    it("validates env entries have name and value strings", async () => {
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      const handler = vi.fn().mockResolvedValue({ terminalId: "term-1" });
+      controller.subscribeToTerminalCreate(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: { command: "bash", env: [{ name: "FOO" }] },
+      });
+
+      await vi.waitFor(() => {
+        const errors = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].error,
+        );
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0][1].error.code).toBe(-32602);
+        expect(errors[0][1].error.message).toContain("env");
+      });
+    });
+
+
+    it("terminal handlers returning null triggers error response", async () => {
+      const handler = vi.fn().mockResolvedValue(null);
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      controller.subscribeToTerminalCreate(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: { command: "bash" },
+      });
+
+      await vi.waitFor(() => {
+        const errors = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].error,
+        );
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0][1].error.code).toBe(-32000);
+      });
+    });
+
+    it("all handlers returning null triggers error response", async () => {
+      const handler1 = vi.fn().mockResolvedValue(null);
+      const handler2 = vi.fn().mockResolvedValue(null);
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      controller.subscribeToTerminalCreate(handler1);
+      controller.subscribeToTerminalCreate(handler2);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: { command: "bash" },
+      });
+
+      await vi.waitFor(() => {
+        const errors = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].error,
+        );
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0][1].error.code).toBe(-32000);
+        expect(errors[0][1].error.message).toContain("Failed to create terminal");
+      });
+    });
+
+    it("handler rejection/throw triggers -32000 error response", async () => {
+      const handler = vi.fn().mockRejectedValue(new Error("handler failure"));
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      controller.subscribeToTerminalCreate(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: { command: "bash" },
+      });
+
+      await vi.waitFor(() => {
+        const errors = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].error,
+        );
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0][1].error.code).toBe(-32000);
+        expect(errors[0][1].error.message).toContain("Failed to create terminal");
+      });
+    });
+
+    it("validates requestId is a number on terminal/create", async () => {
+      const errorHandler = vi.fn();
+      controller.on("error", errorHandler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: "not-a-number",
+        method: "terminal/create",
+        params: { command: "bash" },
+      });
+
+      await vi.waitFor(() => {
+        expect(errorHandler).toHaveBeenCalledTimes(1);
+        expect(errorHandler.mock.calls[0][0].message).toContain("missing or invalid request id");
+      });
+    });
+
+    it("passes optional params to terminal create handler", async () => {
+      const handler = vi.fn().mockResolvedValue({ terminalId: "term-1" });
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+      controller.subscribeToTerminalCreate(handler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: {
+          command: "bash",
+          args: ["-c", "echo hello"],
+          env: [{ name: "FOO", value: "bar" }],
+          cwd: "/tmp",
+          outputByteLimit: 1024,
+        },
+      });
+
+      await vi.waitFor(() => {
+        expect(handler).toHaveBeenCalledWith({
+          command: "bash",
+          args: ["-c", "echo hello"],
+          env: [{ name: "FOO", value: "bar" }],
+          cwd: "/tmp",
+          outputByteLimit: 1024,
+        });
+        const responses = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].result,
+        );
+        expect(responses.length).toBeGreaterThan(0);
+      });
+    });
+
+    it("unsubscribe terminal handler prevents it from being called", async () => {
+      const handler = vi.fn().mockResolvedValue({ terminalId: "term-1" });
+      const subscription = controller.subscribeToTerminalCreate(handler);
+      subscription.unsubscribe();
+
+      const trafficHandler = vi.fn();
+      controller.on("traffic", trafficHandler);
+
+      emitNotification({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "terminal/create",
+        params: { command: "bash" },
+      });
+
+      await vi.waitFor(() => {
+        expect(handler).not.toHaveBeenCalled();
+        const errors = trafficHandler.mock.calls.filter(
+          (c: any) => c[0] === "out" && c[1].error,
+        );
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0][1].error.code).toBe(-32601);
+      });
     });
   });
 

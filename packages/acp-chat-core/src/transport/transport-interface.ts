@@ -157,6 +157,17 @@ export interface Transport {
    * @param response - ACP response object
    */
   sendResponse<T = unknown>(response: ACPResponse<T>): void;
+
+  /**
+   * Send a raw JSON-RPC response or error object.
+   *
+   * This is used for responding to agent-initiated requests (e.g.,
+   * filesystem operations, terminal operations) where the response
+   * must be a raw JSON-RPC object with jsonrpc, id, and result/error fields.
+   *
+   * @param payload - Raw JSON-RPC response/error object to send
+   */
+  sendRawResponse(payload: Record<string, unknown>): void;
 }
 
 /**

@@ -69,6 +69,10 @@ export class MockTransport implements Transport {
   this.responseHandlers.forEach(h => h(response));
  }
 
+ sendRawResponse(payload: Record<string, unknown>): void {
+  this.lastSent = JSON.stringify(payload);
+ }
+
  onNotification(handler: (notification: ACPNotification) => void): () => void {
   this.notificationHandlers.add(handler);
   return () => this.notificationHandlers.delete(handler);

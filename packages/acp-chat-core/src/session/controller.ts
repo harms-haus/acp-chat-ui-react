@@ -9,7 +9,21 @@ import type {
  FileWriteHandler,
  FileSystemSubscription,
 } from "../filesystem/types.js";
-import type { ACPNotification, ACPResponse } from "../protocol/types.js";
+import { TerminalSubscriptionManager } from "../terminals/subscription-manager.js";
+import type {
+  TerminalCreateHandler,
+  TerminalOutputHandler,
+  TerminalWaitForExitHandler,
+  TerminalKillHandler,
+  TerminalReleaseHandler,
+  TerminalSubscription,
+  CreateTerminalRequest,
+  TerminalOutputRequest,
+  WaitForTerminalExitRequest,
+  KillTerminalRequest,
+  ReleaseTerminalRequest,
+} from "../terminals/types.js";
+import type { ACPNotification, ACPResponse, ClientCapabilities } from "../protocol/types.js";
 
 export interface StartAgentConfig {
  command: string;
@@ -84,6 +98,7 @@ export class SessionController {
  private permissionRequestHandlers = new Set<PermissionRequestHandler>();
  private configOptionsHandlers = new Set<ConfigOptionsHandler>();
  private fileSystemManager: FileSystemSubscriptionManager;
+ private terminalManager: TerminalSubscriptionManager;
 
  /**
   * Create a SessionController with a transport.
@@ -103,6 +118,7 @@ export class SessionController {
      configOptions: null,
    };
    this.fileSystemManager = new FileSystemSubscriptionManager();
+   this.terminalManager = new TerminalSubscriptionManager();
 
    // Wire up transport event handlers using the proper interface methods
    this.transport.onStatusChange((status) => this.handleTransportStatus(status));
@@ -188,11 +204,15 @@ export class SessionController {
         this.rejectAllPending(new Error("Disconnected"));
     }
 
-  async initialize(clientInfo?: { name: string; version: string }): Promise<unknown> {
+  async initialize(options?: {
+    clientInfo?: { name: string; version: string };
+    clientCapabilities?: ClientCapabilities;
+  }): Promise<unknown> {
+    const clientCapabilities: ClientCapabilities = options?.clientCapabilities ?? {};
     const params = {
       protocolVersion: 1,
-      clientCapabilities: {},
-      ...(clientInfo ? { clientInfo } : {}),
+      clientCapabilities,
+      ...(options?.clientInfo ? { clientInfo: options.clientInfo } : {}),
     };
     const result = await this.sendRequest("initialize", params);
     this.state.initialized = true;
@@ -340,6 +360,26 @@ export class SessionController {
     return this.fileSystemManager.subscribeToFileWrites(handler);
   }
 
+  public subscribeToTerminalCreate(handler: TerminalCreateHandler): TerminalSubscription {
+    return this.terminalManager.subscribeToCreate(handler);
+  }
+
+  public subscribeToTerminalOutput(handler: TerminalOutputHandler): TerminalSubscription {
+    return this.terminalManager.subscribeToOutput(handler);
+  }
+
+  public subscribeToTerminalWaitForExit(handler: TerminalWaitForExitHandler): TerminalSubscription {
+    return this.terminalManager.subscribeToWaitForExit(handler);
+  }
+
+  public subscribeToTerminalKill(handler: TerminalKillHandler): TerminalSubscription {
+    return this.terminalManager.subscribeToKill(handler);
+  }
+
+  public subscribeToTerminalRelease(handler: TerminalReleaseHandler): TerminalSubscription {
+    return this.terminalManager.subscribeToRelease(handler);
+  }
+
   private handleAcpPayload(payload: unknown): void {
     // Validate payload is a non-null object before casting
     if (payload === null || typeof payload !== 'object') {
@@ -407,6 +447,66 @@ export class SessionController {
           return;
         }
         this.handleFileWriteRequest(requestId, params.path, params.content);
+      } else if (obj.method === "terminal/create") {
+        const requestId = obj.id as number | undefined;
+        const params = obj.params as Record<string, unknown> | undefined;
+        if (typeof requestId !== "number") {
+          this.emitError(new Error("terminal/create: missing or invalid request id"));
+          return;
+        }
+        if (!params || typeof params.command !== "string") {
+          this.sendJsonRpcErrorResponse(requestId, { code: -32602, message: "Invalid params: command required" });
+          return;
+        }
+        this.handleTerminalCreateRequest(requestId, params);
+      } else if (obj.method === "terminal/output") {
+        const requestId = obj.id as number | undefined;
+        const params = obj.params as Record<string, unknown> | undefined;
+        if (typeof requestId !== "number") {
+          this.emitError(new Error("terminal/output: missing or invalid request id"));
+          return;
+        }
+        if (!params || typeof params.sessionId !== "string" || typeof params.terminalId !== "string") {
+          this.sendJsonRpcErrorResponse(requestId, { code: -32602, message: "Invalid params: sessionId and terminalId required" });
+          return;
+        }
+        this.handleTerminalOutputRequest(requestId, params);
+      } else if (obj.method === "terminal/wait_for_exit") {
+        const requestId = obj.id as number | undefined;
+        const params = obj.params as Record<string, unknown> | undefined;
+        if (typeof requestId !== "number") {
+          this.emitError(new Error("terminal/wait_for_exit: missing or invalid request id"));
+          return;
+        }
+        if (!params || typeof params.sessionId !== "string" || typeof params.terminalId !== "string") {
+          this.sendJsonRpcErrorResponse(requestId, { code: -32602, message: "Invalid params: sessionId and terminalId required" });
+          return;
+        }
+        this.handleTerminalWaitForExitRequest(requestId, params);
+      } else if (obj.method === "terminal/kill") {
+        const requestId = obj.id as number | undefined;
+        const params = obj.params as Record<string, unknown> | undefined;
+        if (typeof requestId !== "number") {
+          this.emitError(new Error("terminal/kill: missing or invalid request id"));
+          return;
+        }
+        if (!params || typeof params.sessionId !== "string" || typeof params.terminalId !== "string") {
+          this.sendJsonRpcErrorResponse(requestId, { code: -32602, message: "Invalid params: sessionId and terminalId required" });
+          return;
+        }
+        this.handleTerminalKillRequest(requestId, params);
+      } else if (obj.method === "terminal/release") {
+        const requestId = obj.id as number | undefined;
+        const params = obj.params as Record<string, unknown> | undefined;
+        if (typeof requestId !== "number") {
+          this.emitError(new Error("terminal/release: missing or invalid request id"));
+          return;
+        }
+        if (!params || typeof params.sessionId !== "string" || typeof params.terminalId !== "string") {
+          this.sendJsonRpcErrorResponse(requestId, { code: -32602, message: "Invalid params: sessionId and terminalId required" });
+          return;
+        }
+        this.handleTerminalReleaseRequest(requestId, params);
       }
       // Don't return - let JSON-RPC responses also be processed if they have both method and id
     }
@@ -518,6 +618,176 @@ export class SessionController {
     }
   }
 
+  /**
+   * Generic helper for handling terminal JSON-RPC requests.
+   * Executes handlers via Promise.allSettled, sends success or error response.
+   */
+  private async handleTerminalRequest<T>(
+    requestId: number,
+    request: T,
+    handlers: Array<(request: T) => Promise<unknown>>,
+    noHandlersMsg: string,
+    failedMsg: string,
+  ): Promise<void> {
+    if (handlers.length === 0) {
+      this.sendJsonRpcErrorResponse(requestId, { code: -32601, message: noHandlersMsg });
+      return;
+    }
+
+    const results = await Promise.allSettled(handlers.map((h) => h(request)));
+    const successful = results.find(
+      (r) => r.status === "fulfilled" && r.value !== null,
+    ) as PromiseFulfilledResult<unknown> | undefined;
+
+    if (successful) {
+      await this.sendJsonRpcResponse(requestId, successful.value);
+    } else {
+      this.sendJsonRpcErrorResponse(requestId, { code: -32000, message: failedMsg });
+    }
+  }
+
+  private async handleTerminalCreateRequest(
+    requestId: number,
+    params: Record<string, unknown>,
+  ): Promise<void> {
+    // Validate command is non-empty
+    const command = params.command as string;
+    if (!command || command.trim() === "") {
+      this.sendJsonRpcErrorResponse(requestId, {
+        code: -32602,
+        message: "Invalid params: command must be a non-empty string",
+      });
+      return;
+    }
+
+    // Validate cwd for path traversal
+    if (typeof params.cwd === "string" && params.cwd.includes("..")) {
+      this.sendJsonRpcErrorResponse(requestId, {
+        code: -32602,
+        message: "Invalid params: cwd must not contain '..' (path traversal)",
+      });
+      return;
+    }
+
+    // Validate env entries
+    if (Array.isArray(params.env)) {
+      for (const entry of params.env) {
+        if (
+          typeof entry !== "object" ||
+          entry === null ||
+          Array.isArray(entry) ||
+          !("name" in entry) ||
+          !("value" in entry) ||
+          typeof (entry as Record<string, unknown>).name !== "string" ||
+          typeof (entry as Record<string, unknown>).value !== "string"
+        ) {
+          this.sendJsonRpcErrorResponse(requestId, {
+            code: -32602,
+            message: "Invalid params: each env entry must be { name: string, value: string }",
+          });
+          return;
+        }
+      }
+    }
+
+    const request: CreateTerminalRequest = {
+      command,
+      sessionId: params.sessionId as string,
+    };
+    if (Array.isArray(params.args)) {
+      request.args = params.args as string[];
+    }
+    if (typeof params.cwd === "string") {
+      request.cwd = params.cwd;
+    }
+    if (Array.isArray(params.env)) {
+      request.env = params.env as Array<{ name: string; value: string }>;
+    }
+    if (typeof params.outputByteLimit === "number") {
+      request.outputByteLimit = params.outputByteLimit;
+    }
+
+    await this.handleTerminalRequest(
+      requestId,
+      request,
+      this.terminalManager.getCreateHandlers(),
+      "No terminal create handlers available",
+      "Failed to create terminal",
+    );
+  }
+
+  private async handleTerminalOutputRequest(
+    requestId: number,
+    params: Record<string, unknown>,
+  ): Promise<void> {
+    const request: TerminalOutputRequest = {
+      sessionId: params.sessionId as string,
+      terminalId: params.terminalId as string,
+    };
+
+    await this.handleTerminalRequest(
+      requestId,
+      request,
+      this.terminalManager.getOutputHandlers(),
+      "No terminal output handlers available",
+      "Failed to get terminal output",
+    );
+  }
+
+  private async handleTerminalWaitForExitRequest(
+    requestId: number,
+    params: Record<string, unknown>,
+  ): Promise<void> {
+    const request: WaitForTerminalExitRequest = {
+      sessionId: params.sessionId as string,
+      terminalId: params.terminalId as string,
+    };
+
+    await this.handleTerminalRequest(
+      requestId,
+      request,
+      this.terminalManager.getWaitForExitHandlers(),
+      "No terminal wait_for_exit handlers available",
+      "Failed to wait for terminal exit",
+    );
+  }
+
+  private async handleTerminalKillRequest(
+    requestId: number,
+    params: Record<string, unknown>,
+  ): Promise<void> {
+    const request: KillTerminalRequest = {
+      sessionId: params.sessionId as string,
+      terminalId: params.terminalId as string,
+    };
+
+    await this.handleTerminalRequest(
+      requestId,
+      request,
+      this.terminalManager.getKillHandlers(),
+      "No terminal kill handlers available",
+      "Failed to kill terminal",
+    );
+  }
+
+  private async handleTerminalReleaseRequest(
+    requestId: number,
+    params: Record<string, unknown>,
+  ): Promise<void> {
+    const request: ReleaseTerminalRequest = {
+      sessionId: params.sessionId as string,
+      terminalId: params.terminalId as string,
+    };
+
+    await this.handleTerminalRequest(
+      requestId,
+      request,
+      this.terminalManager.getReleaseHandlers(),
+      "No terminal release handlers available",
+      "Failed to release terminal",
+    );
+  }
+
   private async sendJsonRpcErrorResponse(requestId: number, error: { code: number; message: string }): Promise<void> {
     const payload = {
       jsonrpc: "2.0" as const,
@@ -525,17 +795,17 @@ export class SessionController {
       error,
     };
     this.emitTraffic("out", payload);
-    console.warn("sendJsonRpcErrorResponse: Transport interface doesn't support raw JSON sending yet");
+    this.transport.sendRawResponse(payload);
   }
 
-  private async sendJsonRpcResponse(requestId: number, result: FileReadResponse | FileWriteResponse): Promise<void> {
+  private async sendJsonRpcResponse(requestId: number, result: unknown): Promise<void> {
     const payload = {
       jsonrpc: "2.0" as const,
       id: requestId,
       result,
     };
     this.emitTraffic("out", payload);
-    console.warn("sendJsonRpcResponse: Transport interface doesn't support raw JSON sending yet");
+    this.transport.sendRawResponse(payload);
   }
 
     private handleError(error: Error): void {

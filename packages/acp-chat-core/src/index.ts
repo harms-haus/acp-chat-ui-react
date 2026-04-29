@@ -159,3 +159,25 @@ export type {
 } from "./filesystem/types.js";
 
 export { FileSystemSubscriptionManager } from "./filesystem/subscription-manager.js";
+
+// Terminal types
+export type {
+  CreateTerminalRequest,
+  CreateTerminalResponse,
+  TerminalOutputRequest,
+  TerminalOutputResponse,
+  WaitForTerminalExitRequest,
+  WaitForTerminalExitResponse,
+  KillTerminalRequest,
+  KillTerminalResponse,
+  ReleaseTerminalRequest,
+  ReleaseTerminalResponse,
+  TerminalCreateHandler,
+  TerminalOutputHandler,
+  TerminalWaitForExitHandler,
+  TerminalKillHandler,
+  TerminalReleaseHandler,
+  TerminalSubscription,
+} from "./terminals/types.js";
+
+export { TerminalSubscriptionManager } from "./terminals/subscription-manager.js";
