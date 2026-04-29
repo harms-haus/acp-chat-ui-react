@@ -18,7 +18,21 @@
 
 ## Implementation Log
 
-### Execution (2026-04-28)
+### CRA Review Iterations
+
+**Round 1:** 0 critical, 1 high, 10 medium, 7 low
+- Fixed: DRY violation (extracted handleTerminalRequest helper), input validation (command/cwd/env)
+- Fixed: Test coverage (handler rejection, null returns, requestId validation, optional params, sendRawResponse)
+
+**Round 2:** 0 critical, 4 high, 7 medium, 8 low
+- Fixed: Missing validation tests (empty command, cwd path traversal, invalid env entries)
+
+**Round 3 (final):** 0 critical, 1 high (style DRY), 5 medium, 9 low
+- Remaining findings accepted as future work:
+  - DRY style issue: repeated validation pattern for sessionId/terminalId across 4 methods (stylistic)
+  - Security edge cases: symlink bypass, encoded paths, args contents, negative outputByteLimit
+  - Test gaps: requestId validation for other terminal methods, sessionId in create request
+  - Style: magic numbers, type casting, initialize() breaking change (documented, intentional for 0.0.1)
 
 **Group A (parallel):** Task 1 (Types) + Task 3 (Transport Fix)
 - Task 1: Created `src/terminals/types.ts` — 10 SDK type re-exports, 5 handler type aliases, TerminalSubscription interface
