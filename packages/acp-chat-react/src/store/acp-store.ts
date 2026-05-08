@@ -100,6 +100,7 @@ export class AcpStore {
     // ACP updates are processed IMMEDIATELY; only React notifications are batched
     const unsubStatus = sessionController.on("statusChange", (state) => {
       this.sessionState = state;
+      this.version++;
       this.scheduleNotification();
     });
 
