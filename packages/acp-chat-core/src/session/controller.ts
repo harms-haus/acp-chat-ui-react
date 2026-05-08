@@ -191,6 +191,20 @@ export class SessionController {
     return { ...this.state };
   }
 
+  /**
+   * Set the sessionId externally (e.g. when the server auto-creates a session
+   * and notifies the client via SessionInit). Emits statusChange so React
+   * subscribers see the updated state.
+   */
+  setSessionId(sessionId: string, configOptions?: unknown[]): void {
+    this.state.sessionId = sessionId;
+    if (configOptions) {
+      this.state.configOptions = configOptions as ConfigOption[];
+      this.emitConfigOptionsChange(this.state.configOptions);
+    }
+    this.emitStatusChange();
+  }
+
   getConfigOptions(): ConfigOption[] | null {
     return this.state.configOptions;
   }
