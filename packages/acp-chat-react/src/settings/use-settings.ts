@@ -61,8 +61,16 @@ export function useSettings(options: UseSettingsOptions = {}): UseSettingsReturn
   const modesFromConfig = useMemo(() => extractModesFromConfigOptions(configOptions), [configOptions]);
   const modelsFromConfig = useMemo(() => extractModelsFromConfigOptions(configOptions), [configOptions]);
   
-  const modes = useMemo(() => providedModes ?? (configOptions ? modesFromConfig : DEFAULT_ACP_MODES), [providedModes, configOptions, modesFromConfig]);
-  const models = useMemo(() => providedModels ?? (configOptions ? modelsFromConfig : DEFAULT_ACP_MODELS), [providedModels, configOptions, modelsFromConfig]);
+  const modes = useMemo(() => {
+    if (providedModes) return providedModes;
+    const extracted = configOptions ? modesFromConfig : [];
+    return extracted.length > 0 ? extracted : DEFAULT_ACP_MODES;
+  }, [providedModes, configOptions, modesFromConfig]);
+  const models = useMemo(() => {
+    if (providedModels) return providedModels;
+    const extracted = configOptions ? modelsFromConfig : [];
+    return extracted.length > 0 ? extracted : DEFAULT_ACP_MODELS;
+  }, [providedModels, configOptions, modelsFromConfig]);
 
   const initialMode = useMemo(
     () => modes.find((m) => m.id === initialModeId) ?? null,

@@ -6,6 +6,9 @@
  * mode-specific logic (proxy, replay, live) lives in harness-ui.
  */
 
+// Type declaration for Node.js process (available at runtime, not in DOM lib)
+declare const process: { env: Record<string, string | undefined> } | undefined;
+
 export interface LaunchPreset {
     /** Command to launch the agent (e.g., "npx @agentclientprotocol/claude") */
     launchCmd: string | null;

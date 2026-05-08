@@ -111,6 +111,8 @@ export interface NormalizedState {
   permissionRequests: Map<number, NormalizedPermissionRequest>;
   timelineOrder: Array<{ type: TimelineItemType; id: string | number }>;
   turnIdToMessageId: Map<string, string>;
+  /** Tracks the ID of the currently streaming message per role when no turnId is provided. */
+  activeStreamingMessage: Map<string, string>;
 }
 
 export interface SessionUpdateParams {
@@ -192,6 +194,7 @@ export function createNormalizedState(): NormalizedState {
     permissionRequests: new Map(),
     timelineOrder: [],
     turnIdToMessageId: new Map(),
+    activeStreamingMessage: new Map(),
   };
 }
 
@@ -244,24 +247,36 @@ function applyAgentMessageChunk(state: NormalizedState, update: AgentMessageChun
   const extractedContent = extractText(update.content);
   const newContentBlocks = extractContentBlocks(update.content);
   const timestamp = getTimestamp(update);
+  const isDone = update.status === "done";
 
+  // When no turnId, use active streaming message tracker per role
+  let existingId: string | undefined;
   if (turnId) {
-    const existingId = state.turnIdToMessageId.get(turnId);
-    if (existingId) {
-      const existing = state.messages.get(existingId);
-      if (existing) {
-        const updated: NormalizedMessage = {
-          ...existing,
-          content: existing.content + extractedContent,
-          contentBlocks: mergeContentBlocks(existing.contentBlocks, newContentBlocks),
-          status: mapChunkStatus(update.status),
-        };
-        if (timestamp !== undefined) {
-          updated.updatedAt = timestamp;
-        }
-        state.messages.set(existingId, updated);
-        return updated;
+    existingId = state.turnIdToMessageId.get(turnId);
+  } else {
+    existingId = state.activeStreamingMessage.get("agent");
+    // Clear user's active message when agent starts responding (turn boundary)
+    state.activeStreamingMessage.delete("user");
+  }
+
+  if (existingId) {
+    const existing = state.messages.get(existingId);
+    if (existing) {
+      const updated: NormalizedMessage = {
+        ...existing,
+        content: existing.content + extractedContent,
+        contentBlocks: mergeContentBlocks(existing.contentBlocks, newContentBlocks),
+        status: mapChunkStatus(update.status),
+      };
+      if (timestamp !== undefined) {
+        updated.updatedAt = timestamp;
       }
+      state.messages.set(existingId, updated);
+      // Clear active stream when turn completes
+      if (isDone && !turnId) {
+        state.activeStreamingMessage.delete("agent");
+      }
+      return updated;
     }
   }
 
@@ -275,6 +290,9 @@ function applyAgentMessageChunk(state: NormalizedState, update: AgentMessageChun
   };
   if (turnId) {
     message.turnId = turnId;
+    state.turnIdToMessageId.set(turnId, id);
+  } else if (!isDone) {
+    state.activeStreamingMessage.set("agent", id);
   }
   if (timestamp !== undefined) {
     message.createdAt = timestamp;
@@ -283,9 +301,6 @@ function applyAgentMessageChunk(state: NormalizedState, update: AgentMessageChun
 
   state.messages.set(id, message);
   state.timelineOrder.push({ type: "message", id });
-  if (turnId) {
-    state.turnIdToMessageId.set(turnId, id);
-  }
 
   return message;
 }
@@ -322,22 +337,48 @@ function mapThoughtStatus(status: string | undefined): ThoughtStatus {
 
 function applyUserMessage(state: NormalizedState, update: UserMessage): NormalizedMessage | null {
   const turnId = update.turnId ?? (update as Record<string, unknown>)["turn_id"] as string | undefined;
+  const extractedContent = extractText(update.content);
+  const newContentBlocks = extractContentBlocks(update.content);
+  const timestamp = getTimestamp(update);
+  const isDone = (update as Record<string, unknown>).status === "done";
 
+  // When no turnId, use active streaming message tracker per role
+  let existingId: string | undefined;
   if (turnId) {
-    const existingId = state.turnIdToMessageId.get(turnId);
-    if (existingId) {
-      return state.messages.get(existingId) ?? null;
+    existingId = state.turnIdToMessageId.get(turnId);
+  } else {
+    existingId = state.activeStreamingMessage.get("user");
+    // Clear agent's active message when user starts a new turn (turn boundary)
+    state.activeStreamingMessage.delete("agent");
+  }
+
+  if (existingId) {
+    const existing = state.messages.get(existingId);
+    if (existing) {
+      const updated: NormalizedMessage = {
+        ...existing,
+        content: existing.content + extractedContent,
+        contentBlocks: mergeContentBlocks(existing.contentBlocks, newContentBlocks),
+        status: "completed",
+      };
+      if (timestamp !== undefined) {
+        updated.updatedAt = timestamp;
+      }
+      state.messages.set(existingId, updated);
+      if (!turnId) {
+        state.activeStreamingMessage.delete("user");
+      }
+      return updated;
     }
   }
 
-  const timestamp = getTimestamp(update);
   const id = generateMessageId();
   const message: NormalizedMessage = {
     id,
     role: "user",
-    status: "completed",
-    content: extractText(update.content),
-    contentBlocks: extractContentBlocks(update.content),
+    status: isDone ? "completed" : "streaming",
+    content: extractedContent,
+    contentBlocks: newContentBlocks,
     ...(turnId ? { turnId } : {}),
   };
   if (timestamp !== undefined) {
@@ -350,6 +391,8 @@ function applyUserMessage(state: NormalizedState, update: UserMessage): Normaliz
 
   if (turnId) {
     state.turnIdToMessageId.set(turnId, id);
+  } else if (!isDone) {
+    state.activeStreamingMessage.set("user", id);
   }
 
   return message;

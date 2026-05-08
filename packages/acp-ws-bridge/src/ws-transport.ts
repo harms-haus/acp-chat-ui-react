@@ -212,4 +212,8 @@ export class WsTransport implements Transport {
   sendResponse<T = unknown>(response: ACPResponse<T>): void {
     this.client.send(JSON.stringify(response));
   }
+
+  sendRawResponse(payload: Record<string, unknown>): void {
+    this.client.send(JSON.stringify(payload));
+  }
 }

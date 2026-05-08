@@ -186,9 +186,20 @@ export class SessionController {
   private emitConfigOptionsChange(configOptions: ConfigOption[]): void {
     this.configOptionsHandlers.forEach((h) => { h(configOptions); });
   }
-
+  /** Get the current controller state. */
   getState(): SessionControllerState {
     return { ...this.state };
+  }
+
+  /**
+   * Mark the controller as initialized with the given capabilities.
+   * Used when the server manages the ACP initialize handshake and
+   * proxies the response back to the client.
+   */
+  setInitialized(capabilities: unknown): void {
+    this.state.initialized = true;
+    this.state.capabilities = capabilities;
+    this.emitStatusChange();
   }
 
   /**

@@ -8,6 +8,9 @@
 
 import { estimateTokenCount } from '../helpers/token-estimation.js';
 
+// Type declaration for Node.js require (used in dynamic import fallback)
+declare const require: (module: string) => any;
+
 import type { SessionController } from './controller.js';
 
 /**
